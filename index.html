@@ -500,7 +500,7 @@ tr:hover td{background:#f8faff}
       </button>
     </div>
     <div class="form-group">
-      <label>Username</label>
+      <label id="login-user-label">Username</label>
       <input type="text" id="login-user" placeholder="Enter your username" autocomplete="off">
     </div>
     <div class="form-group">
@@ -798,17 +798,34 @@ async function renderPage(pageNum, canvas) {
 }
 
 // ════════════════════════════════════════════════
-//  DATABASE LAYER
+//  DATABASE LAYER  (Secure — v2)
 // ════════════════════════════════════════════════
-//  SUPABASE — shared backend, works across all devices
+//  Architecture:
+//  • anon key is safe here — RLS policies enforce access control
+//  • Teacher actions → Edge Function (service role key NEVER in browser)
+//  • Student actions → Supabase REST with JWT from Supabase Auth
+//  • Passwords hashed by Supabase Auth — never stored plain in DB
 // ════════════════════════════════════════════════
-const SUPA_URL = 'https://wkydhhnvuoqyebpwmikq.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndreWRoaG52dW9xeWVicHdtaWtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDgzMDYsImV4cCI6MjA5MDk4NDMwNn0.XVNhEm89mOVnjbAy7AvESs6luXgIicVtVSHelcwAvvo';
-const H = { 'Content-Type':'application/json', 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY, 'Prefer':'return=representation' };
+const SUPA_URL  = 'https://wkydhhnvuoqyebpwmikq.supabase.co';
+const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndreWRoaG52dW9xeWVicHdtaWtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDgzMDYsImV4cCI6MjA5MDk4NDMwNn0.XVNhEm89mOVnjbAy7AvESs6luXgIicVtVSHelcwAvvo';
+const EDGE_FN   = `${SUPA_URL}/functions/v1/teacher-api`;
 
-async function supa(method, table, body, qs='', extraPrefer='') {
-  const headers = {...H};
-  if (extraPrefer) headers['Prefer'] = extraPrefer;
+// Current session JWT (set after login, used for all authenticated requests)
+let _sessionJwt = null;
+
+// ── Auth headers helpers ─────────────────────────────────────
+function anonH(extra={}) {
+  return { 'Content-Type':'application/json', 'apikey':SUPA_ANON, 'Authorization':'Bearer '+SUPA_ANON, ...extra };
+}
+function authH(extra={}) {
+  // After login, use the user's JWT instead of the anon key
+  const token = _sessionJwt || SUPA_ANON;
+  return { 'Content-Type':'application/json', 'apikey':SUPA_ANON, 'Authorization':'Bearer '+token, ...extra };
+}
+
+// ── Low-level REST helper (for student RLS-protected reads) ──
+async function supaREST(method, table, body, qs='', extraPrefer='') {
+  const headers = authH(extraPrefer ? {'Prefer': extraPrefer} : {'Prefer':'return=representation'});
   const res = await fetch(`${SUPA_URL}/rest/v1/${table}${qs}`, {
     method, headers, body: body ? JSON.stringify(body) : undefined
   });
@@ -816,71 +833,109 @@ async function supa(method, table, body, qs='', extraPrefer='') {
   const txt = await res.text(); return txt ? JSON.parse(txt) : [];
 }
 
-const DB = {
-  async getTeacher()           { const r=await supa('GET','teacher','','?id=eq.1'); return r[0]; },
-  async getStudentByLogin(u,p) { const r=await supa('GET','students','',`?username=eq.${encodeURIComponent(u)}&password=eq.${encodeURIComponent(p)}`); return r[0]||null; },
-  async getStudents()          { return supa('GET','students','','?order=created_at.asc'); },
-  async getStudent(id)         { const r=await supa('GET','students','',`?id=eq.${id}`); return r[0]||null; },
-  async addStudent(name,username,password,days=31) {
-    const expires_at = new Date(Date.now() + days*86400000).toISOString();
-    const r=await supa('POST','students',{name,username,password,expires_at}); return r[0];
-  },
-  async removeStudent(id)      { await supa('DELETE','students','',`?id=eq.${id}`); },
-  async setDeadline(id,dl)     { await supa('PATCH','students',{deadline:dl},`?id=eq.${id}`); },
-  async setDeadlineAll(dl)     { await supa('PATCH','students',{deadline:dl},''); },
-  async updateAccessDays(id,days) {
-    const expires_at = new Date(Date.now() + days*86400000).toISOString();
-    await supa('PATCH','students',{expires_at},`?id=eq.${id}`);
-  },
-  // Delete all students whose expires_at is in the past
-  async purgeExpired() {
-    const now = new Date().toISOString();
-    await supa('DELETE','students','',`?expires_at=lt.${now}&expires_at=not.is.null`);
-  },
-  async getAssignments(sid)    { return supa('GET','assignments','',`?student_id=eq.${sid}&order=id.asc`); },
-  async assignQuestions(sid,qIds) {
-    if(!qIds.length) return;
-    // First fetch what's already assigned to avoid duplicate key errors
-    const existing = await DB.getAssignments(sid);
-    const existingSet = new Set(existing.map(a=>a.question_id));
-    const newIds = qIds.filter(id=>!existingSet.has(id));
-    if(!newIds.length) return; // all already assigned
-    const rows = newIds.map(q=>({student_id:sid,question_id:q}));
-    const res = await fetch(`${SUPA_URL}/rest/v1/assignments`,{
-      method:'POST',
-      headers:{...H,'Prefer':'return=representation'},
-      body:JSON.stringify(rows)
+// ── Edge Function caller (teacher admin operations) ───────────
+async function teacherAPI(action, params={}) {
+  const res = await fetch(EDGE_FN, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+_sessionJwt },
+    body: JSON.stringify({ action, ...params })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `Edge function error ${res.status}`);
+  return data;
+}
+
+// ── Supabase Auth ─────────────────────────────────────────────
+const Auth = {
+  // Teacher logs in with their real email via Supabase Auth
+  async signInTeacher(email, password) {
+    const res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: anonH(),
+      body: JSON.stringify({ email, password })
     });
-    if(!res.ok){ const e=await res.text(); console.error('assignQuestions error:',e); throw new Error(e); }
-    return res;
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
+    _sessionJwt = data.access_token;
+    return data;
   },
-  async assignToAll(qIds) {
-    const students=await DB.getStudents();
-    await Promise.all(students.map(s=>DB.assignQuestions(s.id,qIds)));
+
+  // Student logs in — email is constructed as username@prepgenix.student
+  async signInStudent(username, password) {
+    const email = `${username}@prepgenix.student`;
+    const res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: anonH(),
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
+    _sessionJwt = data.access_token;
+    return data;
   },
-  async getResults(sid) { return supa('GET','results','',`?student_id=eq.${sid}`); },
-  async resetStudent(sid) {
-    // Delete all assignments and results for this student
-    await Promise.all([
-      supa('DELETE','assignments','',`?student_id=eq.${sid}`),
-      supa('DELETE','results','',`?student_id=eq.${sid}`)
-    ]);
+
+  async signOut() {
+    if (!_sessionJwt) return;
+    await fetch(`${SUPA_URL}/auth/v1/logout`, {
+      method: 'POST', headers: authH()
+    }).catch(()=>{});
+    _sessionJwt = null;
+  }
+};
+
+// ── DB — unified interface (same API as before, secure internals) ──
+const DB = {
+  // ── STUDENT READ OPS (uses auth JWT + RLS) ──────────────────
+  async getStudentSelf() {
+    // After student login, fetch their own row (RLS ensures they only get their own)
+    const r = await supaREST('GET','students','','?select=*');
+    return r[0] || null;
   },
-  async resetAllStudents() {
-    const students = await DB.getStudents();
-    await Promise.all(students.map(s => DB.resetStudent(s.id)));
+  async getAssignments(sid) {
+    return supaREST('GET','assignments','',`?student_id=eq.${sid}&order=id.asc`);
   },
-  async recordAnswer(sid,qId,chosen,correct,timeSeconds) {
-    await fetch(`${SUPA_URL}/rest/v1/results`,{method:'POST',headers:{...H,'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify({student_id:sid,question_id:qId,chosen,correct,time_spent_seconds:timeSeconds||0})});
+  async getResults(sid) {
+    return supaREST('GET','results','',`?student_id=eq.${sid}`);
+  },
+  async recordAnswer(sid, qId, chosen, correct, timeSeconds) {
+    await supaREST('POST','results',
+      {student_id:sid, question_id:qId, chosen, correct, time_spent_seconds:timeSeconds||0},
+      '', 'resolution=merge-duplicates,return=representation'
+    );
   },
   async getStats(sid) {
-    const [assignments,results]=await Promise.all([DB.getAssignments(sid),DB.getResults(sid)]);
-    const assigned=assignments.map(a=>a.question_id);
-    const rm={};results.forEach(r=>rm[r.question_id]={chosen:r.chosen,correct:r.correct,time:r.time_spent_seconds||0});
-    const done=assigned.filter(id=>rm[id]);
-    const correct=done.filter(id=>rm[id].correct);
-    return{total:assigned.length,done:done.length,correct:correct.length,wrong:done.length-correct.length,results:rm,assigned};
-  }
+    const [assignments,results] = await Promise.all([DB.getAssignments(sid), DB.getResults(sid)]);
+    const assigned = assignments.map(a=>a.question_id);
+    const rm = {}; results.forEach(r=>rm[r.question_id]={chosen:r.chosen,correct:r.correct,time:r.time_spent_seconds||0});
+    const done    = assigned.filter(id=>rm[id]);
+    const correct = done.filter(id=>rm[id].correct);
+    return { total:assigned.length, done:done.length, correct:correct.length, wrong:done.length-correct.length, results:rm, assigned };
+  },
+
+  // ── TEACHER OPS (all route through Edge Function) ───────────
+  async getStudents()                       { return teacherAPI('getStudents'); },
+  async getStudent(id)                      { const all=await DB.getStudents(); return all.find(s=>s.id===id)||null; },
+  async addStudent(name,username,password,days=31) { return teacherAPI('addStudent',{name,username,password,days}); },
+  async removeStudent(id)                   { return teacherAPI('removeStudent',{id}); },
+  async setDeadline(id,deadline)            { return teacherAPI('setDeadline',{id,deadline}); },
+  async setDeadlineAll(deadline)            { return teacherAPI('setDeadlineAll',{deadline}); },
+  async updateAccessDays(id,days)           { return teacherAPI('updateAccessDays',{id,days}); },
+  async purgeExpired()                      { return teacherAPI('purgeExpired'); },
+  async assignQuestions(sid,questionIds)    { return teacherAPI('assignQuestions',{studentId:sid,questionIds}); },
+  async assignToAll(questionIds)            { return teacherAPI('assignToAll',{questionIds}); },
+  async resetStudent(sid)                   { return teacherAPI('resetStudent',{id:sid}); },
+  async resetAllStudents()                  { return teacherAPI('resetAllStudents'); },
+  // Teacher viewing a specific student's data — also routes through edge function
+  async getAssignmentsForStudent(sid)       { return teacherAPI('getAssignments',{studentId:sid}); },
+  async getResultsForStudent(sid)           { return teacherAPI('getResults',{studentId:sid}); },
+  async getStatsForStudent(sid) {
+    const [assignments,results] = await Promise.all([DB.getAssignmentsForStudent(sid), DB.getResultsForStudent(sid)]);
+    const assigned = assignments.map(a=>a.question_id);
+    const rm = {}; results.forEach(r=>rm[r.question_id]={chosen:r.chosen,correct:r.correct,time:r.time_spent_seconds||0});
+    const done    = assigned.filter(id=>rm[id]);
+    const correct = done.filter(id=>rm[id].correct);
+    return { total:assigned.length, done:done.length, correct:correct.length, wrong:done.length-correct.length, results:rm, assigned };
+  },
 };
 
 // ════════════════════════════════════════════════
@@ -932,18 +987,28 @@ function switchLoginTab(tab){
   const btn = document.getElementById('btn-signin');
   const heading = document.getElementById('login-heading');
   const sub = document.getElementById('login-subheading');
+  const userLabel = document.getElementById('login-user-label');
+  const userInput = document.getElementById('login-user');
   if(isTeacher){
     btn.className='btn-primary teacher-mode';
     btn.textContent='Sign In as Teacher';
     heading.textContent='Teacher Portal';
     sub.textContent='Manage students, assign questions and track results';
+    userLabel.textContent='Email';
+    userInput.type='email';
+    userInput.placeholder='Enter your email address';
+    userInput.autocomplete='email';
   } else {
     btn.className='btn-primary student-mode';
     btn.textContent='Sign In as Student';
     heading.textContent='Welcome back';
     sub.textContent='Sign in to continue your SAT prep';
+    userLabel.textContent='Username';
+    userInput.type='text';
+    userInput.placeholder='Enter your username';
+    userInput.autocomplete='off';
   }
-  document.getElementById('login-user').value='';
+  userInput.value='';
   document.getElementById('login-pass').value='';
 }
 
@@ -955,35 +1020,47 @@ async function doLogin(){
   btn.textContent='Signing in…';btn.disabled=true;
   try {
     if(loginTab==='teacher'){
-      const t=await DB.getTeacher();
-      if(t&&u===t.username&&p===t.password){
-        currentUser={role:'teacher'};
-        hide('screen-login');show('screen-teacher');
-        document.getElementById('teacher-username-label').textContent=u;
-        // Silently purge any expired student accounts
-        DB.purgeExpired().catch(e=>console.warn('Purge failed:',e));
-        renderTeacher();
-      } else { showToast('Invalid credentials'); }
+      // Teacher signs in with their real email via Supabase Auth
+      await Auth.signInTeacher(u, p);
+      currentUser={role:'teacher'};
+      hide('screen-login');show('screen-teacher');
+      document.getElementById('teacher-username-label').textContent=u;
+      // Silently purge any expired student accounts
+      DB.purgeExpired().catch(e=>console.warn('Purge failed:',e));
+      renderTeacher();
     } else {
-      const s=await DB.getStudentByLogin(u,p);
-      if(s){
-        // Check if account has expired
-        if(s.expires_at && new Date(s.expires_at) < new Date()){
-          showToast('Your access has expired. Please contact your teacher.');
-          btn.textContent='Sign In as Student';btn.disabled=false;
-          return;
-        }
-        currentUser={role:'student',id:s.id}; hide('screen-login'); show('screen-student'); renderStudentPractice(s.id);
+      // Student signs in — username maps to username@prepgenix.student in Supabase Auth
+      await Auth.signInStudent(u, p);
+      // Fetch their own row via RLS-protected query
+      const s = await DB.getStudentSelf();
+      if(!s){ showToast('Account not found — contact your teacher'); await Auth.signOut(); return; }
+      // Check if account has expired
+      if(s.expires_at && new Date(s.expires_at) < new Date()){
+        showToast('Your access has expired. Please contact your teacher.');
+        await Auth.signOut();
+        btn.textContent='Sign In as Student';btn.disabled=false;
+        return;
       }
-      else showToast('Invalid credentials');
+      currentUser={role:'student',id:s.id};
+      hide('screen-login'); show('screen-student');
+      renderStudentPractice(s.id);
     }
-  } catch(e){ showToast('Connection error — check internet'); console.error(e); }
+  } catch(e){
+    // Supabase Auth returns "Invalid login credentials" for wrong password
+    if(e.message.includes('Invalid login') || e.message.includes('invalid_grant')){
+      showToast('Invalid username or password');
+    } else {
+      showToast('Connection error — check internet');
+      console.error(e);
+    }
+  }
   finally{ btn.textContent='Sign In';btn.disabled=false; }
 }
 document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
 document.getElementById('login-user').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('login-pass').focus()});
 
 function doLogout(){
+  Auth.signOut().catch(()=>{});
   currentUser=null;hide('screen-teacher');hide('screen-student');show('screen-login');
   document.getElementById('login-user').value='';document.getElementById('login-pass').value='';
 }
@@ -1011,7 +1088,7 @@ async function renderOverview(){
   loading('overview-stats','Loading…');loading('overview-tbody','');
   try {
     const students=await DB.getStudents();
-    const statsArr=await Promise.all(students.map(s=>DB.getStats(s.id)));
+    const statsArr=await Promise.all(students.map(s=>DB.getStatsForStudent(s.id)));
     let totalDone=0,totalCorrect=0;
     const tbody=document.getElementById('overview-tbody');
     tbody.innerHTML='';
@@ -1075,7 +1152,7 @@ async function renderStudents(){
   loading('students-tbody','Loading students…');
   try {
     const students=await DB.getStudents();
-    const statsArr=await Promise.all(students.map(s=>DB.getStats(s.id)));
+    const statsArr=await Promise.all(students.map(s=>DB.getStatsForStudent(s.id)));
     const tbody=document.getElementById('students-tbody');
     tbody.innerHTML='';
     const now=new Date();
@@ -1359,7 +1436,7 @@ async function loadStudentResults(){
   show('results-content');hide('results-empty');
   loading('results-summary',''); loading('results-tbody','Loading results…');
   try{
-    const st=await DB.getStats(sid);
+    const st=await DB.getStatsForStudent(sid);
     const pct=st.done>0?Math.round(st.correct/st.done*100):0;
     document.getElementById('results-summary').innerHTML=`
       <div class="rs-card"><div class="rs-num">${st.total}</div><div class="rs-label">Assigned</div></div>
@@ -1433,7 +1510,7 @@ async function renderStudentPractice(studentId){
   document.getElementById('student-progress').style.width = '0%';
 
   try{
-    const [s, st] = await Promise.all([DB.getStudent(studentId), DB.getStats(studentId)]);
+    const [s, st] = await Promise.all([DB.getStudentSelf(), DB.getStats(studentId)]);
     currentStudentData = s;
     currentStudentStats = st;
     document.getElementById('student-name-tag').textContent = s.name;
