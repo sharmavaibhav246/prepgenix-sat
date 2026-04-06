@@ -85,6 +85,9 @@ input,select{font-family:var(--sans)}
   color:#fff;line-height:1;
 }
 .ls-stat .ls-key{font-size:.75rem;color:rgba(255,255,255,.5);margin-top:4px}
+.login-proof-item{display:flex;align-items:center;gap:14px;font-size:.88rem;color:rgba(255,255,255,.75);line-height:1.4}
+.login-proof-icon{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.login-left{justify-content:space-between!important;padding-bottom:72px}
 
 /* Right form panel */
 .login-right{
@@ -173,7 +176,7 @@ input,select{font-family:var(--sans)}
 .btn-logout{font-size:.72rem;font-family:var(--mono);padding:6px 14px;border-radius:6px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.12);transition:all .2s}
 .btn-logout:hover{background:rgba(255,255,255,.14);color:#fff}
 .teacher-layout{display:flex;flex:1}
-.sidebar{width:228px;min-height:calc(100vh - 62px);background:var(--navy);padding:20px 0;flex-shrink:0}
+.sidebar{width:228px;min-height:calc(100vh - 62px);background:#0a1628;padding:20px 0;flex-shrink:0}
 .sidebar-section-label{font-size:.65rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.3);padding:16px 24px 8px;margin-top:8px}
 .sidebar-nav-item{display:flex;align-items:center;gap:12px;padding:10px 24px;font-size:.855rem;font-weight:500;color:rgba(255,255,255,.6);cursor:pointer;transition:all .15s;border-left:3px solid transparent;margin:1px 0}
 .sidebar-nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
@@ -188,7 +191,7 @@ input,select{font-family:var(--sans)}
 
 /* stat cards */
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
-.stat-card{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow)}
+.stat-card{background:var(--white);border:1px solid var(--rule);border-radius:12px;padding:20px 22px;box-shadow:0 1px 4px rgba(0,0,0,.05),0 4px 16px rgba(13,27,62,.06)}
 .stat-card .s-num{font-family:var(--serif);font-size:2.1rem;font-weight:700;line-height:1;margin-bottom:5px}
 .stat-card .s-label{font-size:.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
 .stat-card.gold{border-top:3px solid var(--amber)}
@@ -317,9 +320,10 @@ tr:hover td{background:#f8faff}
 /* assigned-opt hover — avoids inline quote conflicts */
 .assigned-opt:hover:not(:disabled){border-color:var(--blue)!important;background:#eff6ff!important;transform:translateX(3px)}
 .assigned-opt:disabled{cursor:default!important}
-.q-timer{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.82rem;font-weight:600;color:var(--ink-mid);background:var(--bg);border:1.5px solid var(--rule);border-radius:8px;padding:5px 12px;min-width:72px;justify-content:center;transition:color .2s,border-color .2s}
-.q-timer.warn{color:#d97706;border-color:#fbbf24}
-.q-timer.slow{color:var(--red);border-color:#fca5a5}
+.q-timer{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:.88rem;font-weight:700;color:var(--ink-mid);background:var(--bg);border:1.5px solid var(--rule);border-radius:10px;padding:6px 14px;min-width:80px;justify-content:center;transition:color .3s,border-color .3s,background .3s}
+.q-timer.warn{color:#b45309;border-color:#f59e0b;background:#fffbeb}
+.q-timer.slow{color:#dc2626;border-color:#f87171;background:#fff1f1;animation:timer-pulse .9s ease-in-out infinite}
+@keyframes timer-pulse{0%,100%{opacity:1}50%{opacity:.6}}
 .q-timer svg{flex-shrink:0}
 .btn-next{padding:11px 30px;border-radius:8px;background:var(--blue);color:#fff;font-size:.88rem;font-weight:700;transition:all .15s;letter-spacing:.02em}
 .btn-next:hover:not(:disabled){background:#1d4ed8}
@@ -327,16 +331,33 @@ tr:hover td{background:#f8faff}
 .btn-next:disabled{opacity:.35;cursor:default}
 
 /* score screen */
-.score-screen{text-align:center;padding:60px 40px;background:var(--white);border:1px solid var(--rule);border-radius:20px;box-shadow:var(--shadow)}
-.score-screen h2{font-family:var(--serif);font-size:1.3rem;color:var(--muted);margin-bottom:8px}
-.score-big{font-family:var(--serif);font-size:5rem;font-weight:700;line-height:1;color:var(--blue);margin-bottom:4px}
-.score-total{font-size:.85rem;color:var(--muted);margin-bottom:36px}
-.score-grid{display:flex;justify-content:center;gap:32px;margin-bottom:40px}
-.score-item{text-align:center}
-.score-item .s-val{font-family:var(--serif);font-size:2rem;font-weight:700;display:block}
-.score-item .s-key{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-.score-item.c .s-val{color:var(--green)}
-.score-item.w .s-val{color:var(--red)}
+.score-screen{text-align:center;padding:48px 36px;background:var(--white);border:1px solid var(--rule);border-radius:20px;box-shadow:var(--shadow)}
+.score-emoji{font-size:3.2rem;margin-bottom:12px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.score-screen h2{font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--navy);margin-bottom:6px}
+.score-screen .score-sub{font-size:.88rem;color:var(--muted);margin-bottom:28px}
+.score-ring-wrap{display:flex;justify-content:center;margin-bottom:28px}
+.score-big{font-family:var(--serif);font-size:4.5rem;font-weight:700;line-height:1;color:var(--blue);margin-bottom:4px}
+.score-total{font-size:.85rem;color:var(--muted);margin-bottom:28px}
+.score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+.score-stat{background:var(--bg);border:1px solid var(--rule);border-radius:12px;padding:14px 10px;text-align:center}
+.score-stat .s-val{font-family:var(--serif);font-size:1.6rem;font-weight:700;display:block;line-height:1;margin-bottom:4px}
+.score-stat .s-key{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.score-stat.c .s-val{color:var(--green)}
+.score-stat.w .s-val{color:var(--red)}
+.score-stat.t .s-val{color:var(--teal)}
+.score-stat.p .s-val{color:var(--blue)}
+.score-topic-bar{margin-bottom:12px}
+.score-topic-bar .stb-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.score-topic-bar .stb-name{font-size:.82rem;font-weight:600;color:var(--ink)}
+.score-topic-bar .stb-pct{font-size:.75rem;font-family:var(--mono);font-weight:700}
+.score-topic-bar .stb-track{height:8px;background:var(--rule);border-radius:4px;overflow:hidden}
+.score-topic-bar .stb-fill{height:100%;border-radius:4px;transition:width .7s ease}
+.score-share-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border-radius:12px;border:none;background:#25d366;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;font-family:var(--sans);transition:all .18s;margin-bottom:12px}
+.score-share-btn:hover{background:#1ebe5d;transform:translateY(-1px)}
+.score-share-btn:active{transform:scale(.98)}
+.score-home-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border-radius:12px;border:1.5px solid var(--rule);background:var(--white);color:var(--ink-mid);font-size:.9rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.score-home-btn:hover{border-color:var(--ink-mid);background:var(--bg)}
 .no-work{text-align:center;padding:80px 20px;color:var(--muted)}
 .no-work .nw-icon{font-size:3rem;margin-bottom:16px}
 .no-work h3{font-size:1.3rem;font-weight:700;color:var(--navy);margin-bottom:8px}
@@ -434,7 +455,7 @@ tr:hover td{background:#f8faff}
   .q-header{flex-wrap:wrap;gap:8px;margin-bottom:10px}
   .q-counter{font-size:.66rem}
   .q-skill-pill{font-size:.64rem;padding:3px 10px}
-  .q-timer{font-size:.8rem!important;padding:5px 10px!important;min-width:60px}
+  .q-timer{font-size:.82rem!important;padding:6px 11px!important;min-width:70px}
 
   /* Feedback */
   .feedback-box{font-size:.95rem!important;padding:13px 14px!important;line-height:1.6}
@@ -446,12 +467,13 @@ tr:hover td{background:#f8faff}
   .student-back-btn{font-size:.78rem;padding:7px 12px}
 
   /* Score screen */
-  .score-screen{padding:32px 18px!important;border-radius:14px}
-  .score-big{font-size:3.8rem!important}
+  .score-screen{padding:28px 16px!important;border-radius:14px}
+  .score-big{font-size:3.6rem!important}
   .score-total{font-size:.82rem}
-  .score-grid{gap:16px!important;flex-wrap:wrap;justify-content:center}
-  .score-item .s-val{font-size:1.55rem!important}
-  .score-item .s-key{font-size:.68rem}
+  .score-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
+  .score-stat .s-val{font-size:1.4rem!important}
+  .score-stat .s-key{font-size:.65rem!important}
+  .score-share-btn{font-size:.88rem!important;padding:13px!important}
 
   /* Analytics */
   .analytics-wrap{padding:16px 14px 48px!important}
@@ -475,12 +497,27 @@ tr:hover td{background:#f8faff}
 <!-- ══════════════ SCREEN: LOGIN ══════════════ -->
 <div id="screen-login" class="screen">
   <div class="login-left">
-    <div class="login-left-brand">Prepgenix<br><span>Digital SAT Portal</span></div>
-    <p class="login-left-tag">Official SAT Algebra practice — crafted by a perfect scorer. One question at a time, instant feedback, real College Board questions.</p>
-    <div class="login-left-stats">
-      <div class="ls-stat"><div class="ls-num">139</div><div class="ls-key">Real SAT Questions</div></div>
-      <div class="ls-stat"><div class="ls-num">4</div><div class="ls-key">Algebra Topics</div></div>
-      <div class="ls-stat"><div class="ls-num">800</div><div class="ls-key">Target Score</div></div>
+    <div>
+      <div class="login-left-brand">Prepgenix<br><span>SAT Math</span></div>
+      <p class="login-left-tag">By Vaibhav Sharma · Perfect SAT Math Score · Princeton Review Certified</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="login-proof-item">
+        <div class="login-proof-icon">📐</div>
+        <span>139 real College Board questions — Algebra & beyond</span>
+      </div>
+      <div class="login-proof-item">
+        <div class="login-proof-icon">⚡</div>
+        <span>Instant feedback on every answer you attempt</span>
+      </div>
+      <div class="login-proof-item">
+        <div class="login-proof-icon">⏱</div>
+        <span>SAT-paced timer to build real test awareness</span>
+      </div>
+      <div class="login-proof-item">
+        <div class="login-proof-icon">📊</div>
+        <span>Topic-by-topic accuracy tracking for every student</span>
+      </div>
     </div>
   </div>
   <div class="login-right">
@@ -547,11 +584,12 @@ tr:hover td{background:#f8faff}
   </div>
   <div class="teacher-layout">
     <nav class="sidebar">
-      <div class="sidebar-section-label">Management</div>
-      <div class="sidebar-nav-item active" onclick="switchPanel('panel-overview',this)"><span class="icon">📊</span> Overview</div>
+      <div class="sidebar-section-label" style="margin-top:4px">Overview</div>
+      <div class="sidebar-nav-item active" onclick="switchPanel('panel-overview',this)"><span class="icon">📊</span> Dashboard</div>
+      <div class="sidebar-section-label">Manage</div>
       <div class="sidebar-nav-item" onclick="switchPanel('panel-students',this)"><span class="icon">👥</span> Students</div>
-      <div class="sidebar-section-label">Content</div>
       <div class="sidebar-nav-item" onclick="switchPanel('panel-assign',this)"><span class="icon">📋</span> Assign Questions</div>
+      <div class="sidebar-section-label">Reports</div>
       <div class="sidebar-nav-item" onclick="switchPanel('panel-results',this)"><span class="icon">📈</span> Results</div>
       <div class="sidebar-nav-item" onclick="switchPanel('panel-deadline',this)"><span class="icon">⏰</span> Deadlines</div>
     </nav>
@@ -578,7 +616,7 @@ tr:hover td{background:#f8faff}
         <p class="section-sub">Manage student accounts. Accounts are automatically deleted after the access period expires.</p>
         <div class="card">
           <div class="card-header"><span class="card-title">All Students</span></div>
-          <table><thead><tr><th>Name</th><th>Username</th><th>Password</th><th>Assigned</th><th>Access Expires</th><th>Days Left</th><th></th></tr></thead>
+          <table><thead><tr><th>Student</th><th>Username</th><th>Progress</th><th>Access Expires</th><th>Days Left</th><th></th></tr></thead>
           <tbody id="students-tbody"></tbody></table>
           <div class="inline-form" style="flex-wrap:wrap;gap:8px">
             <input type="text" id="new-name" placeholder="Full name" style="min-width:120px">
@@ -1099,10 +1137,35 @@ async function renderOverview(){
       const status=st.total===0?'none':st.done===0?'not-started':st.done<st.total?'in-progress':'done';
       const badge={'none':'<span class="badge badge-muted">No questions</span>','not-started':'<span class="badge badge-gold">Not started</span>','in-progress':'<span class="badge badge-sky">In progress</span>','done':'<span class="badge badge-green">Completed</span>'}[status];
       const dl=s.deadline?new Date(s.deadline).toLocaleDateString():'—';
+      const initials = s.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+      const avatarColors = [
+        {bg:'#e0e7ff',color:'#4338ca'},{bg:'#d1fae5',color:'#065f46'},
+        {bg:'#fce7f3',color:'#9d174d'},{bg:'#fef3c7',color:'#92400e'},
+        {bg:'#dbeafe',color:'#1d4ed8'},{bg:'#f3e8ff',color:'#6b21a8'}
+      ];
+      const ac = avatarColors[i % avatarColors.length];
+      const progPct = st.total>0 ? Math.round(st.done/st.total*100) : 0;
+      const progColor = progPct===100?'var(--green)':progPct>0?'var(--blue)':'var(--rule)';
       tbody.innerHTML+=`<tr>
-        <td><strong>${s.name}</strong></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:30px;height:30px;border-radius:8px;background:${ac.bg};color:${ac.color};
+              display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0">${initials}</div>
+            <div>
+              <div style="font-weight:600;font-size:.875rem">${s.name}</div>
+              <div style="font-size:.72rem;color:var(--muted)">${s.username}</div>
+            </div>
+          </div>
+        </td>
         <td>${st.total}</td>
-        <td>${st.done}/${st.total}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:52px;height:4px;background:var(--rule);border-radius:2px;overflow:hidden;flex-shrink:0">
+              <div style="height:100%;width:${progPct}%;background:${progColor};border-radius:2px;transition:width .5s ease"></div>
+            </div>
+            <span style="font-size:.8rem;font-family:var(--mono);color:var(--muted)">${st.done}/${st.total}</span>
+          </div>
+        </td>
         <td>${pct!==null?pct+'%':'—'}</td>
         <td style="font-size:.82rem">${dl}</td>
         <td>${badge}</td>
@@ -1172,11 +1235,27 @@ async function renderStudents(){
           daysHtml=`<span class="badge badge-green">${daysLeft}d left</span>`;
         }
       }
+      const si2 = s.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+      const ac2 = [{bg:'#e0e7ff',color:'#4338ca'},{bg:'#d1fae5',color:'#065f46'},{bg:'#fce7f3',color:'#9d174d'},{bg:'#fef3c7',color:'#92400e'},{bg:'#dbeafe',color:'#1d4ed8'},{bg:'#f3e8ff',color:'#6b21a8'}][i%6];
+      const sp2 = st.total>0?Math.round(st.done/st.total*100):0;
+      const sc2 = sp2===100?'var(--green)':sp2>0?'var(--blue)':'var(--rule)';
       tbody.innerHTML+=`<tr>
-        <td><strong>${s.name}</strong></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:30px;height:30px;border-radius:8px;background:${ac2.bg};color:${ac2.color};
+              display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0">${si2}</div>
+            <strong>${s.name}</strong>
+          </div>
+        </td>
         <td><code style="font-family:var(--mono);font-size:.82rem">${s.username}</code></td>
-        <td><code style="font-family:var(--mono);font-size:.82rem">${s.password}</code></td>
-        <td>${st.total} assigned</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:52px;height:4px;background:var(--rule);border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${sp2}%;background:${sc2};border-radius:2px"></div>
+            </div>
+            <span style="font-size:.78rem;color:var(--muted);font-family:var(--mono)">${st.done}/${st.total}</span>
+          </div>
+        </td>
         <td style="font-size:.82rem">${expiryHtml}</td>
         <td>${daysHtml}</td>
         <td style="display:flex;gap:6px;align-items:center">
@@ -1741,8 +1820,7 @@ function renderPracticeGroundQuestion(){
              </span>`
           : `<div style="display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;
               background:var(--white);border:1.5px solid var(--rule)">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <span class="q-timer" id="q-timer" style="font-size:.82rem;font-weight:700;font-family:var(--mono);color:var(--ink-mid)">00:00</span>
+              <span class="q-timer" id="q-timer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>00:00</span>
              </div>`
         }
       </div>
@@ -1951,37 +2029,7 @@ async function renderAssignedPractice(){
           <span style="font-size:.82rem;color:var(--muted)">Assigned Questions — Complete</span>
         </div>
 
-        <div class="score-screen">
-          <h2>${msg}</h2>
-          <div class="score-big">${pct}%</div>
-          <div class="score-total">${st.correct} of ${st.done} correct</div>
-          <div class="score-grid">
-            <div class="score-item c"><span class="s-val">${st.correct}</span><span class="s-key">Correct</span></div>
-            <div class="score-item w"><span class="s-val">${st.wrong}</span><span class="s-key">Wrong</span></div>
-            <div class="score-item"><span class="s-val">${avg>0?fmtTime(avg):'—'}</span><span class="s-key">Avg Time</span></div>
-          </div>
-
-          ${Object.keys(topicMap).length>0?`
-          <div style="text-align:left;margin-top:8px">
-            <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:14px">Performance by Topic</div>
-            ${Object.entries(topicMap).map(([skill,data])=>{
-              const acc=data.count>0?Math.round(data.correct/data.count*100):0;
-              const color=acc>=80?'var(--green)':acc>=50?'var(--amber)':'var(--red)';
-              return `<div style="margin-bottom:14px">
-                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-                  <span style="font-size:.85rem;font-weight:600;color:var(--ink)">${skill}</span>
-                  <span style="font-size:.78rem;font-family:var(--mono);color:${color};font-weight:700">${acc}% · ${data.correct}/${data.count}</span>
-                </div>
-                <div style="height:8px;background:var(--bg);border-radius:4px;overflow:hidden">
-                  <div style="height:100%;width:${acc}%;background:${color};border-radius:4px;transition:width .6s ease"></div>
-                </div>
-              </div>`;
-            }).join('')}
-          </div>`:''}
-
-          <p style="font-size:.88rem;color:var(--muted);margin-top:20px">All assigned questions completed! Go to <strong>My Analytics</strong> for full details.</p>
-          <button onclick="renderStudentHome()" style="margin-top:16px;background:var(--blue);color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:.88rem;font-weight:700;cursor:pointer">← Back to Home</button>
-        </div>
+        ${buildCompletionHTML(currentStudentData, st, currentStudentId, 'assigned')}
       </div>`;
     return;
   }
@@ -2178,8 +2226,11 @@ function updateTimerDisplay(secs){
   if(!el) return;
   const m = Math.floor(secs/60);
   const s = secs%60;
-  el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  el.className = 'q-timer' + (secs>120?' slow':secs>60?' warn':'');
+  const timeStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const state = secs>120?'slow':secs>75?'warn':'';
+  el.className = 'q-timer' + (state?' '+state:'');
+  const strokeCol = state==='slow'?'#dc2626':state==='warn'?'#b45309':'var(--muted)';
+  el.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${strokeCol}" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${timeStr}`;
 }
 
 function renderQuestion(studentId, cachedStats){
@@ -2203,8 +2254,8 @@ function renderQuestion(studentId, cachedStats){
     ? q.options.map((o,i) => `
         <button class="assigned-opt" data-label="${o.l}" data-color="${colors[i]}"
           onclick="selectAnswer('${studentId}','${q.id}','${o.l}')"
-          style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:12px;
-            border:2px solid var(--rule);background:var(--bg);text-align:left;font-size:.93rem;
+          style="display:flex;align-items:center;gap:14px;padding:13px 17px;border-radius:12px;
+            border:2px solid #f0f0f0;background:var(--white);text-align:left;font-size:.93rem;
             line-height:1.5;color:var(--ink);width:100%;cursor:pointer;font-family:var(--sans);transition:all .15s">
           <span style="width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;
             align-items:center;justify-content:center;font-size:.78rem;font-weight:800;
@@ -2234,10 +2285,8 @@ function renderQuestion(studentId, cachedStats){
         <span style="font-size:.72rem;font-weight:700;padding:4px 11px;border-radius:20px;
           background:#fef9ec;color:#92400e;border:1px solid #fde68a">🟡 Medium</span>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;
-        background:var(--white);border:1.5px solid var(--rule)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span class="q-timer" id="q-timer" style="font-size:.82rem;font-weight:700;font-family:var(--mono);color:var(--ink-mid)">00:00</span>
+      <div title="Time on this question — SAT target: ~75 sec" style="display:flex;align-items:center;border-radius:20px;background:var(--white);border:1.5px solid var(--rule)">
+        <span class="q-timer" id="q-timer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>00:00</span>
       </div>
     </div>
 
@@ -2372,99 +2421,125 @@ async function nextQuestion(studentId){
   }
 }
 
-function renderFinalScore(s,st,studentId){
-  if(timerInterval) clearInterval(timerInterval);
-  document.getElementById('student-progress').style.width='100%';
-  const pct=st.done>0?Math.round(st.correct/st.done*100):0;
-  const msg=pct>=80?'🎉 Excellent work!':pct>=60?'👍 Good effort!':'📚 Keep practicing!';
+function buildCompletionHTML(s, st, studentId, context='assigned') {
+  const pct = st.done > 0 ? Math.round(st.correct / st.done * 100) : 0;
+  const emoji = pct >= 90 ? '🏆' : pct >= 80 ? '🎉' : pct >= 60 ? '👍' : '📚';
+  const headline = pct >= 90 ? 'Outstanding!' : pct >= 80 ? 'Excellent work!' : pct >= 60 ? 'Good effort!' : 'Keep practicing!';
+  const subline = pct >= 80
+    ? `You're well above the SAT average. Keep it up!`
+    : pct >= 60
+    ? `Solid session — review the wrong ones and you'll get there.`
+    : `Every attempt builds the muscle. Review your mistakes below.`;
 
-  const topicMap={};
-  st.assigned.forEach(qId=>{
-    const q=QUESTION_BANK.find(q=>q.id===qId); if(!q) return;
-    const res=st.results[qId];
-    if(!topicMap[q.skill]) topicMap[q.skill]={correct:0,wrong:0,total:0,time:0,count:0};
-    topicMap[q.skill].total++;
-    if(res){
-      if(res.correct) topicMap[q.skill].correct++;
-      else topicMap[q.skill].wrong++;
-      topicMap[q.skill].time+=(res.time||0);
+  // Topic breakdown
+  const topicMap = {};
+  const qIds = context === 'assigned' ? st.assigned : Object.keys(pgSessionAnswers);
+  qIds.forEach(qId => {
+    const q = QUESTION_BANK.find(q => q.id === qId); if (!q) return;
+    const res = context === 'assigned' ? st.results[qId] : pgSessionAnswers[qId];
+    if (!topicMap[q.skill]) topicMap[q.skill] = { correct: 0, count: 0, time: 0 };
+    if (res) {
+      if (res.correct) topicMap[q.skill].correct++;
       topicMap[q.skill].count++;
+      topicMap[q.skill].time += (res.time || 0);
     }
   });
 
-  const answeredQs=st.assigned.filter(id=>st.results[id]);
-  const times=answeredQs.map(id=>(st.results[id].time||0));
-  const avgTime=times.length>0?Math.round(times.reduce((a,b)=>a+b,0)/times.length):0;
-  const maxTime=times.length>0?Math.max(...times):0;
-  const fmtTime=sec=>sec>=60?`${Math.floor(sec/60)}m ${sec%60}s`:`${sec}s`;
-  const remaining=st.total-st.done;
+  // Time stats
+  const answeredQs = qIds.filter(id => context === 'assigned' ? st.results[id] : pgSessionAnswers[id]);
+  const times = answeredQs.map(id => {
+    const r = context === 'assigned' ? st.results[id] : pgSessionAnswers[id];
+    return r ? (r.time || 0) : 0;
+  });
+  const avgTime = times.length > 0 ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0;
+  const fmtTime = sec => sec >= 60 ? `${Math.floor(sec/60)}m ${sec%60}s` : `${sec}s`;
 
-  document.getElementById('q-container').innerHTML=`
+  // Pacing badge
+  const pacingColor = avgTime === 0 ? 'var(--muted)' : avgTime <= 75 ? 'var(--green)' : avgTime <= 120 ? 'var(--amber)' : 'var(--red)';
+  const pacingLabel = avgTime === 0 ? '—' : avgTime <= 75 ? 'On pace ✓' : avgTime <= 120 ? 'A bit slow' : 'Too slow';
+
+  // WhatsApp share
+  const topTopics = Object.entries(topicMap)
+    .filter(([,d]) => d.count > 0)
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 2)
+    .map(([skill]) => skill.replace('Linear ', ''))
+    .join(' & ');
+  const shareText = encodeURIComponent(
+    `I just scored ${pct}% (${st.correct}/${st.done}) on SAT Math${topTopics ? ' — ' + topTopics : ''}! 📐\nPracticing with Prepgenix by @prepgenix\nhttps://prepgenix-sat.vercel.app/`
+  );
+  const whatsappUrl = `https://wa.me/?text=${shareText}`;
+
+  // Topic bars HTML
+  const topicBarsHTML = Object.entries(topicMap)
+    .filter(([, d]) => d.count > 0)
+    .map(([skill, data]) => {
+      const acc = data.count > 0 ? Math.round(data.correct / data.count * 100) : 0;
+      const barColor = acc >= 80 ? 'var(--green)' : acc >= 50 ? 'var(--amber)' : 'var(--red)';
+      const avgT = data.count > 0 ? Math.round(data.time / data.count) : 0;
+      return `<div class="score-topic-bar">
+        <div class="stb-head">
+          <span class="stb-name">${skill}</span>
+          <span class="stb-pct" style="color:${barColor}">${acc}% · ${data.correct}/${data.count}</span>
+        </div>
+        <div class="stb-track"><div class="stb-fill" style="width:${acc}%;background:${barColor}"></div></div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:3px">avg ${avgT > 0 ? fmtTime(avgT) : '—'}/question</div>
+      </div>`;
+    }).join('');
+
+  return `
     <div class="score-screen">
-      <h2>${msg}</h2>
+      <div class="score-emoji">${emoji}</div>
+      <h2>${headline}</h2>
+      <p class="score-sub">${subline}</p>
+
       <div class="score-big">${pct}%</div>
       <div class="score-total">${st.correct} correct out of ${st.done} answered</div>
+
       <div class="score-grid">
-        <div class="score-item c"><span class="s-val">${st.correct}</span><span class="s-key">Correct</span></div>
-        <div class="score-item w"><span class="s-val">${st.wrong}</span><span class="s-key">Wrong</span></div>
-        <div class="score-item"><span class="s-val">${avgTime>0?fmtTime(avgTime):'—'}</span><span class="s-key">Avg / Question</span></div>
-        <div class="score-item"><span class="s-val">${maxTime>0?fmtTime(maxTime):'—'}</span><span class="s-key">Slowest</span></div>
-      </div>
-
-      ${remaining>0
-        ?`<div style="background:var(--blue-bg);border:1.5px solid #bfdbfe;border-radius:10px;padding:14px 20px;margin-bottom:24px;font-size:.9rem;color:var(--blue);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-            <span>📋 <strong>${remaining}</strong> new question(s) assigned — ready to practice!</span>
-            <button onclick="renderStudentPractice('${studentId}')"
-              style="background:var(--blue);color:#fff;border:none;border-radius:7px;padding:8px 18px;font-size:.84rem;font-weight:700;cursor:pointer">
-              Start Now →
-            </button>
-          </div>`
-        :`<p style="font-size:.88rem;color:var(--muted);margin-bottom:24px">You've completed all assigned questions! Check back later for more.</p>`
-      }
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;text-align:left">
-        <div style="background:var(--bg);border:1px solid var(--rule);border-radius:12px;padding:20px">
-          <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:16px">Performance by Topic</div>
-          ${Object.entries(topicMap).map(([skill,data])=>{
-            const acc=data.count>0?Math.round(data.correct/data.count*100):0;
-            const color=acc>=80?'var(--green)':acc>=50?'var(--amber)':'var(--red)';
-            return `<div style="margin-bottom:14px">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
-                <span style="font-size:.8rem;font-weight:600;color:var(--ink)">${skill}</span>
-                <span style="font-size:.75rem;font-family:var(--mono);color:${color};font-weight:700">${acc}%</span>
-              </div>
-              <div style="height:8px;background:var(--rule);border-radius:4px;overflow:hidden">
-                <div style="height:100%;width:${acc}%;background:${color};border-radius:4px;transition:width .6s ease"></div>
-              </div>
-              <div style="font-size:.7rem;color:var(--muted);margin-top:3px">${data.correct}/${data.count} correct · avg ${fmtTime(data.count>0?Math.round(data.time/data.count):0)}/q</div>
-            </div>`;
-          }).join('')}
+        <div class="score-stat c">
+          <span class="s-val">${st.correct}</span>
+          <span class="s-key">Correct</span>
         </div>
-
-        <div style="background:var(--bg);border:1px solid var(--rule);border-radius:12px;padding:20px">
-          <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:16px">Time per Question</div>
-          ${times.length>0?`
-          <div style="display:flex;align-items:flex-end;gap:4px;height:120px;margin-bottom:8px">
-            ${times.slice(-20).map(t=>{
-              const ht=maxTime>0?Math.max(4,Math.round((t/maxTime)*110)):4;
-              const c=t>120?'var(--red)':t>60?'var(--amber)':'var(--blue)';
-              return `<div title="${fmtTime(t)}" style="flex:1;height:${ht}px;background:${c};border-radius:3px 3px 0 0;min-width:6px;cursor:default" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'"></div>`;
-            }).join('')}
-          </div>
-          <div style="height:1px;background:var(--rule);margin-bottom:8px"></div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-            <div style="font-size:.75rem;color:var(--muted)"><span style="color:var(--blue)">●</span> &lt;1min</div>
-            <div style="font-size:.75rem;color:var(--muted)"><span style="color:var(--amber)">●</span> 1–2min</div>
-            <div style="font-size:.75rem;color:var(--muted)"><span style="color:var(--red)">●</span> &gt;2min</div>
-          </div>`:`<div style="color:var(--muted);font-size:.85rem;padding:16px 0">No timing data yet for these questions.</div>`}
-          <div style="padding-top:14px;border-top:1px solid var(--rule)">
-            <div style="font-size:.78rem;color:var(--muted);margin-bottom:4px">Your average time</div>
-            <div style="font-size:1.4rem;font-weight:700;font-family:var(--serif);color:var(--navy)">${avgTime>0?fmtTime(avgTime):'—'}</div>
-            <div style="font-size:.72rem;color:var(--muted);margin-top:2px">SAT target: ~1min 15sec per question</div>
-          </div>
+        <div class="score-stat w">
+          <span class="s-val">${st.wrong || (st.done - st.correct)}</span>
+          <span class="s-key">Wrong</span>
+        </div>
+        <div class="score-stat t">
+          <span class="s-val">${avgTime > 0 ? fmtTime(avgTime) : '—'}</span>
+          <span class="s-key">Avg / Q</span>
+        </div>
+        <div class="score-stat p">
+          <span class="s-val" style="color:${pacingColor}">${pacingLabel}</span>
+          <span class="s-key">Pacing</span>
         </div>
       </div>
+
+      ${topicBarsHTML ? `
+      <div style="text-align:left;margin-bottom:28px">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:14px">Performance by Topic</div>
+        ${topicBarsHTML}
+      </div>` : ''}
+
+      <a href="${whatsappUrl}" target="_blank" class="score-share-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.556 4.123 1.528 5.855L.057 23.882l6.187-1.43A11.946 11.946 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.032-1.38l-.36-.214-3.724.861.878-3.637-.235-.373A9.818 9.818 0 1 1 12 21.818z"/>
+        </svg>
+        Share on WhatsApp
+      </a>
+
+      <button onclick="renderStudentHome()" class="score-home-btn">
+        ← Back to Home
+      </button>
     </div>`;
+}
+
+function renderFinalScore(s, st, studentId){
+  if(timerInterval) clearInterval(timerInterval);
+  document.getElementById('student-progress').style.width = '100%';
+  const el = document.getElementById('q-container');
+  if(el) el.innerHTML = buildCompletionHTML(s, st, studentId, 'assigned');
 }
 
 // ════════════════════════════════════════════════
