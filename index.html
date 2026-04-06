@@ -1582,7 +1582,7 @@ let pgFilters = { topics: [], difficulty: [] }; // empty = show all
 
 async function renderStudentPractice(studentId){
   currentStudentId = studentId;
-  pgSessionAnswers = {}; // reset practice ground session
+  pgLoadSession(studentId); // restore practice ground session from localStorage
   const body = document.getElementById('student-body');
   body.style.padding = '0';
   body.innerHTML = `<div style="padding:60px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:.85rem">Loading…</div>`;
@@ -1721,12 +1721,31 @@ function togglePGFilterItem(type, value){
 let pgSessionAnswers = {};
 let pgQueue = [], pgIndex = 0;
 
+// ── Practice Ground persistence (localStorage, keyed per student) ──
+function pgStorageKey(sid){ return `pg_session_${sid}`; }
+function pgSaveSession(sid){
+  if(!sid) return;
+  try{ localStorage.setItem(pgStorageKey(sid), JSON.stringify(pgSessionAnswers)); } catch(e){}
+}
+function pgLoadSession(sid){
+  if(!sid) return;
+  try{
+    const raw = localStorage.getItem(pgStorageKey(sid));
+    pgSessionAnswers = raw ? JSON.parse(raw) : {};
+  } catch(e){ pgSessionAnswers = {}; }
+}
+function pgClearSession(sid){
+  if(!sid) return;
+  try{ localStorage.removeItem(pgStorageKey(sid)); } catch(e){}
+  pgSessionAnswers = {};
+}
+
 function renderPracticeGround(startIdx, forceNew){
   if(timerInterval) clearInterval(timerInterval);
 
   // forceNew = student clicked "Start Fresh"
   if(forceNew) {
-    pgSessionAnswers = {};
+    pgClearSession(currentStudentId);
     pgIndex = 0;
   }
 
@@ -2020,6 +2039,7 @@ async function selectPracticeGroundAnswer(qId, chosen){
 
   // Store in session answers ONLY — practice ground is fully independent from assigned practice
   pgSessionAnswers[qId] = {chosen, correct, time: timeSpent};
+  pgSaveSession(currentStudentId); // persist across logout/refresh
 
   // Save to DB for analytics (time tracking) but do NOT update currentStudentStats
   // so assigned practice results remain untouched
