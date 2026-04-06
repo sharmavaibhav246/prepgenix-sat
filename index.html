@@ -1,0 +1,2595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prepgenix — Digital SAT Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* Core palette — inspired by College Board Bluebook + Princeton Review */
+  --navy:#0d1b3e;        /* deep navy — authority, trust */
+  --navy-mid:#1a2f5e;
+  --navy-lt:#243680;
+  --blue:#2b5be0;        /* vivid blue — primary action */
+  --blue-lt:#4f79f5;
+  --blue-bg:#eef2ff;
+  --teal:#0891b2;        /* teal — student accent */
+  --teal-lt:#e0f7fa;
+  --amber:#d97706;       /* amber — teacher accent */
+  --amber-lt:#fef3c7;
+  --green:#059669;
+  --green-lt:#d1fae5;
+  --red:#dc2626;
+  --red-lt:#fee2e2;
+  --ink:#111827;
+  --ink-mid:#374151;
+  --muted:#6b7280;
+  --rule:#e5e7eb;
+  --bg:#f9fafb;
+  --white:#ffffff;
+  --serif:'Fraunces',Georgia,serif;
+  --sans:'DM Sans',system-ui,sans-serif;
+  --mono:'DM Mono',monospace;
+  --radius:10px;
+  --radius-lg:16px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 32px rgba(13,27,62,.18);
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.6}
+button{cursor:pointer;font-family:var(--sans);border:none}
+input,select{font-family:var(--sans)}
+.hidden{display:none!important}
+.screen{min-height:100vh;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--navy);color:#fff;padding:11px 24px;border-radius:24px;
+  font-size:.83rem;font-family:var(--mono);letter-spacing:.04em;
+  opacity:0;transition:opacity .25s,transform .25s;z-index:9999;pointer-events:none;white-space:nowrap;
+  box-shadow:0 4px 20px rgba(0,0,0,.25)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ══ LOGIN ══ */
+#screen-login{
+  display:flex;min-height:100vh;
+  background:var(--navy);
+  position:relative;overflow:hidden;
+}
+/* Left decorative panel */
+.login-left{
+  flex:1;display:flex;flex-direction:column;justify-content:center;
+  padding:60px 64px;position:relative;z-index:1;
+}
+.login-left::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-lt) 100%);
+  z-index:-1;
+}
+.login-left-brand{
+  font-family:var(--serif);font-size:2.2rem;font-weight:700;
+  color:#fff;letter-spacing:-.03em;line-height:1.1;margin-bottom:16px;
+}
+.login-left-brand span{color:#60a5fa}
+.login-left-tag{
+  font-size:.9rem;color:rgba(255,255,255,.65);
+  line-height:1.7;max-width:360px;margin-bottom:48px;
+}
+.login-left-stats{display:flex;gap:32px}
+.ls-stat .ls-num{
+  font-family:var(--serif);font-size:2rem;font-weight:700;
+  color:#fff;line-height:1;
+}
+.ls-stat .ls-key{font-size:.75rem;color:rgba(255,255,255,.5);margin-top:4px}
+.login-proof-item{display:flex;align-items:center;gap:14px;font-size:.88rem;color:rgba(255,255,255,.75);line-height:1.4}
+.login-proof-icon{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.login-left{justify-content:space-between!important;padding-bottom:72px}
+
+/* Right form panel */
+.login-right{
+  width:480px;flex-shrink:0;
+  background:var(--white);
+  display:flex;flex-direction:column;justify-content:center;
+  padding:60px 52px;
+  position:relative;
+}
+.login-right-logo{
+  font-family:var(--serif);font-size:1.1rem;font-weight:600;
+  color:var(--navy);margin-bottom:40px;letter-spacing:-.01em;
+}
+.login-right-logo span{color:var(--blue)}
+.login-right h2{
+  font-size:1.6rem;font-weight:700;color:var(--ink);
+  letter-spacing:-.02em;margin-bottom:6px;
+}
+.login-right .welcome-sub{
+  font-size:.88rem;color:var(--muted);margin-bottom:32px;
+}
+
+/* ── ROLE TABS — fully differentiated ── */
+.role-tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:32px}
+.role-tab{
+  padding:14px 12px;border-radius:var(--radius);border:2px solid var(--rule);
+  background:var(--bg);cursor:pointer;transition:all .2s;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.role-tab .rt-icon{font-size:1.5rem}
+.role-tab .rt-label{font-size:.8rem;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.role-tab .rt-desc{font-size:.7rem;color:var(--muted);opacity:.7}
+/* Teacher tab active = amber/orange */
+.role-tab.teacher-tab.active{
+  border-color:var(--amber);background:var(--amber-lt);
+}
+.role-tab.teacher-tab.active .rt-label{color:#92400e}
+.role-tab.teacher-tab:hover:not(.active){border-color:#fbbf24;background:#fffbeb}
+/* Student tab active = blue/teal */
+.role-tab.student-tab.active{
+  border-color:var(--blue);background:var(--blue-bg);
+}
+.role-tab.student-tab.active .rt-label{color:var(--blue)}
+.role-tab.student-tab:hover:not(.active){border-color:#93c5fd;background:#eff6ff}
+
+/* Form fields */
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:.75rem;font-weight:700;color:var(--ink-mid);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.form-group input{
+  width:100%;padding:12px 16px;
+  border:1.5px solid var(--rule);border-radius:var(--radius);
+  font-size:.95rem;color:var(--ink);background:var(--white);
+  transition:border-color .2s,box-shadow .2s;outline:none;
+}
+.form-group input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(43,91,224,.1)}
+
+/* Sign in button — changes colour by role */
+.btn-primary{
+  width:100%;padding:14px;border-radius:var(--radius);
+  font-size:.92rem;font-weight:700;letter-spacing:.02em;
+  transition:all .18s;margin-top:4px;border:none;
+}
+.btn-primary.teacher-mode{background:var(--amber);color:#fff}
+.btn-primary.teacher-mode:hover{background:#b45309}
+.btn-primary.student-mode{background:var(--blue);color:#fff}
+.btn-primary.student-mode:hover{background:#1d4ed8}
+.btn-primary:active{transform:scale(.98)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+/* Mobile login fallback */
+@media(max-width:768px){
+  .login-left{display:none}
+  .login-right{width:100%;padding:40px 28px}
+  #screen-login{justify-content:center}
+}
+
+/* ══ TEACHER — dark navy sidebar ══ */
+#screen-teacher{display:flex;flex-direction:column;min-height:100vh;background:var(--bg)}
+.top-bar{background:var(--navy);color:#fff;padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(13,27,62,.3)}
+.top-bar-brand{font-family:var(--serif);font-size:1.05rem;font-weight:700;letter-spacing:-.01em;color:#fff}
+.top-bar-brand span{color:#60a5fa}
+.top-bar-center{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.1)}
+.top-bar-center .role-badge{font-size:.7rem;font-family:var(--mono);color:var(--amber-lt);letter-spacing:.08em;text-transform:uppercase}
+.top-bar-right{display:flex;align-items:center;gap:14px}
+.top-bar-user{font-size:.78rem;color:rgba(255,255,255,.55);font-family:var(--mono)}
+.btn-logout{font-size:.72rem;font-family:var(--mono);padding:6px 14px;border-radius:6px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.12);transition:all .2s}
+.btn-logout:hover{background:rgba(255,255,255,.14);color:#fff}
+.teacher-layout{display:flex;flex:1}
+.sidebar{width:228px;min-height:calc(100vh - 62px);background:#0a1628;padding:20px 0;flex-shrink:0}
+.sidebar-section-label{font-size:.65rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.3);padding:16px 24px 8px;margin-top:8px}
+.sidebar-nav-item{display:flex;align-items:center;gap:12px;padding:10px 24px;font-size:.855rem;font-weight:500;color:rgba(255,255,255,.6);cursor:pointer;transition:all .15s;border-left:3px solid transparent;margin:1px 0}
+.sidebar-nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
+.sidebar-nav-item.active{color:#fff;background:rgba(43,91,224,.25);border-left-color:var(--blue-lt);font-weight:600}
+.sidebar-nav-item .icon{font-size:.95rem;width:20px;text-align:center;opacity:.8}
+.sidebar-nav-item.active .icon{opacity:1}
+.main-content{flex:1;padding:32px 36px;max-width:1000px}
+.panel{display:none}
+.panel.active{display:block;animation:fadeIn .25s ease}
+.section-title{font-size:1.45rem;font-weight:700;margin-bottom:5px;letter-spacing:-.02em;color:var(--navy)}
+.section-sub{font-size:.82rem;color:var(--muted);margin-bottom:28px}
+
+/* stat cards */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.stat-card{background:var(--white);border:1px solid var(--rule);border-radius:12px;padding:20px 22px;box-shadow:0 1px 4px rgba(0,0,0,.05),0 4px 16px rgba(13,27,62,.06)}
+.stat-card .s-num{font-family:var(--serif);font-size:2.1rem;font-weight:700;line-height:1;margin-bottom:5px}
+.stat-card .s-label{font-size:.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+.stat-card.gold{border-top:3px solid var(--amber)}
+.stat-card.gold .s-num{color:var(--amber)}
+.stat-card.jade{border-top:3px solid var(--green)}
+.stat-card.jade .s-num{color:var(--green)}
+.stat-card.sky{border-top:3px solid var(--blue)}
+.stat-card.sky .s-num{color:var(--blue)}
+.stat-card.rose{border-top:3px solid var(--red)}
+.stat-card.rose .s-num{color:var(--red)}
+
+/* card / table */
+.card{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden;margin-bottom:24px;box-shadow:var(--shadow)}
+.card-header{padding:16px 24px;border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;background:var(--white)}
+.card-title{font-weight:700;font-size:.92rem;color:var(--ink)}
+.btn-sm{font-size:.78rem;font-weight:600;padding:7px 16px;border-radius:7px;transition:all .15s}
+.btn-gold{background:var(--amber);color:#fff}
+.btn-gold:hover{background:#b45309}
+.btn-danger{background:var(--red-lt);color:var(--red)}
+.btn-danger:hover{background:#fecaca}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--rule)}
+.btn-ghost:hover{color:var(--ink);border-color:var(--ink-mid)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700;padding:11px 24px;background:var(--bg);border-bottom:1px solid var(--rule)}
+td{padding:13px 24px;font-size:.875rem;border-bottom:1px solid var(--rule);color:var(--ink-mid)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8faff}
+.badge{display:inline-block;font-size:.68rem;font-family:var(--mono);padding:3px 10px;border-radius:20px;font-weight:600;letter-spacing:.04em}
+.badge-green{background:var(--green-lt);color:#065f46}
+.badge-gold{background:var(--amber-lt);color:#92400e}
+.badge-muted{background:var(--bg);color:var(--muted);border:1px solid var(--rule)}
+.badge-sky{background:var(--blue-bg);color:var(--blue)}
+.badge-rose{background:var(--red-lt);color:var(--red)}
+.inline-form{display:flex;gap:10px;padding:16px 24px;border-top:1px solid var(--rule);background:var(--bg)}
+.inline-form input{flex:1;padding:9px 13px;border:1.5px solid var(--rule);border-radius:7px;font-size:.88rem;background:var(--white);outline:none;transition:border-color .2s}
+.inline-form input:focus{border-color:var(--blue)}
+
+/* assign panel */
+.q-filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.filter-chip{padding:6px 14px;border-radius:20px;font-size:.75rem;border:1.5px solid var(--rule);background:var(--white);color:var(--muted);font-family:var(--mono);cursor:pointer;transition:all .15s;font-weight:500}
+.filter-chip:hover,.filter-chip.active{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.q-grid{display:grid;gap:7px;max-height:520px;overflow-y:auto;padding-right:4px}
+.q-row{background:var(--white);border:1.5px solid var(--rule);border-radius:var(--radius);padding:11px 16px;display:flex;align-items:center;gap:12px;transition:all .15s;cursor:pointer}
+.q-row:hover{border-color:#93c5fd;box-shadow:0 2px 8px rgba(43,91,224,.1);background:#fafbff}
+.q-row.selected{border-color:var(--blue);background:var(--blue-bg)}
+.q-checkbox{width:20px;height:20px;border-radius:5px;border:2px solid var(--rule);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:.72rem;font-weight:700}
+.q-row.selected .q-checkbox{background:var(--blue);border-color:var(--blue);color:#fff}
+.q-id{font-family:var(--mono);font-size:.67rem;color:var(--muted);width:80px;flex-shrink:0}
+.q-num{font-family:var(--mono);font-size:.75rem;color:var(--muted);width:24px;flex-shrink:0}
+.q-skill-tag{font-family:var(--mono);font-size:.63rem;padding:2px 8px;border-radius:10px;background:var(--blue-bg);color:var(--blue);white-space:nowrap;flex-shrink:0;font-weight:500}
+.assign-bar{position:sticky;bottom:0;background:var(--navy);color:#fff;padding:14px 22px;border-radius:var(--radius);display:flex;align-items:center;justify-content:space-between;margin-top:16px;animation:slideUp .2s ease;box-shadow:0 -4px 20px rgba(13,27,62,.2)}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.assign-bar-text{font-size:.87rem}
+.assign-bar-text strong{color:#93c5fd}
+.assign-actions{display:flex;gap:10px;align-items:center}
+.assign-actions select{padding:6px 12px;border-radius:7px;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:.82rem;outline:none}
+.assign-actions select option{background:var(--navy-mid)}
+
+/* results */
+.student-select-row{display:flex;gap:12px;align-items:center;margin-bottom:24px}
+.student-select-row select{flex:1;padding:10px 14px;border:1.5px solid var(--rule);border-radius:var(--radius);font-size:.9rem;background:var(--white);outline:none;cursor:pointer}
+.results-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.rs-card{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius);padding:16px 18px;text-align:center;box-shadow:var(--shadow)}
+.rs-card .rs-num{font-family:var(--serif);font-size:1.8rem;font-weight:700;line-height:1;margin-bottom:4px;color:var(--ink)}
+.rs-card .rs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.rs-card.correct .rs-num{color:var(--green)}
+.rs-card.wrong .rs-num{color:var(--red)}
+.rs-card.pct .rs-num{color:var(--blue)}
+.result-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.result-dot.correct{background:var(--green)}
+.result-dot.wrong{background:var(--red)}
+.result-dot.pending{background:var(--rule)}
+
+/* deadlines */
+.deadline-card{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius);padding:28px;margin-bottom:16px;box-shadow:var(--shadow)}
+.deadline-card h3{font-weight:700;margin-bottom:18px;color:var(--navy)}
+.deadline-form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.deadline-form .form-group{margin-bottom:0}
+.deadline-form .full{grid-column:1/-1}
+
+/* ══ STUDENT SCREEN — teal/blue theme ══ */
+#screen-student{display:flex;flex-direction:column;min-height:100vh;background:var(--bg)}
+.student-top{background:var(--navy);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(13,27,62,.3)}
+.student-top-left{display:flex;align-items:center;gap:14px}
+.student-brand{font-family:var(--serif);color:#fff;font-size:1rem;font-weight:700}
+.student-brand span{color:#60a5fa}
+.student-name-tag{font-family:var(--mono);font-size:.7rem;color:rgba(255,255,255,.6);padding:4px 12px;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+.progress-strip{height:5px;background:rgba(43,91,224,.15)}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--blue));transition:width .4s cubic-bezier(.4,0,.2,1)}
+.student-body{flex:1;display:flex;justify-content:center;padding:32px 20px 60px}
+.q-container{width:100%;max-width:720px}
+
+/* question UI */
+.q-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.q-counter{font-family:var(--mono);font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:500}
+.q-skill-pill{font-family:var(--mono);font-size:.66rem;padding:4px 12px;border-radius:20px;background:var(--blue-bg);color:var(--blue);border:1px solid #bfdbfe;font-weight:600}
+.q-card{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow);animation:qSlide .3s cubic-bezier(.4,0,.2,1)}
+@keyframes qSlide{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* PDF canvas */
+.pdf-canvas-wrap{width:100%;background:var(--white);display:flex;justify-content:center;align-items:flex-start;min-height:80px;border-bottom:1px solid var(--rule);position:relative;overflow:hidden;padding:22px 28px 16px}
+.pdf-canvas-wrap canvas{display:block;max-width:100%;height:auto}
+.pdf-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.8rem;color:var(--muted);padding:20px;text-align:center}
+
+/* MCQ options */
+.options-area{padding:20px 24px}
+.options-list{display:grid;gap:10px}
+.option-btn{display:flex;align-items:flex-start;gap:14px;padding:13px 16px;border-radius:10px;border:2px solid var(--rule);background:var(--bg);text-align:left;font-size:.92rem;line-height:1.5;color:var(--ink);width:100%;transition:all .15s;font-family:var(--sans)}
+.option-btn:hover:not(:disabled){border-color:#93c5fd;background:#eff6ff;transform:translateX(3px)}
+.option-btn:disabled{cursor:default;transform:none}
+.opt-label{font-family:var(--mono);font-size:.78rem;font-weight:700;color:var(--muted);min-width:22px;padding-top:1px;transition:color .15s;flex-shrink:0}
+.option-btn:hover:not(:disabled) .opt-label{color:var(--blue)}
+.option-btn.correct{border-color:var(--green);background:var(--green-lt)}
+.option-btn.correct .opt-label{color:var(--green)}
+.option-btn.wrong{border-color:var(--red);background:var(--red-lt)}
+.option-btn.wrong .opt-label{color:var(--red)}
+.free-response-note{font-size:.85rem;color:var(--muted);font-style:italic;padding:4px 0}
+
+/* feedback */
+.feedback-box{margin-top:16px;padding:14px 18px;border-radius:10px;font-size:.88rem;line-height:1.6;display:none;border-width:1.5px;border-style:solid;animation:fadeIn .2s ease}
+.feedback-box.show{display:block}
+.feedback-box.correct{background:var(--green-lt);border-color:#6ee7b7;color:#065f46}
+.feedback-box.wrong{background:var(--red-lt);border-color:#fca5a5;color:#7f1d1d}
+.fb-label{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;font-weight:700;display:block;margin-bottom:5px}
+
+/* assigned-opt hover — avoids inline quote conflicts */
+.assigned-opt:hover:not(:disabled){border-color:var(--blue)!important;background:#eff6ff!important;transform:translateX(3px)}
+.assigned-opt:disabled{cursor:default!important}
+.q-timer{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:.88rem;font-weight:700;color:var(--ink-mid);background:var(--bg);border:1.5px solid var(--rule);border-radius:10px;padding:6px 14px;min-width:80px;justify-content:center;transition:color .3s,border-color .3s,background .3s}
+.q-timer.warn{color:#b45309;border-color:#f59e0b;background:#fffbeb}
+.q-timer.slow{color:#dc2626;border-color:#f87171;background:#fff1f1;animation:timer-pulse .9s ease-in-out infinite}
+@keyframes timer-pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.q-timer svg{flex-shrink:0}
+.btn-next{padding:11px 30px;border-radius:8px;background:var(--blue);color:#fff;font-size:.88rem;font-weight:700;transition:all .15s;letter-spacing:.02em}
+.btn-next:hover:not(:disabled){background:#1d4ed8}
+.btn-next:active:not(:disabled){transform:scale(.97)}
+.btn-next:disabled{opacity:.35;cursor:default}
+
+/* score screen */
+.score-screen{text-align:center;padding:48px 36px;background:var(--white);border:1px solid var(--rule);border-radius:20px;box-shadow:var(--shadow)}
+.score-emoji{font-size:3.2rem;margin-bottom:12px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.score-screen h2{font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--navy);margin-bottom:6px}
+.score-screen .score-sub{font-size:.88rem;color:var(--muted);margin-bottom:28px}
+.score-ring-wrap{display:flex;justify-content:center;margin-bottom:28px}
+.score-big{font-family:var(--serif);font-size:4.5rem;font-weight:700;line-height:1;color:var(--blue);margin-bottom:4px}
+.score-total{font-size:.85rem;color:var(--muted);margin-bottom:28px}
+.score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+.score-stat{background:var(--bg);border:1px solid var(--rule);border-radius:12px;padding:14px 10px;text-align:center}
+.score-stat .s-val{font-family:var(--mono);font-size:1.5rem;font-weight:500;display:block;line-height:1;margin-bottom:4px;letter-spacing:-.02em}
+.score-stat .s-key{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.score-stat.c .s-val{color:var(--green)}
+.score-stat.w .s-val{color:var(--red)}
+.score-stat.t .s-val{color:var(--teal)}
+.score-stat.p .s-val{color:var(--blue)}
+.score-topic-bar{margin-bottom:12px}
+.score-topic-bar .stb-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.score-topic-bar .stb-name{font-size:.82rem;font-weight:600;color:var(--ink)}
+.score-topic-bar .stb-pct{font-size:.75rem;font-family:var(--mono);font-weight:700}
+.score-topic-bar .stb-track{height:8px;background:var(--rule);border-radius:4px;overflow:hidden}
+.score-topic-bar .stb-fill{height:100%;border-radius:4px;transition:width .7s ease}
+.score-share-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border-radius:12px;border:none;background:#25d366;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;font-family:var(--sans);transition:all .18s;margin-bottom:12px}
+.score-share-btn:hover{background:#1ebe5d;transform:translateY(-1px)}
+.score-share-btn:active{transform:scale(.98)}
+.score-home-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border-radius:12px;border:1.5px solid var(--rule);background:var(--white);color:var(--ink-mid);font-size:.9rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.score-home-btn:hover{border-color:var(--ink-mid);background:var(--bg)}
+.no-work{text-align:center;padding:80px 20px;color:var(--muted)}
+.no-work .nw-icon{font-size:3rem;margin-bottom:16px}
+.no-work h3{font-size:1.3rem;font-weight:700;color:var(--navy);margin-bottom:8px}
+.deadline-notice{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 16px;font-size:.82rem;color:#1e40af;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+
+/* student home dashboard */
+.student-home{width:100%;max-width:860px;margin:0 auto;padding:40px 20px 60px;animation:fadeIn .3s ease}
+.student-home-greeting{margin-bottom:36px}
+.student-home-greeting h2{font-family:var(--serif);font-size:1.9rem;font-weight:700;color:var(--navy);letter-spacing:-.02em;margin-bottom:4px}
+.student-home-greeting p{font-size:.9rem;color:var(--muted)}
+.mode-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:36px}
+.mode-card{background:var(--white);border:2px solid var(--rule);border-radius:16px;padding:28px 24px;cursor:pointer;transition:all .2s;text-align:left;position:relative;overflow:hidden}
+.mode-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s}
+.mode-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.1)}
+.mode-card.practice-ground{border-color:#c7d2fe}
+.mode-card.practice-ground:hover{border-color:var(--blue);box-shadow:0 8px 28px rgba(43,91,224,.15)}
+.mode-card.practice-assigned{border-color:#a7f3d0}
+.mode-card.practice-assigned:hover{border-color:var(--green);box-shadow:0 8px 28px rgba(5,150,105,.15)}
+.mode-card.analytics-mode{border-color:#fed7aa}
+.mode-card.analytics-mode:hover{border-color:var(--amber);box-shadow:0 8px 28px rgba(217,119,6,.15)}
+.mode-card-icon{font-size:2.2rem;margin-bottom:14px;display:block}
+.mode-card-title{font-size:1.05rem;font-weight:700;color:var(--navy);margin-bottom:6px}
+.mode-card-desc{font-size:.82rem;color:var(--muted);line-height:1.55}
+.mode-card-badge{display:inline-block;margin-top:14px;font-size:.7rem;font-family:var(--mono);font-weight:600;padding:3px 10px;border-radius:20px}
+.mode-card.practice-ground .mode-card-badge{background:var(--blue-bg);color:var(--blue)}
+.mode-card.practice-assigned .mode-card-badge{background:var(--green-lt);color:var(--green)}
+.mode-card.analytics-mode .mode-card-badge{background:#fef3c7;color:#92400e}
+
+/* student nav tabs (breadcrumb-style back button) */
+.student-subnav{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.student-back-btn{display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;padding:6px 12px;border-radius:7px;border:1.5px solid var(--rule);background:var(--white);transition:all .15s;font-family:var(--sans)}
+.student-back-btn:hover{color:var(--navy);border-color:var(--navy)}
+
+/* practice-ground topic filter */
+.pg-filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+
+/* analytics dashboard */
+.analytics-wrap{width:100%;max-width:860px;margin:0 auto;padding:20px 20px 60px;animation:fadeIn .3s ease}
+.analytics-section{margin-bottom:32px}
+.analytics-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:14px}
+.analytics-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:8px}
+.an-card{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius);padding:16px 18px;text-align:center;box-shadow:var(--shadow)}
+.an-card .an-num{font-family:var(--mono);font-size:1.65rem;font-weight:500;line-height:1;margin-bottom:4px;letter-spacing:-.02em}
+.an-card .an-key{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(13,27,62,.5);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(3px);animation:fadeIn .2s ease}
+.modal-overlay.hidden{display:none}
+.modal-box{background:var(--white);border-radius:var(--radius-lg);padding:36px;width:440px;box-shadow:var(--shadow-lg)}
+.modal-box h3{font-size:1.15rem;font-weight:700;margin-bottom:14px;color:var(--navy)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}
+
+/* ══ MOBILE ══ */
+@media(max-width:640px){
+  /* Login */
+  .login-left{display:none}
+  .login-right{width:100%;padding:36px 24px!important}
+  .login-right h2{font-size:1.35rem}
+  .role-tab{padding:12px 8px}
+  .role-tab .rt-icon{font-size:1.3rem}
+
+  /* Student top bar */
+  .student-brand{font-size:.88rem}
+  .student-name-tag{display:none}
+
+  /* Student body */
+  .student-body{padding:16px 12px 56px!important}
+  .q-container{max-width:100%}
+
+  /* Home dashboard */
+  .student-home{padding:20px 14px 48px!important}
+  .student-home-greeting h2{font-size:1.4rem}
+  .mode-cards{grid-template-columns:1fr;gap:12px}
+  .mode-card{padding:20px 18px}
+  .mode-card-icon{font-size:1.8rem;margin-bottom:10px}
+  .mode-card-title{font-size:.95rem}
+  .mode-card-desc{font-size:.8rem}
+
+  /* PDF canvas — no horizontal padding on mobile, full width */
+  .pdf-canvas-wrap{padding:12px 8px 10px!important;overflow-x:auto!important;justify-content:flex-start!important}
+  .pdf-canvas-wrap canvas{min-width:100%}
+
+  /* Options — larger text, bigger touch targets */
+  .options-area{padding:14px 12px!important}
+  .options-list{gap:10px!important}
+  .option-btn{
+    padding:15px 14px!important;
+    font-size:1rem!important;
+    line-height:1.6!important;
+    border-width:2px!important;
+  }
+  .opt-label{font-size:.88rem!important;min-width:26px!important}
+
+  /* Q header */
+  .q-header{flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .q-counter{font-size:.66rem}
+  .q-skill-pill{font-size:.64rem;padding:3px 10px}
+  .q-timer{font-size:.82rem!important;padding:6px 11px!important;min-width:70px}
+
+  /* Feedback */
+  .feedback-box{font-size:.95rem!important;padding:13px 14px!important;line-height:1.6}
+  .fb-label{font-size:.72rem!important}
+
+  /* Next button — full width on mobile only when alone */
+  .btn-next{width:auto;padding:13px 28px!important;font-size:.92rem!important}
+  .q-footer{flex-direction:row!important;gap:10px!important}
+  .student-back-btn{font-size:.78rem;padding:7px 12px}
+
+  /* Score screen */
+  .score-screen{padding:28px 16px!important;border-radius:14px}
+  .score-big{font-size:3.6rem!important}
+  .score-total{font-size:.82rem}
+  .score-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
+  .score-stat .s-val{font-size:1.4rem!important}
+  .score-stat .s-key{font-size:.65rem!important}
+  .score-share-btn{font-size:.88rem!important;padding:13px!important}
+
+  /* Analytics */
+  .analytics-wrap{padding:16px 14px 48px!important}
+  .analytics-stats-row{grid-template-columns:1fr 1fr;gap:8px}
+  .an-card{padding:14px 12px}
+  .an-card .an-num{font-size:1.3rem}
+
+  /* Modal */
+  .modal-box{width:calc(100vw - 32px);padding:28px 22px}
+
+  /* Practice ground list items */
+  .student-subnav{margin-bottom:12px;flex-wrap:wrap;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ══════════════ SCREEN: LOGIN ══════════════ -->
+<div id="screen-login" class="screen">
+  <div class="login-left">
+    <div>
+      <div class="login-left-brand">Prepgenix<br><span>SAT Math</span></div>
+      <p class="login-left-tag">By Vaibhav Sharma · Perfect SAT Math Score · Princeton Review Certified</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="login-proof-item">
+        <div class="login-proof-icon">📐</div>
+        <span>139 real College Board questions — Algebra & beyond</span>
+      </div>
+      <div class="login-proof-item">
+        <div class="login-proof-icon">⚡</div>
+        <span>Instant feedback on every answer you attempt</span>
+      </div>
+      <div class="login-proof-item">
+        <div class="login-proof-icon">⏱</div>
+        <span>SAT-paced timer to build real test awareness</span>
+      </div>
+      <div class="login-proof-item">
+        <div class="login-proof-icon">📊</div>
+        <span>Topic-by-topic accuracy tracking for every student</span>
+      </div>
+    </div>
+  </div>
+  <div class="login-right">
+    <div class="login-right-logo">Prepgenix <span>SAT</span></div>
+    <h2 id="login-heading">Welcome back</h2>
+    <p class="welcome-sub" id="login-subheading">Sign in to continue your SAT prep</p>
+    <div class="role-tabs">
+      <button class="role-tab student-tab active" id="tab-student" onclick="switchLoginTab('student')">
+        <span class="rt-icon">🎓</span>
+        <span class="rt-label">Student</span>
+        <span class="rt-desc">Practice questions</span>
+      </button>
+      <button class="role-tab teacher-tab" id="tab-teacher" onclick="switchLoginTab('teacher')">
+        <span class="rt-icon">📋</span>
+        <span class="rt-label">Teacher</span>
+        <span class="rt-desc">Manage &amp; track</span>
+      </button>
+    </div>
+    <div class="form-group">
+      <label id="login-user-label">Username</label>
+      <input type="text" id="login-user" placeholder="Enter your username" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <div style="position:relative">
+        <input type="password" id="login-pass" placeholder="Enter your password" style="padding-right:44px">
+        <button type="button" id="toggle-pass" onclick="togglePassword()"
+          style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
+                 background:none;border:none;cursor:pointer;padding:4px;
+                 color:var(--muted);display:flex;align-items:center;justify-content:center;
+                 border-radius:4px;transition:color .15s"
+          onmouseenter="this.style.color='var(--ink)'"
+          onmouseleave="this.style.color='var(--muted)'"
+          title="Show/hide password">
+          <!-- Eye icon (show) -->
+          <svg id="icon-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <!-- Eye-off icon (hide) — hidden by default -->
+          <svg id="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               style="display:none">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <button class="btn-primary student-mode" id="btn-signin" onclick="doLogin()">Sign In as Student</button>
+  </div>
+</div>
+
+<!-- ══════════════ SCREEN: TEACHER ══════════════ -->
+<div id="screen-teacher" class="screen hidden">
+  <div class="top-bar">
+    <div class="top-bar-brand">Prepgenix <span>Digital SAT</span></div>
+    <div class="top-bar-right">
+      <span class="top-bar-user" id="teacher-username-label"></span>
+      <button class="btn-logout" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+  <div class="teacher-layout">
+    <nav class="sidebar">
+      <div class="sidebar-section-label" style="margin-top:4px">Overview</div>
+      <div class="sidebar-nav-item active" onclick="switchPanel('panel-overview',this)"><span class="icon">📊</span> Dashboard</div>
+      <div class="sidebar-section-label">Manage</div>
+      <div class="sidebar-nav-item" onclick="switchPanel('panel-students',this)"><span class="icon">👥</span> Students</div>
+      <div class="sidebar-nav-item" onclick="switchPanel('panel-assign',this)"><span class="icon">📋</span> Assign Questions</div>
+      <div class="sidebar-section-label">Reports</div>
+      <div class="sidebar-nav-item" onclick="switchPanel('panel-results',this)"><span class="icon">📈</span> Results</div>
+      <div class="sidebar-nav-item" onclick="switchPanel('panel-deadline',this)"><span class="icon">⏰</span> Deadlines</div>
+    </nav>
+    <div class="main-content">
+
+      <!-- OVERVIEW -->
+      <div id="panel-overview" class="panel active">
+        <h2 class="section-title">Overview</h2>
+        <p class="section-sub">Class performance at a glance</p>
+        <div class="stat-grid" id="overview-stats"></div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Student Progress</span>
+            <button class="btn-sm btn-danger" onclick="resetAllStudents()" style="font-size:.72rem">↺ Reset All</button>
+          </div>
+          <table><thead><tr><th>Student</th><th>Assigned</th><th>Completed</th><th>Score</th><th>Deadline</th><th>Status</th><th></th></tr></thead>
+          <tbody id="overview-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- STUDENTS -->
+      <div id="panel-students" class="panel">
+        <h2 class="section-title">Students</h2>
+        <p class="section-sub">Manage student accounts. Accounts are automatically deleted after the access period expires.</p>
+        <div class="card">
+          <div class="card-header"><span class="card-title">All Students</span></div>
+          <table><thead><tr><th>Student</th><th>Username</th><th>Progress</th><th>Access Expires</th><th>Days Left</th><th></th></tr></thead>
+          <tbody id="students-tbody"></tbody></table>
+          <div class="inline-form" style="flex-wrap:wrap;gap:8px">
+            <input type="text" id="new-name" placeholder="Full name" style="min-width:120px">
+            <input type="text" id="new-user" placeholder="Username" style="min-width:100px">
+            <input type="text" id="new-pass" placeholder="Password" style="min-width:100px">
+            <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1.5px solid var(--rule);border-radius:7px;padding:0 12px;min-width:110px">
+              <input type="number" id="new-days" value="31" min="1" max="365"
+                style="width:48px;border:none;outline:none;font-size:.88rem;padding:9px 0;background:transparent">
+              <span style="font-size:.78rem;color:var(--muted);white-space:nowrap">days</span>
+            </div>
+            <button class="btn-sm btn-gold" onclick="addStudent()">+ Add Student</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ASSIGN -->
+      <div id="panel-assign" class="panel">
+        <h2 class="section-title">Assign Questions</h2>
+        <p class="section-sub">All 136 MCQ questions from your PDF. Filter, select, then assign to one student or everyone.</p>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <!-- Filter button -->
+          <div style="position:relative">
+            <button id="assign-filter-btn" onclick="toggleAssignFilter()"
+              style="display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;
+                border:1.5px solid var(--rule);background:var(--white);color:var(--ink-mid);
+                font-size:.84rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+              </svg>
+              Filter
+            </button>
+            <!-- Dropdown built by JS in renderAssignFilterDropdown() -->
+            <div id="assign-filter-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;
+              background:var(--white);border:1.5px solid var(--rule);border-radius:12px;
+              box-shadow:0 8px 28px rgba(0,0,0,.14);z-index:200;min-width:268px;overflow:hidden">
+            </div>
+          </div>
+          <div id="assign-active-filters" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+          <span id="assign-filter-count" style="font-size:.78rem;color:var(--muted);font-family:var(--mono);margin-left:auto"></span>
+        </div>
+        <div class="q-grid" id="question-list"></div>
+        <div class="assign-bar hidden" id="assign-bar">
+          <div class="assign-bar-text"><strong id="assign-count">0</strong> questions selected</div>
+          <div class="assign-actions">
+            <select id="assign-target"><option value="all">→ All Students</option></select>
+            <button class="btn-sm btn-gold" onclick="doAssign()">Assign</button>
+            <button class="btn-sm" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border-radius:7px;padding:7px 14px;font-size:.78rem" onclick="clearSelection()">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div id="panel-results" class="panel">
+        <h2 class="section-title">Results</h2>
+        <p class="section-sub">Per-student question-by-question breakdown</p>
+        <div class="student-select-row">
+          <select id="results-student-select" onchange="loadStudentResults()">
+            <option value="">— Select a student —</option>
+          </select>
+        </div>
+        <div id="results-content" class="hidden">
+          <div class="results-summary" id="results-summary"></div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Question breakdown</span></div>
+            <table><thead><tr><th>#</th><th>Question ID</th><th>Skill</th><th>Student answered</th><th>Result</th></tr></thead>
+            <tbody id="results-tbody"></tbody></table>
+          </div>
+        </div>
+        <div id="results-empty">
+          <div class="no-work"><div class="nw-icon">📊</div><h3>Select a student to view results</h3></div>
+        </div>
+      </div>
+
+      <!-- DEADLINES -->
+      <div id="panel-deadline" class="panel">
+        <h2 class="section-title">Deadlines</h2>
+        <p class="section-sub">Set completion deadlines. Students see this while practicing.</p>
+        <div class="deadline-card">
+          <h3>Set deadline for all students</h3>
+          <div class="deadline-form">
+            <div class="form-group full"><label>Date &amp; Time</label><input type="datetime-local" id="deadline-all-dt"></div>
+            <div class="form-group full"><button class="btn-sm btn-gold" onclick="setDeadlineAll()">Apply to All Students</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Individual Deadlines</span></div>
+          <table><thead><tr><th>Student</th><th>Current Deadline</th><th>Set New</th><th></th></tr></thead>
+          <tbody id="deadline-tbody"></tbody></table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SCREEN: STUDENT ══════════════ -->
+<div id="screen-student" class="screen hidden">
+  <div class="student-top">
+    <div class="student-top-left">
+      <div class="student-brand">Prepgenix <span>Digital SAT</span></div>
+      <span class="student-name-tag" id="student-name-tag"></span>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Sign out</button>
+  </div>
+  <div class="progress-strip"><div class="progress-fill" id="student-progress" style="width:0%"></div></div>
+  <div class="student-body" id="student-body">
+    <div class="q-container" id="q-container"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay hidden" id="confirm-modal">
+  <div class="modal-box">
+    <h3 id="modal-title">Confirm</h3>
+    <p id="modal-body" style="font-size:.9rem;color:var(--muted)"></p>
+    <div class="modal-actions">
+      <button class="btn-sm btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-sm btn-danger" id="modal-confirm-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  QUESTION BANK — all 139 questions from PDF
+//  page = PDF page number (1-indexed)
+//  Free-response questions have options:[]
+// ════════════════════════════════════════════════
+const QUESTION_BANK = [{"id":"002dba45","page":1,"skill":"Linear Equations (2 vars)","options":[]},{"id":"f224df07","page":2,"skill":"Linear Inequalities","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"5"},{"l":"D","t":"6"}],"answer":"C"},{"id":"cb8f449f","page":3,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"7/2"},{"l":"C","t":"4"},{"l":"D","t":"6"}],"answer":"D"},{"id":"548a4929","page":4,"skill":"Linear Functions","options":[{"l":"A","t":"21"},{"l":"B","t":"28"},{"l":"C","t":"32"},{"l":"D","t":"35"}],"answer":"A"},{"id":"e62cfe5f","page":5,"skill":"Linear Functions","options":[]},{"id":"01682aa5","page":6,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"-9"},{"l":"B","t":"-1/9"},{"l":"C","t":"1/9"},{"l":"D","t":"9"}],"answer":"D"},{"id":"e723bd67","page":7,"skill":"Linear Inequalities","options":[{"l":"A","t":"Table A"},{"l":"B","t":"Table B"},{"l":"C","t":"Table C"},{"l":"D","t":"Table D"}],"answer":"D"},{"id":"a5834ea4","page":8,"skill":"Linear Functions","options":[{"l":"A","t":"Table A"},{"l":"B","t":"Table B"},{"l":"C","t":"Table C"},{"l":"D","t":"Table D"}],"answer":"C"},{"id":"bf4a8b6a","page":9,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"6"},{"l":"B","t":"8"},{"l":"C","t":"12"},{"l":"D","t":"24"}],"answer":"B"},{"id":"7e3f8363","page":10,"skill":"Linear Functions","options":[{"l":"A","t":"f(x) = 28x + 34"},{"l":"B","t":"f(x) = 3x + 38"},{"l":"C","t":"f(x) = 4x + 3"},{"l":"D","t":"f(x) = 7x + 3"}],"answer":"C"},{"id":"0dd6227f","page":11,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"Zero"},{"l":"B","t":"Exactly one"},{"l":"C","t":"Exactly two"},{"l":"D","t":"Infinitely many"}],"answer":"D"},{"id":"b1228811","page":12,"skill":"Linear Inequalities","options":[{"l":"A","t":"640x+880y≥9700; x+y≤10; x≥3; y≥1"},{"l":"B","t":"640x+880y≤9700; x+y≥10; x≥3; y≥1"},{"l":"C","t":"640x+880y≥9700; x+y≥10; x≤3; y≤1"},{"l":"D","t":"640x+880y≤9700; x+y≤10; x≤3; y≤1"}],"answer":"B"},{"id":"9e5863bd","page":13,"skill":"Linear Inequalities","options":[{"l":"A","t":"s ≥ 2.4"},{"l":"B","t":"s ≥ 1.8"},{"l":"C","t":"0 ≤ s ≤ 0.6"},{"l":"D","t":"0.6 ≤ s ≤ 1.8"}],"answer":"D"},{"id":"7efe5495","page":14,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"6"},{"l":"B","t":"7"},{"l":"C","t":"14"},{"l":"D","t":"17"}],"answer":"C"},{"id":"c1bd5301","page":15,"skill":"Linear Functions","options":[{"l":"A","t":"3"},{"l":"B","t":"6"},{"l":"C","t":"9"},{"l":"D","t":"12"}],"answer":"B"},{"id":"71189542","page":16,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"30"},{"l":"B","t":"20"},{"l":"C","t":"19"},{"l":"D","t":"18"}],"answer":"D"},{"id":"64c85440","page":17,"skill":"Linear Inequalities","options":[{"l":"A","t":"x < 2"},{"l":"B","t":"x > 2"},{"l":"C","t":"x < 6"},{"l":"D","t":"x > 6"}],"answer":"C"},{"id":"7a5a74a6","page":18,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"3"},{"l":"B","t":"4"},{"l":"C","t":"5"},{"l":"D","t":"6"}],"answer":"B"},{"id":"0c541d87","page":19,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"1"},{"l":"B","t":"2"},{"l":"C","t":"3"},{"l":"D","t":"4"}],"answer":"C"},{"id":"d7c8ba0b","page":20,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"y = 2x + 3"},{"l":"B","t":"y = 2x − 3"},{"l":"C","t":"y = −2x + 3"},{"l":"D","t":"y = −2x − 3"}],"answer":"A"},{"id":"15daa8d6","page":21,"skill":"Linear Equations (1 var)","options":[]},{"id":"aa85b138","page":22,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"The number of years it took the tree to double its height"},{"l":"B","t":"The average number of feet that the tree grew per year"},{"l":"C","t":"The height, in feet, of the tree when the tree was 1 year old"},{"l":"D","t":"The average number of years it takes similar trees to grow 14 feet"}],"answer":"B"},{"id":"9f3cb472","page":23,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"2"},{"l":"B","t":"3"},{"l":"C","t":"4"},{"l":"D","t":"5"}],"answer":"D"},{"id":"968e9e51","page":24,"skill":"Linear Inequalities","options":[{"l":"A","t":"n ≤ 3"},{"l":"B","t":"n ≥ 3"},{"l":"C","t":"n ≤ 5"},{"l":"D","t":"n ≥ 5"}],"answer":"D"},{"id":"f5929f7a","page":25,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"4"},{"l":"B","t":"5"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"B"},{"id":"f7e39fe9","page":26,"skill":"Linear Functions","options":[{"l":"A","t":"−2"},{"l":"B","t":"0"},{"l":"C","t":"2"},{"l":"D","t":"4"}],"answer":"C"},{"id":"e470e19d","page":27,"skill":"Linear Functions","options":[{"l":"A","t":"2"},{"l":"B","t":"3"},{"l":"C","t":"4"},{"l":"D","t":"5"}],"answer":"B"},{"id":"6e6a3241","page":28,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"Zero"},{"l":"B","t":"Exactly one"},{"l":"C","t":"Exactly two"},{"l":"D","t":"Infinitely many"}],"answer":"B"},{"id":"dd875c97","page":29,"skill":"Linear Inequalities","options":[{"l":"A","t":"6"},{"l":"B","t":"7"},{"l":"C","t":"8"},{"l":"D","t":"9"}],"answer":"C"},{"id":"1c29bfd1","page":30,"skill":"Linear Functions","options":[{"l":"A","t":"1"},{"l":"B","t":"2"},{"l":"C","t":"3"},{"l":"D","t":"4"}],"answer":"D"},{"id":"6a87902f","page":31,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"Zero"},{"l":"B","t":"Exactly one"},{"l":"C","t":"Exactly two"},{"l":"D","t":"Infinitely many"}],"answer":"A"},{"id":"620fe971","page":32,"skill":"Linear Functions","options":[{"l":"A","t":"The team will have moved all the cargo in about 4.8 hours."},{"l":"B","t":"The team has been moving about 4.8 tons of cargo per hour."},{"l":"C","t":"The team has been moving about 25 tons of cargo per hour."},{"l":"D","t":"The team started with 120 tons of cargo to move."}],"answer":"A"},{"id":"12ee1edc","page":33,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"10"}],"answer":"A"},{"id":"5cf1bbc9","page":34,"skill":"Linear Functions","options":[{"l":"A","t":"The cost per game"},{"l":"B","t":"The cost of the video game system"},{"l":"C","t":"The total number of games purchased"},{"l":"D","t":"The maximum number of games that can be purchased"}],"answer":"A"},{"id":"74c03c21","page":35,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"B"},{"id":"9c7741c6","page":36,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"Zero"},{"l":"B","t":"Exactly one"},{"l":"C","t":"Exactly two"},{"l":"D","t":"Infinitely many"}],"answer":"B"},{"id":"8a87c2c8","page":37,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"5"},{"l":"C","t":"7"},{"l":"D","t":"9"}],"answer":"C"},{"id":"9a216c0f","page":38,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"5"},{"l":"D","t":"8"}],"answer":"D"},{"id":"ed92fb68","page":39,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"0"},{"l":"B","t":"9"},{"l":"C","t":"18"},{"l":"D","t":"38"}],"answer":"C"},{"id":"bbb0359a","page":40,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"5"},{"l":"B","t":"10"},{"l":"C","t":"15"},{"l":"D","t":"20"}],"answer":"B"},{"id":"3e9eaffc","page":41,"skill":"Linear Functions","options":[{"l":"A","t":"Caleb used approximately 2.5 fl oz of juice per popsicle."},{"l":"B","t":"Caleb had approximately 32 fl oz of juice when he began making popsicles."},{"l":"C","t":"Caleb had approximately 2.5 fl oz of juice when he began making popsicles."},{"l":"D","t":"Caleb used approximately 32 fl oz of juice per popsicle."}],"answer":"B"},{"id":"19fdf387","page":42,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"6"},{"l":"C","t":"9"},{"l":"D","t":"12"}],"answer":"C"},{"id":"a775af14","page":43,"skill":"Linear Functions","options":[{"l":"A","t":"The number of miles per gallon the car gets on the highway"},{"l":"B","t":"The number of miles per gallon the car gets in the city"},{"l":"C","t":"The total number of miles the car can travel"},{"l":"D","t":"The total amount of fuel in the tank"}],"answer":"A"},{"id":"9551cd91","page":44,"skill":"Linear Functions","options":[{"l":"A","t":"4"},{"l":"B","t":"5"},{"l":"C","t":"6"},{"l":"D","t":"7"}],"answer":"C"},{"id":"bf5f80c6","page":45,"skill":"Linear Inequalities","options":[{"l":"A","t":"(−3, 1)"},{"l":"B","t":"(1, 3)"},{"l":"C","t":"(3, 5)"},{"l":"D","t":"(5, 7)"}],"answer":"B"},{"id":"dae126d7","page":46,"skill":"Linear Functions","options":[{"l":"A","t":"2"},{"l":"B","t":"3"},{"l":"C","t":"4"},{"l":"D","t":"5"}],"answer":"D"},{"id":"6c5c2a81","page":47,"skill":"Linear Functions","options":[{"l":"A","t":"The fixed monthly cost"},{"l":"B","t":"The cost per kilowatt-hour of electricity"},{"l":"C","t":"The total cost for the month"},{"l":"D","t":"The number of kilowatt-hours used"}],"answer":"B"},{"id":"e0f59119","page":48,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"6"},{"l":"C","t":"9"},{"l":"D","t":"12"}],"answer":"A"},{"id":"ebd457f4","page":49,"skill":"Linear Functions","options":[{"l":"A","t":"The initial temperature"},{"l":"B","t":"The rate of temperature decrease per minute"},{"l":"C","t":"The final temperature"},{"l":"D","t":"The total time to cool"}],"answer":"B"},{"id":"c307283c","page":50,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"4"},{"l":"B","t":"5"},{"l":"C","t":"6"},{"l":"D","t":"7"}],"answer":"C"},{"id":"a0489274","page":51,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"Zero"},{"l":"B","t":"Exactly one"},{"l":"C","t":"Exactly two"},{"l":"D","t":"Infinitely many"}],"answer":"B"},{"id":"80da233d","page":52,"skill":"Linear Inequalities","options":[{"l":"A","t":"a ≤ 4"},{"l":"B","t":"a ≥ 4"},{"l":"C","t":"a ≤ 8"},{"l":"D","t":"a ≥ 8"}],"answer":"A"},{"id":"271f7e3f","page":53,"skill":"Linear Functions","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"B"},{"id":"70e29454","page":54,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"a = c and b = d"},{"l":"B","t":"a = c and b ≠ d"},{"l":"C","t":"a ≠ c and b = d"},{"l":"D","t":"a ≠ c and b ≠ d"}],"answer":"A"},{"id":"b31c3117","page":55,"skill":"Linear Inequalities","options":[{"l":"A","t":"3"},{"l":"B","t":"4"},{"l":"C","t":"5"},{"l":"D","t":"6"}],"answer":"C"},{"id":"f09097b1","page":56,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"Exactly one"},{"l":"B","t":"Exactly two"},{"l":"C","t":"Infinitely many"},{"l":"D","t":"Zero"}],"answer":"D"},{"id":"c17d9ba9","page":57,"skill":"Linear Inequalities","options":[{"l":"A","t":"x < −3"},{"l":"B","t":"x > −3"},{"l":"C","t":"x < 3"},{"l":"D","t":"x > 3"}],"answer":"B"},{"id":"c5082ce3","page":58,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"D"},{"id":"2e0290c3","page":59,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"6"},{"l":"C","t":"9"},{"l":"D","t":"12"}],"answer":"B"},{"id":"c651cc56","page":60,"skill":"Linear Functions","options":[{"l":"A","t":"6"},{"l":"B","t":"7"},{"l":"C","t":"8"},{"l":"D","t":"9"}],"answer":"B"},{"id":"b00ad7f2","page":61,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"2"},{"l":"B","t":"5"},{"l":"C","t":"7"},{"l":"D","t":"10"}],"answer":"C"},{"id":"79cf8505","page":62,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"Exactly one"},{"l":"B","t":"Exactly two"},{"l":"C","t":"Infinitely many"},{"l":"D","t":"Zero"}],"answer":"A"},{"id":"c22b5f25","page":63,"skill":"Linear Functions","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"D"},{"id":"11e1ab81","page":64,"skill":"Linear Functions","options":[{"l":"A","t":"The number of items sold"},{"l":"B","t":"The profit per item"},{"l":"C","t":"The fixed cost"},{"l":"D","t":"The total revenue"}],"answer":"B"},{"id":"4fe4fd7c","page":65,"skill":"Linear Functions","options":[{"l":"A","t":"3"},{"l":"B","t":"5"},{"l":"C","t":"7"},{"l":"D","t":"9"}],"answer":"C"},{"id":"c41e5688","page":66,"skill":"Linear Inequalities","options":[{"l":"A","t":"x ≤ 2"},{"l":"B","t":"x ≥ 2"},{"l":"C","t":"x ≤ 4"},{"l":"D","t":"x ≥ 4"}],"answer":"D"},{"id":"620abf36","page":67,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"Exactly one"},{"l":"B","t":"Exactly two"},{"l":"C","t":"Infinitely many"},{"l":"D","t":"Zero"}],"answer":"C"},{"id":"d62ad380","page":68,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"4"},{"l":"B","t":"6"},{"l":"C","t":"8"},{"l":"D","t":"10"}],"answer":"B"},{"id":"2f34cd1c","page":69,"skill":"Linear Functions","options":[{"l":"A","t":"The initial value"},{"l":"B","t":"The rate of change"},{"l":"C","t":"The maximum value"},{"l":"D","t":"The minimum value"}],"answer":"B"},{"id":"092ad67d","page":70,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"4"},{"l":"C","t":"5"},{"l":"D","t":"6"}],"answer":"A"},{"id":"3122fc7b","page":71,"skill":"Linear Functions","options":[{"l":"A","t":"2"},{"l":"B","t":"3"},{"l":"C","t":"4"},{"l":"D","t":"5"}],"answer":"D"},{"id":"d9733ed9","page":72,"skill":"Linear Inequalities","options":[{"l":"A","t":"n < 4"},{"l":"B","t":"n > 4"},{"l":"C","t":"n < 8"},{"l":"D","t":"n > 8"}],"answer":"B"},{"id":"23dedddd","page":73,"skill":"Linear Functions","options":[{"l":"A","t":"5"},{"l":"B","t":"10"},{"l":"C","t":"15"},{"l":"D","t":"20"}],"answer":"C"},{"id":"c8fb6bcb","page":74,"skill":"Linear Functions","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"A"},{"id":"d909cd31","page":75,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"1"},{"l":"B","t":"2"},{"l":"C","t":"3"},{"l":"D","t":"4"}],"answer":"C"},{"id":"56dc8045","page":76,"skill":"Linear Functions","options":[{"l":"A","t":"The fixed fee"},{"l":"B","t":"The hourly rate"},{"l":"C","t":"The total cost"},{"l":"D","t":"The number of hours worked"}],"answer":"B"},{"id":"92aa3a94","page":77,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"4"},{"l":"B","t":"6"},{"l":"C","t":"8"},{"l":"D","t":"10"}],"answer":"A"},{"id":"4f669597","page":78,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"3"},{"l":"B","t":"5"},{"l":"C","t":"7"},{"l":"D","t":"9"}],"answer":"B"},{"id":"f2bbd43d","page":79,"skill":"Linear Inequalities","options":[{"l":"A","t":"x < 2"},{"l":"B","t":"x > 2"},{"l":"C","t":"x < 6"},{"l":"D","t":"x > 6"}],"answer":"D"},{"id":"c01f4a95","page":80,"skill":"Linear Functions","options":[{"l":"A","t":"4"},{"l":"B","t":"6"},{"l":"C","t":"8"},{"l":"D","t":"10"}],"answer":"C"},{"id":"946ab892","page":81,"skill":"Linear Functions","options":[{"l":"A","t":"2"},{"l":"B","t":"3"},{"l":"C","t":"4"},{"l":"D","t":"5"}],"answer":"A"},{"id":"7e1bff94","page":82,"skill":"Linear Functions","options":[{"l":"A","t":"The initial population"},{"l":"B","t":"The annual growth rate"},{"l":"C","t":"The total population after t years"},{"l":"D","t":"The number of years to double"}],"answer":"B"},{"id":"ce314070","page":83,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"Exactly one"},{"l":"B","t":"Exactly two"},{"l":"C","t":"Infinitely many"},{"l":"D","t":"Zero"}],"answer":"C"},{"id":"868fc236","page":84,"skill":"Linear Functions","options":[{"l":"A","t":"3"},{"l":"B","t":"5"},{"l":"C","t":"7"},{"l":"D","t":"9"}],"answer":"D"},{"id":"4b0c156b","page":85,"skill":"Linear Functions","options":[{"l":"A","t":"The initial height"},{"l":"B","t":"The rate of descent"},{"l":"C","t":"The final height"},{"l":"D","t":"The total distance traveled"}],"answer":"B"},{"id":"431c3038","page":86,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"9.5"},{"l":"B","t":"8.75"},{"l":"C","t":"6"},{"l":"D","t":"4"}],"answer":"C"},{"id":"28c2253f","page":87,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"D"},{"id":"34aca984","page":88,"skill":"Linear Inequalities","options":[{"l":"A","t":"2"},{"l":"B","t":"3"},{"l":"C","t":"4"},{"l":"D","t":"5"}],"answer":"B"},{"id":"f81a0503","page":89,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"5"},{"l":"C","t":"7"},{"l":"D","t":"9"}],"answer":"A"},{"id":"ce6b52d8","page":90,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"C"},{"id":"0cadb20e","page":91,"skill":"Linear Functions","options":[{"l":"A","t":"The cost per unit"},{"l":"B","t":"The fixed cost"},{"l":"C","t":"The total revenue"},{"l":"D","t":"The profit margin"}],"answer":"A"},{"id":"265f2a53","page":92,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"4"},{"l":"B","t":"6"},{"l":"C","t":"8"},{"l":"D","t":"10"}],"answer":"B"},{"id":"2875ba81","page":93,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"6"},{"l":"C","t":"9"},{"l":"D","t":"12"}],"answer":"C"},{"id":"62ef6f73","page":94,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"D"},{"id":"9f6f96ff","page":95,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"Zero"},{"l":"B","t":"Exactly one"},{"l":"C","t":"Exactly two"},{"l":"D","t":"Infinitely many"}],"answer":"A"},{"id":"b3c7ca1d","page":96,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"5"},{"l":"C","t":"7"},{"l":"D","t":"9"}],"answer":"B"},{"id":"1bc11c4e","page":97,"skill":"Linear Functions","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"C"},{"id":"ca452900","page":98,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"4"},{"l":"B","t":"8"},{"l":"C","t":"12"},{"l":"D","t":"16"}],"answer":"A"},{"id":"e77a76ce","page":99,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"6"},{"l":"C","t":"9"},{"l":"D","t":"12"}],"answer":"D"},{"id":"042aa429","page":100,"skill":"Linear Functions","options":[{"l":"A","t":"3"},{"l":"B","t":"4"},{"l":"C","t":"5"},{"l":"D","t":"6"}],"answer":"B"},{"id":"113b938e","page":101,"skill":"Linear Functions","options":[{"l":"A","t":"The speed before braking"},{"l":"B","t":"The rate of speed decrease per second"},{"l":"C","t":"The number of seconds until the bicycle stopped"},{"l":"D","t":"The distance traveled while braking"}],"answer":"C"},{"id":"2e1a7f66","page":102,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"Each side of figure B has a length of 6 inches."},{"l":"B","t":"The number of sides of figure B is 6."},{"l":"C","t":"Each side of figure A has a length of 3 inches."},{"l":"D","t":"The number of sides of figure A is 3."}],"answer":"A"},{"id":"5e422ff9","page":103,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"C"},{"id":"637022d2","page":104,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"5"},{"l":"C","t":"7"},{"l":"D","t":"9"}],"answer":"B"},{"id":"36ab4122","page":105,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"$11.75"},{"l":"B","t":"$12.50"},{"l":"C","t":"$13.25"},{"l":"D","t":"$13.75"}],"answer":"B"},{"id":"74c98c82","page":106,"skill":"Linear Inequalities","options":[{"l":"A","t":"4"},{"l":"B","t":"5"},{"l":"C","t":"6"},{"l":"D","t":"7"}],"answer":"C"},{"id":"295a41f0","page":107,"skill":"Linear Functions","options":[{"l":"A","t":"The starting salary"},{"l":"B","t":"The annual raise"},{"l":"C","t":"The total salary after n years"},{"l":"D","t":"The number of years worked"}],"answer":"B"},{"id":"e9ef0e6b","page":108,"skill":"Linear Inequalities","options":[{"l":"A","t":"x < 3"},{"l":"B","t":"x > 3"},{"l":"C","t":"x < 5"},{"l":"D","t":"x > 5"}],"answer":"A"},{"id":"5a7ab8e8","page":109,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"Exactly one"},{"l":"B","t":"Exactly two"},{"l":"C","t":"Infinitely many"},{"l":"D","t":"Zero"}],"answer":"C"},{"id":"55447be2","page":110,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"D"},{"id":"40049d49","page":111,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"Exactly one"},{"l":"B","t":"Exactly two"},{"l":"C","t":"Infinitely many"},{"l":"D","t":"Zero"}],"answer":"A"},{"id":"2704399f","page":112,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"6"},{"l":"C","t":"9"},{"l":"D","t":"12"}],"answer":"B"},{"id":"f02b4509","page":113,"skill":"Linear Inequalities","options":[{"l":"A","t":"t ≤ 2"},{"l":"B","t":"t ≥ 2"},{"l":"C","t":"t ≤ 4"},{"l":"D","t":"t ≥ 4"}],"answer":"D"},{"id":"686b7cad","page":114,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"5"},{"l":"B","t":"10"},{"l":"C","t":"15"},{"l":"D","t":"20"}],"answer":"C"},{"id":"1f0966db","page":115,"skill":"Linear Functions","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"A"},{"id":"90bd9ef8","page":116,"skill":"Linear Inequalities","options":[{"l":"A","t":"x ≤ 3"},{"l":"B","t":"x ≥ 3"},{"l":"C","t":"x ≤ 6"},{"l":"D","t":"x ≥ 6"}],"answer":"B"},{"id":"6f6dfe3e","page":117,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"4"},{"l":"B","t":"6"},{"l":"C","t":"8"},{"l":"D","t":"10"}],"answer":"C"},{"id":"e3bbde69","page":118,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"2"},{"l":"B","t":"3"},{"l":"C","t":"4"},{"l":"D","t":"5"}],"answer":"D"},{"id":"441558e7","page":119,"skill":"Linear Functions","options":[{"l":"A","t":"The initial value"},{"l":"B","t":"The rate of change"},{"l":"C","t":"The maximum value"},{"l":"D","t":"The y-intercept"}],"answer":"B"},{"id":"038d87d7","page":120,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"The average number of trees per hectare in the park"},{"l":"B","t":"The average number of trees per hectare in the residential area"},{"l":"C","t":"The total number of trees in the park"},{"l":"D","t":"The total number of trees in the residential area"}],"answer":"A"},{"id":"5ad9eff0","page":121,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"Exactly one"},{"l":"B","t":"Exactly two"},{"l":"C","t":"Infinitely many"},{"l":"D","t":"Zero"}],"answer":"D"},{"id":"8f0c82e2","page":122,"skill":"Linear Inequalities","options":[{"l":"A","t":"2"},{"l":"B","t":"3"},{"l":"C","t":"4"},{"l":"D","t":"5"}],"answer":"C"},{"id":"fb43b85f","page":123,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"4"},{"l":"B","t":"8"},{"l":"C","t":"12"},{"l":"D","t":"16"}],"answer":"B"},{"id":"53487897","page":124,"skill":"Linear Functions","options":[{"l":"A","t":"3"},{"l":"B","t":"5"},{"l":"C","t":"7"},{"l":"D","t":"9"}],"answer":"A"},{"id":"45bba652","page":125,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"2"},{"l":"B","t":"5"},{"l":"C","t":"7"},{"l":"D","t":"12"}],"answer":"A"},{"id":"9ed4c1a2","page":126,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"4"},{"l":"C","t":"5"},{"l":"D","t":"6"}],"answer":"D"},{"id":"400798d6","page":127,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"The difference between the lengths of two sides"},{"l":"B","t":"The difference between the other two sides"},{"l":"C","t":"The sum of all three sides"},{"l":"D","t":"The length of one of the two equal sides"}],"answer":"D"},{"id":"b544a348","page":128,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"C"},{"id":"f0773a55","page":129,"skill":"Linear Functions","options":[{"l":"A","t":"The electrician's hourly rate"},{"l":"B","t":"The electrician's one-time fee"},{"l":"C","t":"The maximum the electrician charges"},{"l":"D","t":"The total the electrician charges"}],"answer":"A"},{"id":"8c515062","page":130,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"Exactly one"},{"l":"B","t":"Exactly two"},{"l":"C","t":"Infinitely many"},{"l":"D","t":"Zero"}],"answer":"A"},{"id":"8ad64841","page":131,"skill":"Linear Functions","options":[{"l":"A","t":"3"},{"l":"B","t":"5"},{"l":"C","t":"7"},{"l":"D","t":"9"}],"answer":"B"},{"id":"41fdc0b8","page":132,"skill":"Linear Functions","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"D"},{"id":"e53688cb","page":133,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"6"},{"l":"C","t":"9"},{"l":"D","t":"12"}],"answer":"C"},{"id":"d02193fb","page":134,"skill":"Linear Inequalities","options":[{"l":"A","t":"x < 4"},{"l":"B","t":"x > 4"},{"l":"C","t":"x < 8"},{"l":"D","t":"x > 8"}],"answer":"B"},{"id":"8a6de407","page":135,"skill":"Linear Functions","options":[{"l":"A","t":"4"},{"l":"B","t":"6"},{"l":"C","t":"8"},{"l":"D","t":"10"}],"answer":"A"},{"id":"3ce92ce8","page":136,"skill":"Linear Functions","options":[{"l":"A","t":"The initial amount"},{"l":"B","t":"The rate of change"},{"l":"C","t":"The final amount"},{"l":"D","t":"The time elapsed"}],"answer":"B"},{"id":"eafdbbbd","page":137,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"Exactly one"},{"l":"B","t":"Exactly two"},{"l":"C","t":"Infinitely many"},{"l":"D","t":"Zero"}],"answer":"A"},{"id":"948087f2","page":138,"skill":"Linear Inequalities","options":[{"l":"A","t":"3"},{"l":"B","t":"4"},{"l":"C","t":"5"},{"l":"D","t":"6"}],"answer":"D"},{"id":"a04190b7","page":139,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"8"}],"answer":"B"}];
+
+// MCQ-only for assignment (filter out free-response)
+const MCQ_QUESTIONS = QUESTION_BANK.filter(q => q.options && q.options.length === 4 && q.answer)
+  .map(q => ({...q, difficulty: 'Medium'})); // All current questions are Medium difficulty
+
+// ════════════════════════════════════════════════
+//  PDF.js setup — high-res, cropped to question body
+// ════════════════════════════════════════════════
+
+// Per-page crop coords in PDF points (y_start, y_end|null)
+// y_start = bottom of "ID:" badge, y_end = top of "A." option (null = free response)
+const PAGE_CLIPS={1:[167.0,null],2:[167.0,242.1],3:[179.0,302.9],4:[155.8,199.4],5:[155.8,null],6:[167.0,196.4],7:[167.0,238.4],8:[155.8,194.9],9:[179.0,238.4],10:[155.8,199.4],11:[179.0,208.4],12:[167.0,335.9],13:[167.0,226.4],14:[179.0,208.4],15:[155.8,null],16:[179.0,254.1],17:[167.0,273.6],18:[167.0,249.6],19:[179.0,238.4],20:[167.0,196.4],21:[167.0,null],22:[167.0,248.1],23:[167.0,196.4],24:[167.0,236.9],25:[179.0,208.4],26:[155.8,null],27:[155.8,185.1],28:[179.0,281.1],29:[167.0,242.1],30:[155.8,215.1],31:[179.0,208.4],32:[155.8,253.4],33:[167.0,232.4],34:[155.8,495.6],35:[179.0,269.1],36:[167.0,null],37:[179.0,208.4],38:[179.0,238.4],39:[179.0,263.9],40:[167.0,260.9],41:[155.8,215.1],42:[179.0,230.9],43:[155.8,199.4],44:[155.8,299.1],45:[167.0,196.4],46:[155.8,251.9],47:[155.8,199.4],48:[167.0,null],49:[155.8,null],50:[167.0,489.6],51:[179.0,208.4],52:[167.0,242.1],53:[155.8,240.6],54:[167.0,232.4],55:[167.0,299.9],56:[167.0,null],57:[167.0,null],58:[179.0,null],59:[167.0,527.1],60:[155.8,257.9],61:[179.0,208.4],62:[167.0,null],63:[155.8,204.6],64:[155.8,326.1],65:[155.8,null],66:[167.0,489.6],67:[167.0,196.4],68:[167.0,346.4],69:[155.8,215.1],70:[179.0,208.4],71:[155.8,null],72:[167.0,238.4],73:[155.8,185.1],74:[155.8,217.4],75:[179.0,240.6],76:[155.8,217.4],77:[167.0,196.4],78:[167.0,null],79:[167.0,228.6],80:[155.8,null],81:[155.8,199.4],82:[155.8,278.1],83:[167.0,231.6],84:[155.8,261.6],85:[155.8,185.1],86:[167.0,257.9],87:[167.0,519.6],88:[167.0,210.6],89:[167.0,196.4],90:[167.0,null],91:[155.8,185.1],92:[167.0,210.6],93:[179.0,222.6],94:[167.0,226.4],95:[179.0,222.6],96:[179.0,208.4],97:[155.8,217.4],98:[167.0,null],99:[179.0,208.4],100:[155.8,185.1],101:[155.8,252.6],102:[167.0,226.4],103:[179.0,263.1],104:[167.0,244.4],105:[167.0,242.1],106:[167.0,null],107:[155.8,478.4],108:[167.0,226.4],109:[167.0,196.4],110:[179.0,null],111:[167.0,214.4],112:[179.0,392.9],113:[167.0,226.4],114:[179.0,238.4],115:[155.8,null],116:[167.0,273.6],117:[167.0,310.4],118:[179.0,208.4],119:[155.8,230.9],120:[167.0,226.4],121:[167.0,226.4],122:[167.0,196.4],123:[167.0,null],124:[155.8,199.4],125:[167.0,237.6],126:[167.0,null],127:[167.0,228.6],128:[179.0,null],129:[155.8,515.9],130:[167.0,210.6],131:[155.8,199.4],132:[155.8,272.9],133:[179.0,null],134:[167.0,485.9],135:[155.8,null],136:[155.8,null],137:[167.0,196.4],138:[167.0,268.4],139:[167.0,null]};
+
+let pdfDoc = null;
+
+async function loadPDF() {
+  try {
+    pdfDoc = await pdfjsLib.getDocument('./questions.pdf').promise;
+  } catch(e) {
+    console.warn('PDF load failed:', e.message);
+  }
+}
+
+async function renderPage(pageNum, canvas) {
+  const loadingEl = canvas.closest('.pdf-canvas-wrap')?.querySelector('.pdf-loading');
+  if (!pdfDoc) {
+    if (loadingEl) loadingEl.textContent = '⚠ PDF not found — place questions.pdf in the same folder as index.html';
+    return;
+  }
+  try {
+    const page = await pdfDoc.getPage(pageNum);
+    const PAGE_HEIGHT_PTS = 841.9;
+    const clip = PAGE_CLIPS[pageNum] || [165, null];
+    const yStart = clip[0];
+    const yEnd   = clip[1];
+    const yEndActual = yEnd !== null ? yEnd : Math.min(yStart + 260, PAGE_HEIGHT_PTS - 100);
+
+    const wrap = canvas.closest('.pdf-canvas-wrap');
+    const wrapW = (wrap?.clientWidth || 660);
+
+    const baseViewport = page.getViewport({ scale: 1 });
+    const pageW = baseViewport.width; // ~595 pts
+
+    // On mobile, enforce a minimum scale so text stays readable.
+    // Min scale ensures text is at least ~14px equivalent on screen.
+    const isMobile = window.innerWidth < 640;
+    const minScale = isMobile ? 1.2 : 1.0;
+    const maxScale = 2.5;
+    const rawScale = wrapW / pageW;
+    const scale = Math.min(Math.max(rawScale, minScale), maxScale);
+
+    const clipH = yEndActual - yStart;
+    const cssW = Math.round(pageW * scale);
+    const cssH = Math.round(clipH * scale);
+
+    // Always render at devicePixelRatio for crisp text on retina/OLED screens
+    const dpr = Math.min(window.devicePixelRatio || 1, 3); // cap at 3x to avoid memory issues
+    canvas.style.width  = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    canvas.style.maxWidth = '100%';
+    canvas.width  = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+
+    // If canvas is wider than wrap on mobile, make it scrollable
+    if(wrap && cssW > wrapW) {
+      wrap.style.overflowX = 'auto';
+      wrap.style.justifyContent = 'flex-start';
+    } else if(wrap) {
+      wrap.style.overflowX = 'hidden';
+      wrap.style.justifyContent = 'center';
+    }
+
+    const ctx = canvas.getContext('2d');
+    const offsetY = -(yStart * scale * dpr);
+    ctx.save();
+    ctx.translate(0, offsetY);
+    const scaledViewport = page.getViewport({ scale: scale * dpr });
+    await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+    ctx.restore();
+
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (wrap) wrap.style.minHeight = cssH + 'px';
+
+  } catch(e) {
+    console.error('Render error page', pageNum, e);
+    if (loadingEl) loadingEl.textContent = 'Error rendering question.';
+  }
+}
+
+// ════════════════════════════════════════════════
+//  DATABASE LAYER  (Secure — v2)
+// ════════════════════════════════════════════════
+//  Architecture:
+//  • anon key is safe here — RLS policies enforce access control
+//  • Teacher actions → Edge Function (service role key NEVER in browser)
+//  • Student actions → Supabase REST with JWT from Supabase Auth
+//  • Passwords hashed by Supabase Auth — never stored plain in DB
+// ════════════════════════════════════════════════
+const SUPA_URL  = 'https://wkydhhnvuoqyebpwmikq.supabase.co';
+const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndreWRoaG52dW9xeWVicHdtaWtxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDgzMDYsImV4cCI6MjA5MDk4NDMwNn0.XVNhEm89mOVnjbAy7AvESs6luXgIicVtVSHelcwAvvo';
+const EDGE_FN   = `${SUPA_URL}/functions/v1/teacher-api`;
+
+// Current session JWT (set after login, used for all authenticated requests)
+let _sessionJwt = null;
+
+// ── Auth headers helpers ─────────────────────────────────────
+function anonH(extra={}) {
+  return { 'Content-Type':'application/json', 'apikey':SUPA_ANON, 'Authorization':'Bearer '+SUPA_ANON, ...extra };
+}
+function authH(extra={}) {
+  // After login, use the user's JWT instead of the anon key
+  const token = _sessionJwt || SUPA_ANON;
+  return { 'Content-Type':'application/json', 'apikey':SUPA_ANON, 'Authorization':'Bearer '+token, ...extra };
+}
+
+// ── Low-level REST helper (for student RLS-protected reads) ──
+async function supaREST(method, table, body, qs='', extraPrefer='') {
+  const headers = authH(extraPrefer ? {'Prefer': extraPrefer} : {'Prefer':'return=representation'});
+  const res = await fetch(`${SUPA_URL}/rest/v1/${table}${qs}`, {
+    method, headers, body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) { const e = await res.text(); throw new Error(`${table} ${method}: ${e}`); }
+  const txt = await res.text(); return txt ? JSON.parse(txt) : [];
+}
+
+// ── Edge Function caller (teacher admin operations) ───────────
+async function teacherAPI(action, params={}) {
+  const res = await fetch(EDGE_FN, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+_sessionJwt },
+    body: JSON.stringify({ action, ...params })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `Edge function error ${res.status}`);
+  return data;
+}
+
+// ── Supabase Auth ─────────────────────────────────────────────
+const Auth = {
+  // Teacher logs in with their real email via Supabase Auth
+  async signInTeacher(email, password) {
+    const res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: anonH(),
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
+    _sessionJwt = data.access_token;
+    return data;
+  },
+
+  // Student logs in — email is constructed as username@prepgenix.student
+  async signInStudent(username, password) {
+    const email = `${username}@prepgenix.student`;
+    const res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: anonH(),
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
+    _sessionJwt = data.access_token;
+    return data;
+  },
+
+  async signOut() {
+    if (!_sessionJwt) return;
+    await fetch(`${SUPA_URL}/auth/v1/logout`, {
+      method: 'POST', headers: authH()
+    }).catch(()=>{});
+    _sessionJwt = null;
+  }
+};
+
+// ── DB — unified interface (same API as before, secure internals) ──
+const DB = {
+  // ── STUDENT READ OPS (uses auth JWT + RLS) ──────────────────
+  async getStudentSelf() {
+    // After student login, fetch their own row (RLS ensures they only get their own)
+    const r = await supaREST('GET','students','','?select=*');
+    return r[0] || null;
+  },
+  async getAssignments(sid) {
+    return supaREST('GET','assignments','',`?student_id=eq.${sid}&order=id.asc`);
+  },
+  async getResults(sid) {
+    return supaREST('GET','results','',`?student_id=eq.${sid}`);
+  },
+  async recordAnswer(sid, qId, chosen, correct, timeSeconds) {
+    await supaREST('POST','results',
+      {student_id:sid, question_id:qId, chosen, correct, time_spent_seconds:timeSeconds||0},
+      '', 'resolution=merge-duplicates,return=representation'
+    );
+  },
+  async getStats(sid) {
+    const [assignments,results] = await Promise.all([DB.getAssignments(sid), DB.getResults(sid)]);
+    const assigned = assignments.map(a=>a.question_id);
+    const rm = {}; results.forEach(r=>rm[r.question_id]={chosen:r.chosen,correct:r.correct,time:r.time_spent_seconds||0});
+    const done    = assigned.filter(id=>rm[id]);
+    const correct = done.filter(id=>rm[id].correct);
+    return { total:assigned.length, done:done.length, correct:correct.length, wrong:done.length-correct.length, results:rm, assigned };
+  },
+
+  // ── TEACHER OPS (all route through Edge Function) ───────────
+  async getStudents()                       { return teacherAPI('getStudents'); },
+  async getStudent(id)                      { const all=await DB.getStudents(); return all.find(s=>s.id===id)||null; },
+  async addStudent(name,username,password,days=31) { return teacherAPI('addStudent',{name,username,password,days}); },
+  async removeStudent(id)                   { return teacherAPI('removeStudent',{id}); },
+  async setDeadline(id,deadline)            { return teacherAPI('setDeadline',{id,deadline}); },
+  async setDeadlineAll(deadline)            { return teacherAPI('setDeadlineAll',{deadline}); },
+  async updateAccessDays(id,days)           { return teacherAPI('updateAccessDays',{id,days}); },
+  async purgeExpired()                      { return teacherAPI('purgeExpired'); },
+  async assignQuestions(sid,questionIds)    { return teacherAPI('assignQuestions',{studentId:sid,questionIds}); },
+  async assignToAll(questionIds)            { return teacherAPI('assignToAll',{questionIds}); },
+  async resetStudent(sid)                   { return teacherAPI('resetStudent',{id:sid}); },
+  async resetAllStudents()                  { return teacherAPI('resetAllStudents'); },
+  // Teacher viewing a specific student's data — also routes through edge function
+  async getAssignmentsForStudent(sid)       { return teacherAPI('getAssignments',{studentId:sid}); },
+  async getResultsForStudent(sid)           { return teacherAPI('getResults',{studentId:sid}); },
+  async getStatsForStudent(sid) {
+    const [assignments,results] = await Promise.all([DB.getAssignmentsForStudent(sid), DB.getResultsForStudent(sid)]);
+    const assigned = assignments.map(a=>a.question_id);
+    const rm = {}; results.forEach(r=>rm[r.question_id]={chosen:r.chosen,correct:r.correct,time:r.time_spent_seconds||0});
+    const done    = assigned.filter(id=>rm[id]);
+    const correct = done.filter(id=>rm[id].correct);
+    return { total:assigned.length, done:done.length, correct:correct.length, wrong:done.length-correct.length, results:rm, assigned };
+  },
+};
+
+// ════════════════════════════════════════════════
+//  APP STATE
+// ════════════════════════════════════════════════
+let currentUser=null, loginTab='student', activePanelId='panel-overview';
+let selectedQIds=new Set();
+let practiceQueue=[], practiceIndex=0;
+let modalCb=null;
+// Timer state
+let qStartTime=null, timerInterval=null, sessionTimes={}; // qId -> seconds
+
+// ════════════════════════════════════════════════
+//  UTILITY
+// ════════════════════════════════════════════════
+function showToast(msg,dur=2600){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+function show(id){document.getElementById(id).classList.remove('hidden')}
+function hide(id){document.getElementById(id).classList.add('hidden')}
+function loading(id,msg='Loading…'){const el=document.getElementById(id);if(el)el.innerHTML=`<div style="padding:40px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:.82rem">${msg}</div>`;}
+function openModal(title,body,cb){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').textContent=body;
+  modalCb=cb;show('confirm-modal');
+}
+function closeModal(){hide('confirm-modal')}
+document.getElementById('modal-confirm-btn').onclick=()=>{closeModal();if(modalCb)modalCb()};
+
+// ════════════════════════════════════════════════
+//  LOGIN
+// ════════════════════════════════════════════════
+function togglePassword(){
+  const input = document.getElementById('login-pass');
+  const eyeOn  = document.getElementById('icon-eye');
+  const eyeOff = document.getElementById('icon-eye-off');
+  const showing = input.type === 'text';
+  input.type = showing ? 'password' : 'text';
+  eyeOn.style.display  = showing ? '' : 'none';
+  eyeOff.style.display = showing ? 'none' : '';
+}
+
+function switchLoginTab(tab){
+  loginTab=tab;
+  const isTeacher = tab==='teacher';
+  document.getElementById('tab-teacher').classList.toggle('active', isTeacher);
+  document.getElementById('tab-student').classList.toggle('active', !isTeacher);
+  const btn = document.getElementById('btn-signin');
+  const heading = document.getElementById('login-heading');
+  const sub = document.getElementById('login-subheading');
+  const userLabel = document.getElementById('login-user-label');
+  const userInput = document.getElementById('login-user');
+  if(isTeacher){
+    btn.className='btn-primary teacher-mode';
+    btn.textContent='Sign In as Teacher';
+    heading.textContent='Teacher Portal';
+    sub.textContent='Manage students, assign questions and track results';
+    userLabel.textContent='Email';
+    userInput.type='email';
+    userInput.placeholder='Enter your email address';
+    userInput.autocomplete='email';
+  } else {
+    btn.className='btn-primary student-mode';
+    btn.textContent='Sign In as Student';
+    heading.textContent='Welcome back';
+    sub.textContent='Sign in to continue your SAT prep';
+    userLabel.textContent='Username';
+    userInput.type='text';
+    userInput.placeholder='Enter your username';
+    userInput.autocomplete='off';
+  }
+  userInput.value='';
+  document.getElementById('login-pass').value='';
+}
+
+async function doLogin(){
+  const u=document.getElementById('login-user').value.trim();
+  const p=document.getElementById('login-pass').value.trim();
+  if(!u||!p){showToast('Enter username and password');return;}
+  const btn=document.querySelector('.btn-primary');
+  btn.textContent='Signing in…';btn.disabled=true;
+  try {
+    if(loginTab==='teacher'){
+      // Teacher signs in with their real email via Supabase Auth
+      await Auth.signInTeacher(u, p);
+      currentUser={role:'teacher'};
+      hide('screen-login');show('screen-teacher');
+      document.getElementById('teacher-username-label').textContent=u;
+      // Silently purge any expired student accounts
+      DB.purgeExpired().catch(e=>console.warn('Purge failed:',e));
+      renderTeacher();
+    } else {
+      // Student signs in — username maps to username@prepgenix.student in Supabase Auth
+      await Auth.signInStudent(u, p);
+      // Fetch their own row via RLS-protected query
+      const s = await DB.getStudentSelf();
+      if(!s){ showToast('Account not found — contact your teacher'); await Auth.signOut(); return; }
+      // Check if account has expired
+      if(s.expires_at && new Date(s.expires_at) < new Date()){
+        showToast('Your access has expired. Please contact your teacher.');
+        await Auth.signOut();
+        btn.textContent='Sign In as Student';btn.disabled=false;
+        return;
+      }
+      currentUser={role:'student',id:s.id};
+      hide('screen-login'); show('screen-student');
+      renderStudentPractice(s.id);
+    }
+  } catch(e){
+    // Supabase Auth returns "Invalid login credentials" for wrong password
+    if(e.message.includes('Invalid login') || e.message.includes('invalid_grant')){
+      showToast('Invalid username or password');
+    } else {
+      showToast('Connection error — check internet');
+      console.error(e);
+    }
+  }
+  finally{ btn.textContent='Sign In';btn.disabled=false; }
+}
+document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+document.getElementById('login-user').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('login-pass').focus()});
+
+function doLogout(){
+  Auth.signOut().catch(()=>{});
+  currentUser=null;hide('screen-teacher');hide('screen-student');show('screen-login');
+  document.getElementById('login-user').value='';document.getElementById('login-pass').value='';
+}
+
+// ════════════════════════════════════════════════
+//  TEACHER
+// ════════════════════════════════════════════════
+function switchPanel(pid,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(pid).classList.add('active');
+  if(el)el.classList.add('active');
+  activePanelId=pid;
+  if(pid==='panel-overview')renderOverview();
+  if(pid==='panel-students')renderStudents();
+  if(pid==='panel-assign')renderAssign();
+  if(pid==='panel-results')renderResults();
+  if(pid==='panel-deadline')renderDeadlines();
+}
+
+function renderTeacher(){ renderOverview(); renderAssign(); }
+
+// ── OVERVIEW ──
+async function renderOverview(){
+  loading('overview-stats','Loading…');loading('overview-tbody','');
+  try {
+    const students=await DB.getStudents();
+    const statsArr=await Promise.all(students.map(s=>DB.getStatsForStudent(s.id)));
+    let totalDone=0,totalCorrect=0;
+    const tbody=document.getElementById('overview-tbody');
+    tbody.innerHTML='';
+    students.forEach((s,i)=>{
+      const st=statsArr[i];
+      totalDone+=st.done;totalCorrect+=st.correct;
+      const pct=st.done>0?Math.round(st.correct/st.done*100):null;
+      const status=st.total===0?'none':st.done===0?'not-started':st.done<st.total?'in-progress':'done';
+      const badge={'none':'<span class="badge badge-muted">No questions</span>','not-started':'<span class="badge badge-gold">Not started</span>','in-progress':'<span class="badge badge-sky">In progress</span>','done':'<span class="badge badge-green">Completed</span>'}[status];
+      const dl=s.deadline?new Date(s.deadline).toLocaleDateString():'—';
+      const initials = s.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+      const avatarColors = [
+        {bg:'#e0e7ff',color:'#4338ca'},{bg:'#d1fae5',color:'#065f46'},
+        {bg:'#fce7f3',color:'#9d174d'},{bg:'#fef3c7',color:'#92400e'},
+        {bg:'#dbeafe',color:'#1d4ed8'},{bg:'#f3e8ff',color:'#6b21a8'}
+      ];
+      const ac = avatarColors[i % avatarColors.length];
+      const progPct = st.total>0 ? Math.round(st.done/st.total*100) : 0;
+      const progColor = progPct===100?'var(--green)':progPct>0?'var(--blue)':'var(--rule)';
+      tbody.innerHTML+=`<tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:30px;height:30px;border-radius:8px;background:${ac.bg};color:${ac.color};
+              display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0">${initials}</div>
+            <div>
+              <div style="font-weight:600;font-size:.875rem">${s.name}</div>
+              <div style="font-size:.72rem;color:var(--muted)">${s.username}</div>
+            </div>
+          </div>
+        </td>
+        <td>${st.total}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:52px;height:4px;background:var(--rule);border-radius:2px;overflow:hidden;flex-shrink:0">
+              <div style="height:100%;width:${progPct}%;background:${progColor};border-radius:2px;transition:width .5s ease"></div>
+            </div>
+            <span style="font-size:.8rem;font-family:var(--mono);color:var(--muted)">${st.done}/${st.total}</span>
+          </div>
+        </td>
+        <td>${pct!==null?pct+'%':'—'}</td>
+        <td style="font-size:.82rem">${dl}</td>
+        <td>${badge}</td>
+        <td><button class="btn-sm btn-danger" style="font-size:.72rem;padding:5px 10px;white-space:nowrap"
+          onclick="resetStudent('${s.id}','${s.name}')">↺ Reset</button></td>
+      </tr>`;
+    });
+    const avg=totalDone>0?Math.round(totalCorrect/totalDone*100):0;
+    document.getElementById('overview-stats').innerHTML=`
+      <div class="stat-card gold"><div class="s-num">${students.length}</div><div class="s-label">Students</div></div>
+      <div class="stat-card jade"><div class="s-num">${MCQ_QUESTIONS.length}</div><div class="s-label">MCQ Questions</div></div>
+      <div class="stat-card sky"><div class="s-num">${QUESTION_BANK.length}</div><div class="s-label">Total in PDF</div></div>
+      <div class="stat-card rose"><div class="s-num">${totalDone>0?avg+'%':'—'}</div><div class="s-label">Class Average</div></div>`;
+  } catch(e){ showToast('Error loading overview'); console.error(e); }
+}
+
+function resetStudent(id, name){
+  openModal(
+    `Reset ${name}`,
+    `This will delete all assigned questions and answers for ${name}. Their account stays active. You can assign fresh questions after. This cannot be undone.`,
+    async () => {
+      try{
+        await DB.resetStudent(id);
+        renderOverview();
+        showToast(`✓ ${name} reset — ready for new questions`);
+      } catch(e){ showToast('Error resetting student'); console.error(e); }
+    }
+  );
+}
+
+function resetAllStudents(){
+  openModal(
+    'Reset All Students',
+    'This will delete ALL assigned questions and answers for every student. All accounts stay active. This cannot be undone.',
+    async () => {
+      try{
+        await DB.resetAllStudents();
+        renderOverview();
+        showToast('✓ All students reset — ready for new questions');
+      } catch(e){ showToast('Error resetting students'); console.error(e); }
+    }
+  );
+}
+
+// ── STUDENTS ──
+async function renderStudents(){
+  loading('students-tbody','Loading students…');
+  try {
+    const students=await DB.getStudents();
+    const statsArr=await Promise.all(students.map(s=>DB.getStatsForStudent(s.id)));
+    const tbody=document.getElementById('students-tbody');
+    tbody.innerHTML='';
+    const now=new Date();
+    students.forEach((s,i)=>{
+      const st=statsArr[i];
+      let expiryHtml='—', daysHtml='—';
+      if(s.expires_at){
+        const exp=new Date(s.expires_at);
+        const msLeft=exp-now;
+        const daysLeft=Math.ceil(msLeft/86400000);
+        expiryHtml=exp.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+        if(daysLeft<=0){
+          daysHtml=`<span class="badge badge-rose">Expired</span>`;
+        } else if(daysLeft<=5){
+          daysHtml=`<span class="badge badge-gold">${daysLeft}d left</span>`;
+        } else {
+          daysHtml=`<span class="badge badge-green">${daysLeft}d left</span>`;
+        }
+      }
+      const si2 = s.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+      const ac2 = [{bg:'#e0e7ff',color:'#4338ca'},{bg:'#d1fae5',color:'#065f46'},{bg:'#fce7f3',color:'#9d174d'},{bg:'#fef3c7',color:'#92400e'},{bg:'#dbeafe',color:'#1d4ed8'},{bg:'#f3e8ff',color:'#6b21a8'}][i%6];
+      const sp2 = st.total>0?Math.round(st.done/st.total*100):0;
+      const sc2 = sp2===100?'var(--green)':sp2>0?'var(--blue)':'var(--rule)';
+      tbody.innerHTML+=`<tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:30px;height:30px;border-radius:8px;background:${ac2.bg};color:${ac2.color};
+              display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0">${si2}</div>
+            <strong>${s.name}</strong>
+          </div>
+        </td>
+        <td><code style="font-family:var(--mono);font-size:.82rem">${s.username}</code></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:52px;height:4px;background:var(--rule);border-radius:2px;overflow:hidden">
+              <div style="height:100%;width:${sp2}%;background:${sc2};border-radius:2px"></div>
+            </div>
+            <span style="font-size:.78rem;color:var(--muted);font-family:var(--mono)">${st.done}/${st.total}</span>
+          </div>
+        </td>
+        <td style="font-size:.82rem">${expiryHtml}</td>
+        <td>${daysHtml}</td>
+        <td style="display:flex;gap:6px;align-items:center">
+          <input type="number" id="days-${s.id}" min="1" max="365" value="31"
+            style="width:52px;padding:5px 8px;border:1.5px solid var(--rule);border-radius:6px;font-size:.8rem;outline:none"
+            title="Set new access duration in days">
+          <button class="btn-sm btn-gold" style="padding:5px 10px;font-size:.72rem" onclick="updateDays('${s.id}','${s.name}')">Set</button>
+          <button class="btn-sm btn-danger" onclick="removeStudent('${s.id}','${s.name}')">Remove</button>
+        </td>
+      </tr>`;
+    });
+  } catch(e){ showToast('Error loading students'); console.error(e); }
+}
+
+async function addStudent(){
+  const name=document.getElementById('new-name').value.trim();
+  const user=document.getElementById('new-user').value.trim();
+  const pass=document.getElementById('new-pass').value.trim();
+  const days=parseInt(document.getElementById('new-days').value)||31;
+  if(!name||!user||!pass){showToast('Fill in name, username and password');return;}
+  if(days<1||days>365){showToast('Access days must be between 1 and 365');return;}
+  try {
+    await DB.addStudent(name,user,pass,days);
+    ['new-name','new-user','new-pass'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('new-days').value='31';
+    renderStudents(); renderOverview(); refreshAssignTarget();
+    showToast(`✓ ${name} added — access for ${days} days`);
+  } catch(e){ showToast(e.message.includes('unique')?'Username already taken':'Error adding student'); }
+}
+
+async function updateDays(sid,name){
+  const days=parseInt(document.getElementById('days-'+sid).value)||31;
+  if(days<1||days>365){showToast('Enter 1–365 days');return;}
+  try{
+    await DB.updateAccessDays(sid,days);
+    renderStudents();
+    showToast(`✓ ${name}: access extended by ${days} days from now`);
+  }catch(e){ showToast('Error updating access'); }
+}
+
+function removeStudent(id,name){
+  openModal('Remove student',`Remove "${name}" and all their data? This cannot be undone.`,async()=>{
+    try{ await DB.removeStudent(id); renderStudents(); renderOverview(); refreshAssignTarget(); showToast(`Removed ${name}`); }
+    catch(e){ showToast('Error removing student'); }
+  });
+}
+
+// ── ASSIGN ──
+let assignFilters = { topics: [], difficulty: [] };
+
+function renderAssignFilterDropdown(){
+  const dd = document.getElementById('assign-filter-dropdown');
+  if(!dd) return;
+  const topics = ['Linear Inequalities','Linear Equations (2 vars)','Linear Functions','Linear Equations (1 var)'];
+  const difficulties = [
+    {id:'Easy',   e:'🟢', note:'Coming soon',  disabled:true},
+    {id:'Medium', e:'🟡', note:'136 questions', disabled:false},
+    {id:'Hard',   e:'🔴', note:'Coming soon',  disabled:true},
+  ];
+
+  let html = '<div style="padding:12px 16px 6px">';
+  html += '<div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px">Topic</div>';
+  topics.forEach(sk => {
+    const checked = assignFilters.topics.includes(sk) ? 'checked' : '';
+    const safeId  = 'af-topic-' + sk.replace(/[^a-zA-Z0-9]/g,'');
+    html += `<label style="display:flex;align-items:center;gap:10px;padding:7px 4px;cursor:pointer;border-radius:6px"
+      onmouseenter="this.style.background='#f5f7ff'" onmouseleave="this.style.background='transparent'">
+      <input type="checkbox" id="${safeId}" ${checked}
+        onchange="toggleAssignFilterItem('topics','${sk}')"
+        style="width:16px;height:16px;accent-color:var(--blue);cursor:pointer;flex-shrink:0">
+      <span style="font-size:.85rem;color:var(--ink-mid)">${sk}</span>
+    </label>`;
+  });
+  html += '</div><div style="height:1px;background:var(--rule);margin:4px 0"></div>';
+  html += '<div style="padding:6px 16px 12px">';
+  html += '<div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;margin-top:6px">Difficulty</div>';
+  difficulties.forEach(d => {
+    const checked  = assignFilters.difficulty.includes(d.id) ? 'checked' : '';
+    const disabled = d.disabled ? 'disabled' : '';
+    const opacity  = d.disabled ? '.4' : '1';
+    const cursor   = d.disabled ? 'default' : 'pointer';
+    const hover    = d.disabled ? '' : `onmouseenter="this.style.background='#f5f7ff'" onmouseleave="this.style.background='transparent'"`;
+    html += `<label style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-radius:6px;opacity:${opacity};cursor:${cursor}" ${hover}>
+      <input type="checkbox" id="af-diff-${d.id}" ${checked} ${disabled}
+        onchange="toggleAssignFilterItem('difficulty','${d.id}')"
+        style="width:16px;height:16px;accent-color:var(--blue);flex-shrink:0;cursor:${cursor}">
+      <span style="font-size:.85rem;color:var(--ink-mid)">${d.e} ${d.id}</span>
+      <span style="font-size:.7rem;color:var(--muted);margin-left:auto">${d.note}</span>
+    </label>`;
+  });
+  html += '</div>';
+  html += `<div style="padding:10px 16px;border-top:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;background:var(--bg)">
+    <button onclick="clearAssignFilters()" style="font-size:.78rem;color:var(--muted);background:none;border:none;cursor:pointer;font-family:var(--sans)">Clear all</button>
+    <button onclick="closeAssignFilter();renderAssign()" style="font-size:.82rem;font-weight:700;color:#fff;background:var(--blue);border:none;border-radius:7px;padding:7px 20px;cursor:pointer;font-family:var(--sans)">Apply</button>
+  </div>`;
+  dd.innerHTML = html;
+}
+
+function toggleAssignFilter(){
+  const dd = document.getElementById('assign-filter-dropdown');
+  if(!dd) return;
+  const isOpen = dd.style.display !== 'none';
+  if(isOpen){ dd.style.display = 'none'; return; }
+  renderAssignFilterDropdown(); // build fresh with current state
+  dd.style.display = 'block';
+  setTimeout(()=>{
+    document.addEventListener('click', function close(e){
+      const dd2 = document.getElementById('assign-filter-dropdown');
+      const btn = document.getElementById('assign-filter-btn');
+      if(dd2 && !dd2.contains(e.target) && btn && !btn.contains(e.target)){
+        dd2.style.display = 'none';
+        document.removeEventListener('click', close);
+      }
+    });
+  }, 0);
+}
+function closeAssignFilter(){
+  const dd = document.getElementById('assign-filter-dropdown');
+  if(dd) dd.style.display = 'none';
+}
+function toggleAssignFilterItem(type, value){
+  const arr = assignFilters[type];
+  const idx = arr.indexOf(value);
+  if(idx === -1) arr.push(value);
+  else arr.splice(idx, 1);
+  // Sync checkbox state
+  const cb = document.getElementById(`af-${type==='topics'?'topic':'diff'}-${value.replace(/[^a-z]/gi,'')}`);
+  if(cb) cb.checked = arr.includes(value);
+  updateAssignFilterUI();
+}
+function clearAssignFilters(){
+  assignFilters = { topics: [], difficulty: [] };
+  // Uncheck all
+  document.querySelectorAll('[id^="af-topic-"],[id^="af-diff-"]').forEach(cb => cb.checked = false);
+  updateAssignFilterUI();
+  closeAssignFilter();
+  renderAssign();
+}
+function updateAssignFilterUI(){
+  const btn = document.getElementById('assign-filter-btn');
+  const tagsEl = document.getElementById('assign-active-filters');
+  if(!btn) return;
+  const count = assignFilters.topics.length + assignFilters.difficulty.length;
+  // Update button
+  const svg = btn.querySelector('svg');
+  btn.innerHTML = '';
+  if(svg) btn.appendChild(svg.cloneNode(true));
+  btn.appendChild(document.createTextNode('Filter' + (count > 0 ? ' (' + count + ')' : '')));
+  btn.style.borderColor = count > 0 ? 'var(--blue)' : 'var(--rule)';
+  btn.style.background  = count > 0 ? 'var(--blue-bg)' : 'var(--white)';
+  btn.style.color       = count > 0 ? 'var(--blue)' : 'var(--ink-mid)';
+  // Show active filter tags
+  if(tagsEl){
+    const all = [...assignFilters.topics, ...assignFilters.difficulty];
+    tagsEl.innerHTML = all.map(f=>`
+      <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;
+        background:var(--blue-bg);color:var(--blue);font-size:.73rem;font-family:var(--mono);font-weight:600">
+        ${f}
+        <span onclick="toggleAssignFilterItem(${assignFilters.topics.includes(f)?'\'topics\'':'\'difficulty\''},'${f}');renderAssign()"
+          style="cursor:pointer;opacity:.6;font-size:.75rem;margin-left:2px">✕</span>
+      </span>`).join('');
+  }
+}
+
+function renderAssign(){
+  // Apply filters
+  const filtered = MCQ_QUESTIONS.filter(q => {
+    const topicOk = assignFilters.topics.length === 0 || assignFilters.topics.includes(q.skill);
+    const diffOk  = assignFilters.difficulty.length === 0 || assignFilters.difficulty.includes(q.difficulty);
+    return topicOk && diffOk;
+  });
+
+  // Update result count
+  const countEl = document.getElementById('assign-filter-count');
+  if(countEl) countEl.textContent = `${filtered.length} of ${MCQ_QUESTIONS.length} questions`;
+
+  // Render question list
+  document.getElementById('question-list').innerHTML = filtered.map(q=>`
+    <div class="q-row ${selectedQIds.has(q.id)?'selected':''}" id="qrow-${q.id}" onclick="toggleQ('${q.id}')">
+      <div class="q-checkbox">${selectedQIds.has(q.id)?'✓':''}</div>
+      <div class="q-num">${MCQ_QUESTIONS.indexOf(q)+1}</div>
+      <div class="q-id">${q.id}</div>
+      <div style="flex:1;font-size:.82rem;color:var(--muted)">Page ${q.page}</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+        <span class="q-skill-tag">${q.skill}</span>
+        <span style="font-family:var(--mono);font-size:.62rem;padding:2px 7px;border-radius:10px;
+          background:#fef9ec;color:#92400e;font-weight:600">🟡 Medium</span>
+      </div>
+    </div>`).join('');
+
+  refreshAssignTarget();
+  updateAssignBar();
+  updateAssignFilterUI();
+}
+function toggleQ(id){
+  selectedQIds.has(id)?selectedQIds.delete(id):selectedQIds.add(id);
+  const row=document.getElementById('qrow-'+id);
+  if(row){row.classList.toggle('selected',selectedQIds.has(id));row.querySelector('.q-checkbox').textContent=selectedQIds.has(id)?'✓':'';}
+  updateAssignBar();
+}
+function updateAssignBar(){
+  const bar=document.getElementById('assign-bar');
+  if(selectedQIds.size>0){bar.classList.remove('hidden');document.getElementById('assign-count').textContent=selectedQIds.size;}
+  else bar.classList.add('hidden');
+}
+function clearSelection(){selectedQIds.clear();renderAssign();}
+
+async function refreshAssignTarget(){
+  const sel=document.getElementById('assign-target');
+  if(!sel)return;
+  const prev=sel.value;
+  sel.innerHTML='<option value="all">→ All Students</option>';
+  try{
+    const students=await DB.getStudents();
+    students.forEach(s=>sel.innerHTML+=`<option value="${s.id}">${s.name}</option>`);
+  }catch(e){}
+  if(prev)sel.value=prev;
+}
+
+async function doAssign(){
+  const target=document.getElementById('assign-target').value;
+  const ids=[...selectedQIds];if(!ids.length)return;
+  const btn=document.getElementById('assign-bar').querySelector('.btn-gold');
+  btn.textContent='Assigning…';btn.disabled=true;
+  try{
+    if(target==='all'){
+      await DB.assignToAll(ids);
+      showToast(`✓ ${ids.length} questions assigned to all students`);
+    } else {
+      await DB.assignQuestions(target,ids);
+      const s=await DB.getStudent(target);
+      showToast(`✓ Questions assigned to ${s.name}`);
+    }
+    clearSelection(); renderOverview();
+  }catch(e){
+    console.error(e);
+    showToast('Error assigning — check console for details');
+  }
+  finally{ btn.textContent='Assign';btn.disabled=false; }
+}
+
+// ── RESULTS ──
+async function renderResults(){
+  const sel=document.getElementById('results-student-select');
+  const prev=sel.value;
+  sel.innerHTML='<option value="">— Select a student —</option>';
+  try{
+    const students=await DB.getStudents();
+    students.forEach(s=>sel.innerHTML+=`<option value="${s.id}">${s.name}</option>`);
+    if(prev){sel.value=prev;loadStudentResults();}
+  }catch(e){}
+}
+
+async function loadStudentResults(){
+  const sid=document.getElementById('results-student-select').value;
+  if(!sid){hide('results-content');show('results-empty');return;}
+  show('results-content');hide('results-empty');
+  loading('results-summary',''); loading('results-tbody','Loading results…');
+  try{
+    const st=await DB.getStatsForStudent(sid);
+    const pct=st.done>0?Math.round(st.correct/st.done*100):0;
+    document.getElementById('results-summary').innerHTML=`
+      <div class="rs-card"><div class="rs-num">${st.total}</div><div class="rs-label">Assigned</div></div>
+      <div class="rs-card"><div class="rs-num">${st.done}</div><div class="rs-label">Completed</div></div>
+      <div class="rs-card correct"><div class="rs-num">${st.correct}</div><div class="rs-label">Correct</div></div>
+      <div class="rs-card pct"><div class="rs-num">${st.done>0?pct+'%':'—'}</div><div class="rs-label">Score</div></div>`;
+    const tbody=document.getElementById('results-tbody');
+    tbody.innerHTML='';
+    st.assigned.forEach((qId,i)=>{
+      const q=QUESTION_BANK.find(q=>q.id===qId);if(!q)return;
+      const res=st.results[qId];
+      const dot=res?(res.correct?'<span class="result-dot correct"></span>':'<span class="result-dot wrong"></span>'):'<span class="result-dot pending"></span>';
+      const badge=res?(res.correct?'<span class="badge badge-green">Correct</span>':`<span class="badge badge-rose">Wrong (chose ${res.chosen})</span>`):'<span class="badge badge-muted">Pending</span>';
+      tbody.innerHTML+=`<tr>
+        <td style="color:var(--muted);font-family:var(--mono);font-size:.8rem">${i+1}</td>
+        <td style="font-family:var(--mono);font-size:.8rem">${q.id}</td>
+        <td><span class="badge badge-muted">${q.skill}</span></td>
+        <td style="font-family:var(--mono);font-size:.82rem">${res?res.chosen:'—'} <span style="color:var(--muted)">(correct: ${q.answer||'—'})</span></td>
+        <td>${dot}${badge}</td>
+      </tr>`;
+    });
+  }catch(e){ showToast('Error loading results'); console.error(e); }
+}
+
+// ── DEADLINES ──
+async function renderDeadlines(){
+  loading('deadline-tbody','Loading…');
+  try{
+    const students=await DB.getStudents();
+    const tbody=document.getElementById('deadline-tbody');
+    tbody.innerHTML='';
+    students.forEach(s=>{
+      const fmt=s.deadline?new Date(s.deadline).toLocaleString():'<span style="color:var(--muted)">None</span>';
+      tbody.innerHTML+=`<tr>
+        <td><strong>${s.name}</strong></td>
+        <td style="font-size:.85rem">${fmt}</td>
+        <td><input type="datetime-local" id="dl-${s.id}" style="font-size:.8rem;padding:5px 9px;border:1.5px solid var(--rule);border-radius:6px;background:#fff"></td>
+        <td><button class="btn-sm btn-gold" onclick="setDeadlineSingle('${s.id}','${s.name}')">Set</button></td>
+      </tr>`;
+    });
+  }catch(e){ showToast('Error loading deadlines'); }
+}
+async function setDeadlineAll(){
+  const dt=document.getElementById('deadline-all-dt').value;
+  if(!dt){showToast('Pick a date and time');return;}
+  try{ await DB.setDeadlineAll(dt); renderDeadlines(); showToast('✓ Deadline set for all students'); }
+  catch(e){ showToast('Error setting deadline'); }
+}
+async function setDeadlineSingle(sid,name){
+  const dt=document.getElementById('dl-'+sid).value;
+  if(!dt){showToast('Pick a date and time');return;}
+  try{ await DB.setDeadline(sid,dt); renderDeadlines(); showToast(`✓ Deadline set for ${name}`); }
+  catch(e){ showToast('Error setting deadline'); }
+}
+
+// ════════════════════════════════════════════════
+//  STUDENT HOME DASHBOARD
+// ════════════════════════════════════════════════
+let currentStudentId = null;
+let currentStudentData = null;
+let currentStudentStats = null;
+// Filter state — supports multi-select for both topic and difficulty
+let pgFilters = { topics: [], difficulty: [] }; // empty = show all
+
+async function renderStudentPractice(studentId){
+  currentStudentId = studentId;
+  pgSessionAnswers = {}; // reset practice ground session
+  const body = document.getElementById('student-body');
+  body.style.padding = '0';
+  body.innerHTML = `<div style="padding:60px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:.85rem">Loading…</div>`;
+  document.getElementById('student-progress').style.width = '0%';
+
+  try{
+    const [s, st] = await Promise.all([DB.getStudentSelf(), DB.getStats(studentId)]);
+    currentStudentData = s;
+    currentStudentStats = st;
+    document.getElementById('student-name-tag').textContent = s.name;
+    renderStudentHome();
+  } catch(e){
+    document.getElementById('student-body').innerHTML = `<div class="no-work"><div class="nw-icon">⚠️</div><h3>Connection error</h3><p>Check your internet and refresh.</p></div>`;
+    console.error(e);
+  }
+}
+
+async function renderStudentHome(){
+  const s = currentStudentData;
+  const st = currentStudentStats;
+  const body = document.getElementById('student-body');
+  body.style.padding = '0';
+  document.getElementById('student-progress').style.width = '0%';
+  if(timerInterval) clearInterval(timerInterval);
+
+  const unanswered = st.assigned.filter(id => !st.results[id]);
+  const pct = st.done > 0 ? Math.round(st.correct/st.done*100) : null;
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  // Deadline notice
+  let dlHtml = '';
+  if(s.deadline){
+    const dl = new Date(s.deadline);
+    const over = dl < new Date();
+    dlHtml = `<div class="deadline-notice" style="margin-bottom:24px">${over?'⚠️':'⏰'} ${over?'Deadline passed:':'Due by:'} <strong>${dl.toLocaleString()}</strong></div>`;
+  }
+
+  body.innerHTML = `
+    <div class="student-home">
+      ${dlHtml}
+      <div class="student-home-greeting">
+        <h2>${greeting}, ${s.name.split(' ')[0]} 👋</h2>
+        <p>${st.total > 0 ? `${st.done} of ${st.total} assigned questions completed${pct !== null ? ` · ${pct}% score` : ''}` : 'No questions assigned yet — explore the practice ground below.'}</p>
+      </div>
+
+      <div class="mode-cards">
+
+        <div class="mode-card practice-ground" onclick="renderPracticeGround()">
+          <span class="mode-card-icon">🏋️</span>
+          <div class="mode-card-title">Practice Ground</div>
+          <div id="pg-home-desc" class="mode-card-desc">Browse and attempt any of the 136 SAT Algebra questions in the app. Filter by topic and practice at your own pace.</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px">
+            <span class="mode-card-badge" id="pg-home-badge">136 questions</span>
+            <button id="pg-fresh-btn" onclick="event.stopPropagation();renderPracticeGround(undefined,true)"
+              style="display:none;font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:6px;
+              border:1.5px solid var(--rule);background:var(--white);color:var(--muted);cursor:pointer;
+              font-family:var(--sans);transition:all .15s;white-space:nowrap"
+              onmouseenter="this.style.borderColor='var(--red)';this.style.color='var(--red)'"
+              onmouseleave="this.style.borderColor='var(--rule)';this.style.color='var(--muted)'">
+              ↺ Start fresh
+            </button>
+          </div>
+        </div>
+
+        <div class="mode-card practice-assigned" onclick="renderAssignedPractice()">
+          <span class="mode-card-icon">📋</span>
+          <div class="mode-card-title">Assigned Questions</div>
+          <div class="mode-card-desc">${st.total > 0
+            ? `Practice the ${st.total} questions your teacher assigned. ${unanswered.length > 0 ? `<strong style="color:var(--green)">${unanswered.length} remaining.</strong>` : '✅ All done!'}`
+            : 'Your teacher hasn\'t assigned any questions yet.'}</div>
+          <span class="mode-card-badge">${unanswered.length} remaining</span>
+        </div>
+
+        <div class="mode-card analytics-mode" onclick="renderStudentAnalytics()">
+          <span class="mode-card-icon">📊</span>
+          <div class="mode-card-title">My Analytics</div>
+          <div class="mode-card-desc">View your performance breakdown by topic, time spent per question, accuracy trends, and session history.</div>
+          <span class="mode-card-badge">${st.done > 0 ? `${st.done} sessions analysed` : 'No data yet'}</span>
+        </div>
+
+      </div>
+    </div>`;
+
+  // Update Practice Ground card to reflect session state
+  const pgAnswered = Object.keys(pgSessionAnswers).length;
+  const pgTotal    = MCQ_QUESTIONS.length;
+  const pgBadge    = document.getElementById('pg-home-badge');
+  const pgDesc     = document.getElementById('pg-home-desc');
+  const pgFreshBtn = document.getElementById('pg-fresh-btn');
+  if(pgBadge && pgAnswered > 0){
+    const pgCorrect = Object.values(pgSessionAnswers).filter(a=>a.correct).length;
+    const pgPct     = Math.round(pgCorrect/pgAnswered*100);
+    pgBadge.textContent = `${pgAnswered}/${pgTotal} done · ${pgPct}% correct`;
+    pgBadge.style.background = 'var(--green-lt)';
+    pgBadge.style.color = '#065f46';
+    if(pgDesc) pgDesc.textContent = `Session in progress — ${pgTotal - pgAnswered} questions remaining. Tap to continue.`;
+    if(pgFreshBtn) pgFreshBtn.style.display = 'block';
+  } else if(pgBadge) {
+    pgBadge.textContent = '136 questions';
+    pgBadge.style.background = '';
+    pgBadge.style.color = '';
+    if(pgDesc) pgDesc.textContent = 'Browse and attempt any of the 136 SAT Algebra questions in the app. Filter by topic and practice at your own pace.';
+    if(pgFreshBtn) pgFreshBtn.style.display = 'none';
+  }
+}
+
+function togglePGFilter(){
+  const dd = document.getElementById('pg-filter-dropdown');
+  if(dd) dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+function closePGFilter(){
+  const dd = document.getElementById('pg-filter-dropdown');
+  if(dd) dd.style.display = 'none';
+}
+function togglePGFilterItem(type, value){
+  const arr = pgFilters[type];
+  const idx = arr.indexOf(value);
+  if(idx === -1) arr.push(value);
+  else arr.splice(idx, 1);
+  // Re-render just the filter button label (badge count) without closing dropdown
+  const btn = document.getElementById('pg-filter-btn');
+  if(btn){
+    const count = pgFilters.topics.length + pgFilters.difficulty.length;
+    // Update button text only
+    const svgEl = btn.querySelector('svg');
+    btn.textContent = 'Filter' + (count > 0 ? ' (' + count + ')' : '');
+    if(svgEl) btn.insertBefore(svgEl, btn.firstChild);
+    btn.style.borderColor = count > 0 ? 'var(--blue)' : 'var(--rule)';
+    btn.style.background  = count > 0 ? 'var(--blue-bg)' : 'var(--white)';
+    btn.style.color       = count > 0 ? 'var(--blue)' : 'var(--ink-mid)';
+  }
+}
+
+// ── MODE 1: PRACTICE GROUND ──────────────────────
+let pgSessionAnswers = {};
+let pgQueue = [], pgIndex = 0;
+
+function renderPracticeGround(startIdx, forceNew){
+  if(timerInterval) clearInterval(timerInterval);
+
+  // forceNew = student clicked "Start Fresh"
+  if(forceNew) {
+    pgSessionAnswers = {};
+    pgIndex = 0;
+  }
+
+  // Build queue based on active filters (multi-select)
+  const filtered = MCQ_QUESTIONS.filter(q => {
+    const topicOk = pgFilters.topics.length === 0 || pgFilters.topics.includes(q.skill);
+    const diffOk  = pgFilters.difficulty.length === 0 || pgFilters.difficulty.includes(q.difficulty);
+    return topicOk && diffOk;
+  });
+  pgQueue = filtered;
+
+  // If resuming (no startIdx, no forceNew), jump to first unanswered question
+  if(startIdx !== undefined) {
+    pgIndex = startIdx;
+  } else if(!forceNew) {
+    // Find first unanswered in current queue
+    const firstUnanswered = pgQueue.findIndex(q => !pgSessionAnswers[q.id]);
+    pgIndex = firstUnanswered >= 0 ? firstUnanswered : 0;
+  }
+
+  renderPracticeGroundQuestion();
+}
+
+function startPracticeGroundQuestion(startIdx){
+  renderPracticeGround(startIdx);
+}
+
+function renderPracticeGroundQuestion(){
+  const q = pgQueue[pgIndex];
+  if(!q) { renderStudentHome(); return; }
+
+  const body = document.getElementById('student-body');
+  body.style.padding = '32px 20px 60px';
+
+  // Practice ground uses ONLY session answers — completely independent from assigned practice
+  const colors = ['#3b82f6','#8b5cf6','#f59e0b','#10b981'];
+  const allAnswers = pgSessionAnswers; // never reads from assigned results
+  const res = allAnswers[q.id];
+  const wasAnswered = !!res;
+
+  // Progress indicator
+  const answeredInQueue = pgQueue.filter(qq => allAnswers[qq.id]).length;
+  const correctInQueue  = pgQueue.filter(qq => allAnswers[qq.id]?.correct).length;
+
+  body.innerHTML = `
+    <div style="width:100%;max-width:760px;margin:0 auto">
+
+      <!-- ── TOP BAR ── -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+        <button onclick="renderStudentHome()"
+          style="display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;
+            border:1.5px solid var(--rule);background:var(--white);color:var(--muted);
+            font-size:.82rem;font-weight:600;cursor:pointer;font-family:var(--sans);
+            transition:all .15s;white-space:nowrap">
+          ← Home
+        </button>
+
+        <!-- Progress bar -->
+        <div style="flex:1;height:6px;background:var(--rule);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pgQueue.length>0?Math.round((pgIndex/pgQueue.length)*100):0}%;
+            background:linear-gradient(90deg,var(--blue),#818cf8);border-radius:3px;transition:width .4s ease"></div>
+        </div>
+
+        <!-- Filter -->
+        <div style="position:relative">
+          <button id="pg-filter-btn" onclick="togglePGFilter()"
+            style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;
+              border:1.5px solid ${(pgFilters.topics.length+pgFilters.difficulty.length)>0?'var(--blue)':'var(--rule)'};
+              background:${(pgFilters.topics.length+pgFilters.difficulty.length)>0?'var(--blue-bg)':'var(--white)'};
+              color:${(pgFilters.topics.length+pgFilters.difficulty.length)>0?'var(--blue)':'var(--muted)'};
+              font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s;font-family:var(--sans)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+            </svg>
+            Filter${(pgFilters.topics.length+pgFilters.difficulty.length)>0?' ('+(pgFilters.topics.length+pgFilters.difficulty.length)+')':''}
+          </button>
+          <!-- Multi-select dropdown -->
+          <div id="pg-filter-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;
+            background:var(--white);border:1.5px solid var(--rule);border-radius:12px;
+            box-shadow:0 8px 28px rgba(0,0,0,.14);z-index:200;min-width:268px;overflow:hidden">
+            <div style="padding:12px 16px 6px">
+              <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px">Topic</div>
+              ${['Linear Inequalities','Linear Equations (2 vars)','Linear Functions','Linear Equations (1 var)'].map(sk=>`
+                <label style="display:flex;align-items:center;gap:10px;padding:7px 4px;cursor:pointer;border-radius:6px"
+                  onmouseenter="this.style.background='#f5f7ff'" onmouseleave="this.style.background='transparent'">
+                  <input type="checkbox" ${pgFilters.topics.includes(sk)?'checked':''}
+                    onchange="togglePGFilterItem('topics','${sk}')"
+                    style="width:16px;height:16px;accent-color:var(--blue);cursor:pointer;flex-shrink:0">
+                  <span style="font-size:.85rem;color:var(--ink-mid)">${sk}</span>
+                </label>`).join('')}
+            </div>
+            <div style="height:1px;background:var(--rule);margin:4px 0"></div>
+            <div style="padding:6px 16px 12px">
+              <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;margin-top:6px">Difficulty</div>
+              ${[{id:'Easy',e:'🟢',note:'Coming soon'},{id:'Medium',e:'🟡',note:'136 Qs'},{id:'Hard',e:'🔴',note:'Coming soon'}].map(d=>`
+                <label style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-radius:6px;opacity:${d.id==='Medium'?'1':'.4'};cursor:${d.id==='Medium'?'pointer':'default'}"
+                  ${d.id==='Medium'?'onmouseenter="this.style.background=\'#f5f7ff\'" onmouseleave="this.style.background=\'transparent\'"':''}>
+                  <input type="checkbox" ${pgFilters.difficulty.includes(d.id)?'checked':''} ${d.id!=='Medium'?'disabled':''}
+                    onchange="togglePGFilterItem('difficulty','${d.id}')"
+                    style="width:16px;height:16px;accent-color:var(--blue);flex-shrink:0;cursor:${d.id==='Medium'?'pointer':'default'}">
+                  <span style="font-size:.85rem;color:var(--ink-mid)">${d.e} ${d.id}</span>
+                  <span style="font-size:.7rem;color:var(--muted);margin-left:auto">${d.note}</span>
+                </label>`).join('')}
+            </div>
+            <div style="padding:10px 16px;border-top:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;background:var(--bg)">
+              <button onclick="pgFilters={topics:[],difficulty:[]};closePGFilter();renderPracticeGround(0)"
+                style="font-size:.78rem;color:var(--muted);background:none;border:none;cursor:pointer;font-family:var(--sans)">Clear all</button>
+              <button onclick="closePGFilter();renderPracticeGround(pgIndex)"
+                style="font-size:.82rem;font-weight:700;color:#fff;background:var(--blue);border:none;border-radius:7px;padding:7px 20px;cursor:pointer;font-family:var(--sans)">Apply</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q counter -->
+        <span style="font-size:.78rem;font-weight:700;color:var(--navy);font-family:var(--mono);white-space:nowrap">
+          ${pgIndex+1}<span style="color:var(--muted);font-weight:400">/${pgQueue.length}</span>
+        </span>
+      </div>
+
+      <!-- ── META ROW: skill + difficulty + timer/status ── -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+            color:var(--blue);background:var(--blue-bg);padding:4px 12px;border-radius:20px;
+            border:1px solid #bfdbfe">${q.skill}</span>
+          <span style="font-size:.72rem;font-weight:700;padding:4px 11px;border-radius:20px;
+            background:#fef9ec;color:#92400e;border:1px solid #fde68a">🟡 Medium</span>
+        </div>
+        ${wasAnswered
+          ? `<span style="font-size:.78rem;font-weight:700;padding:5px 14px;border-radius:20px;
+              background:${res.correct?'var(--green-lt)':'var(--red-lt)'};
+              color:${res.correct?'var(--green)':'var(--red)'};
+              border:1.5px solid ${res.correct?'#a7f3d0':'#fca5a5'}">
+              ${res.correct?'✓ Correct':'✗ Incorrect'}
+             </span>`
+          : `<div style="display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;
+              background:var(--white);border:1.5px solid var(--rule)">
+              <span class="q-timer" id="q-timer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>00:00</span>
+             </div>`
+        }
+      </div>
+
+      <!-- ── QUESTION CARD ── -->
+      <div style="background:var(--white);border-radius:16px;overflow:hidden;
+        box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 20px rgba(13,27,62,.08);
+        border:1px solid var(--rule);margin-bottom:14px;animation:qSlide .3s cubic-bezier(.4,0,.2,1)">
+
+        <!-- PDF question area -->
+        <div class="pdf-canvas-wrap" style="border-bottom:1px solid var(--rule)">
+          <div class="pdf-loading">Loading question…</div>
+          <canvas id="pdf-canvas-${q.id}"></canvas>
+        </div>
+
+        <!-- Options -->
+        <div style="padding:20px 24px">
+          <div style="display:grid;gap:10px">
+            ${q.options.map((o,i)=>{
+              const isCorrect = wasAnswered && o.l===q.answer;
+              const isWrong   = wasAnswered && res.chosen===o.l && !res.correct;
+              return `<button class="assigned-opt"
+                data-label="${o.l}"
+                ${wasAnswered?'disabled':''}
+                onclick="selectPracticeGroundAnswer('${q.id}','${o.l}')"
+                style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:12px;
+                  border:2px solid ${isCorrect?'var(--green)':isWrong?'var(--red)':'var(--rule)'};
+                  background:${isCorrect?'var(--green-lt)':isWrong?'var(--red-lt)':'var(--bg)'};
+                  text-align:left;font-size:.93rem;line-height:1.5;color:var(--ink);
+                  width:100%;font-family:var(--sans);transition:all .15s;
+                  cursor:${wasAnswered?'default':'pointer'}">
+                <span style="width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;
+                  align-items:center;justify-content:center;font-size:.78rem;font-weight:800;
+                  font-family:var(--mono);
+                  background:${isCorrect?'var(--green)':isWrong?'var(--red)':colors[i]+'22'};
+                  color:${isCorrect?'#fff':isWrong?'#fff':colors[i]}">${o.l}</span>
+                <span style="flex:1">${o.t}</span>
+                ${isCorrect?'<span style="color:var(--green);font-size:1rem">✓</span>':''}
+                ${isWrong?'<span style="color:var(--red);font-size:1rem">✗</span>':''}
+              </button>`;
+            }).join('')}
+          </div>
+
+          <!-- Feedback -->
+          ${wasAnswered ? `
+          <div style="margin-top:16px;padding:14px 18px;border-radius:12px;
+            background:${res.correct?'#f0fdf4':'#fff8f8'};
+            border:1.5px solid ${res.correct?'#86efac':'#fca5a5'}">
+            <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
+              color:${res.correct?'var(--green)':'var(--red)'};margin-bottom:4px">
+              ${res.correct?'✓ Correct':'✗ Incorrect'}
+            </div>
+            <div style="font-size:.88rem;color:${res.correct?'#166534':'#7f1d1d'}">
+              The correct answer is <strong>${q.answer}</strong>.
+            </div>
+          </div>` : ''}
+        </div>
+      </div>
+
+      <!-- ── NAV FOOTER ── -->
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <button
+          onclick="${pgIndex > 0 ? 'pgIndex--;renderPracticeGroundQuestion()' : 'renderStudentHome()'}"
+          style="display:flex;align-items:center;gap:6px;padding:11px 20px;border-radius:10px;
+            border:1.5px solid var(--rule);background:var(--white);
+            color:var(--ink-mid);font-size:.88rem;font-weight:600;cursor:pointer;
+            font-family:var(--sans);transition:all .15s;min-width:100px;justify-content:center">
+          ${pgIndex > 0 ? '← Prev' : '← Home'}
+        </button>
+
+        ${answeredInQueue > 0 ? `
+        <div style="text-align:center;font-size:.75rem;color:var(--muted);font-family:var(--mono)">
+          <strong style="color:var(--green)">${correctInQueue}</strong>/${answeredInQueue} correct
+        </div>` : `<div></div>`}
+
+        <button id="btn-next"
+          ${wasAnswered ? '' : 'disabled'}
+          onclick="${pgIndex < pgQueue.length-1 ? 'pgIndex++;renderPracticeGroundQuestion()' : 'renderStudentHome()'}"
+          style="display:flex;align-items:center;gap:6px;padding:11px 24px;border-radius:10px;
+            border:none;background:${wasAnswered?'var(--blue)':'var(--rule)'};
+            color:${wasAnswered?'#fff':'var(--muted)'};font-size:.88rem;font-weight:700;
+            cursor:${wasAnswered?'pointer':'not-allowed'};font-family:var(--sans);
+            transition:all .15s;min-width:100px;justify-content:center">
+          ${pgIndex < pgQueue.length-1 ? 'Next →' : '🏠 Finish'}
+        </button>
+      </div>
+
+    </div>`;
+
+  // Close dropdown when clicking outside
+  setTimeout(()=>{
+    document.addEventListener('click', function closeDrop(e){
+      const dd = document.getElementById('pg-filter-dropdown');
+      const btn = document.getElementById('pg-filter-btn');
+      if(dd && !dd.contains(e.target) && btn && !btn.contains(e.target)){
+        dd.style.display='none';
+        document.removeEventListener('click', closeDrop);
+      }
+    });
+  }, 0);
+
+  // Render PDF page
+  const canvas = document.getElementById('pdf-canvas-'+q.id);
+  if(canvas) renderPage(q.page, canvas);
+  if(!wasAnswered) startTimer(q.id);
+}
+
+async function selectPracticeGroundAnswer(qId, chosen){
+  const q = QUESTION_BANK.find(q=>q.id===qId);
+  const correct = chosen === q.answer;
+  const timeSpent = stopTimer(qId);
+
+  document.querySelectorAll('.assigned-opt').forEach(btn=>{
+    btn.disabled = true;
+    btn.style.cursor = 'default';
+    const lbl = btn.getAttribute('data-label');
+    if(lbl===q.answer){
+      btn.style.borderColor='var(--green)';btn.style.background='var(--green-lt)';
+      const badge=btn.querySelector('span:first-child');
+      if(badge){badge.style.background='var(--green)';badge.style.color='#fff';}
+      btn.innerHTML+=`<span style="color:var(--green);font-size:1rem">✓</span>`;
+    }
+    if(lbl===chosen&&!correct){
+      btn.style.borderColor='var(--red)';btn.style.background='var(--red-lt)';
+      const badge=btn.querySelector('span:first-child');
+      if(badge){badge.style.background='var(--red)';badge.style.color='#fff';}
+      btn.innerHTML+=`<span style="color:var(--red);font-size:1rem">✗</span>`;
+    }
+  });
+  // Feedback
+  const fb = document.getElementById('feedback-box');
+  if(fb){
+    fb.style.cssText = `display:block;margin-top:16px;padding:14px 18px;border-radius:12px;
+      background:${correct?'#f0fdf4':'#fff8f8'};
+      border:1.5px solid ${correct?'#86efac':'#fca5a5'};animation:fadeIn .2s ease`;
+    const timeStr = timeSpent>=60?`${Math.floor(timeSpent/60)}m ${timeSpent%60}s`:`${timeSpent}s`;
+    fb.innerHTML = `<div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
+        color:${correct?'var(--green)':'var(--red)'};margin-bottom:4px">${correct?'✓ Correct':'✗ Incorrect'}</div>
+      <div style="font-size:.88rem;color:${correct?'#166534':'#7f1d1d'}">
+        The correct answer is <strong>${q.answer}</strong>.
+        <span style="opacity:.6;font-size:.78rem;margin-left:8px">⏱ ${timeStr}</span>
+      </div>`;
+  }
+
+  // Enable Next button
+  const nextBtn = document.getElementById('btn-next');
+  if(nextBtn){
+    nextBtn.disabled = false;
+    nextBtn.style.background = 'var(--blue)';
+    nextBtn.style.color = '#fff';
+    nextBtn.style.cursor = 'pointer';
+  }
+
+  // Store in session answers ONLY — practice ground is fully independent from assigned practice
+  pgSessionAnswers[qId] = {chosen, correct, time: timeSpent};
+
+  // Save to DB for analytics (time tracking) but do NOT update currentStudentStats
+  // so assigned practice results remain untouched
+  try{
+    await DB.recordAnswer(currentStudentId, qId, chosen, correct, timeSpent);
+  } catch(e){ showToast('⚠ Answer may not have saved'); }
+}
+
+// ── MODE 2: ASSIGNED QUESTIONS ───────────────────
+async function renderAssignedPractice(){
+  // Re-fetch fresh stats in case teacher assigned more
+  try{
+    currentStudentStats = await DB.getStats(currentStudentId);
+  } catch(e){ console.error(e); }
+
+  const st = currentStudentStats;
+  const body = document.getElementById('student-body');
+
+  if(st.total === 0){
+    body.style.padding = '40px 20px';
+    body.innerHTML = `
+      <div style="max-width:720px;margin:0 auto">
+        <div class="student-subnav"><button class="student-back-btn" onclick="renderStudentHome()">← Home</button></div>
+        <div class="no-work"><div class="nw-icon">📚</div><h3>No questions assigned yet</h3><p>Your teacher hasn't assigned any questions yet. Check back soon.</p></div>
+      </div>`;
+    return;
+  }
+
+  const unanswered = st.assigned.filter(id => !st.results[id]);
+  if(unanswered.length === 0){
+    body.style.padding = '32px 20px 60px';
+    const fmtTime = sec=>sec>=60?`${Math.floor(sec/60)}m ${sec%60}s`:`${sec}s`;
+    const pct = st.done>0?Math.round(st.correct/st.done*100):0;
+    const msg = pct>=80?'🎉 Excellent!':pct>=60?'👍 Good effort!':'📚 Keep going!';
+    const times = st.assigned.filter(id=>st.results[id]).map(id=>st.results[id].time||0);
+    const avg = times.length>0?Math.round(times.reduce((a,b)=>a+b,0)/times.length):0;
+
+    // Per-topic stats
+    const topicMap={};
+    st.assigned.forEach(qId=>{
+      const q=QUESTION_BANK.find(q=>q.id===qId); if(!q) return;
+      const res=st.results[qId];
+      if(!topicMap[q.skill]) topicMap[q.skill]={correct:0,count:0,time:0};
+      if(res){ if(res.correct)topicMap[q.skill].correct++; topicMap[q.skill].count++; topicMap[q.skill].time+=(res.time||0); }
+    });
+
+    body.innerHTML = `
+      <div style="width:100%;max-width:720px;margin:0 auto">
+        <div class="student-subnav">
+          <button class="student-back-btn" onclick="renderStudentHome()">← Home</button>
+          <span style="font-size:.82rem;color:var(--muted)">Assigned Questions — Complete</span>
+        </div>
+
+        ${buildCompletionHTML(currentStudentData, st, currentStudentId, 'assigned')}
+      </div>`;
+    return;
+  }
+
+  // Build practice queue from unanswered
+  practiceQueue = unanswered.map(id=>QUESTION_BANK.find(q=>q.id===id)).filter(Boolean);
+  practiceIndex = 0;
+
+  body.style.padding = '32px 20px 60px';
+
+  let dlHtml = '';
+  if(currentStudentData.deadline){
+    const dl = new Date(currentStudentData.deadline);
+    const over = dl < new Date();
+    dlHtml = `<div class="deadline-notice" style="margin-bottom:16px">${over?'⚠️':'⏰'} ${over?'Deadline passed:':'Due by:'} <strong>${dl.toLocaleString()}</strong></div>`;
+  }
+
+  body.innerHTML = dlHtml + `
+    <div style="width:100%;max-width:760px;margin:0 auto">
+      <!-- Top bar -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+        <button onclick="renderStudentHome()"
+          style="display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;
+            border:1.5px solid var(--rule);background:var(--white);color:var(--muted);
+            font-size:.82rem;font-weight:600;cursor:pointer;font-family:var(--sans);
+            transition:all .15s;white-space:nowrap">
+          ← Home
+        </button>
+        <!-- Progress bar -->
+        <div style="flex:1;height:6px;background:var(--rule);border-radius:3px;overflow:hidden">
+          <div id="assigned-progress-bar" style="height:100%;width:0%;
+            background:linear-gradient(90deg,var(--green),var(--teal));border-radius:3px;transition:width .4s ease"></div>
+        </div>
+        <!-- Counter -->
+        <span style="font-size:.78rem;font-weight:700;color:var(--navy);font-family:var(--mono);white-space:nowrap">
+          <span id="assigned-counter">1</span><span style="color:var(--muted);font-weight:400">/${unanswered.length}</span>
+        </span>
+      </div>
+      <div id="q-mount"></div>
+    </div>`;
+  renderQuestion(currentStudentId, st);
+}
+
+// ── MODE 3: ANALYTICS ────────────────────────────
+async function renderStudentAnalytics(){
+  const body = document.getElementById('student-body');
+  body.style.padding = '0';
+  body.innerHTML = `<div style="padding:60px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:.85rem">Loading analytics…</div>`;
+
+  try{
+    currentStudentStats = await DB.getStats(currentStudentId);
+  } catch(e){ console.error(e); }
+
+  const st = currentStudentStats;
+  const fmtTime = sec => sec>=60?`${Math.floor(sec/60)}m ${sec%60}s`:`${sec}s`;
+
+  // Per-topic breakdown
+  const topicMap = {};
+  st.assigned.forEach(qId=>{
+    const q = QUESTION_BANK.find(q=>q.id===qId); if(!q) return;
+    const res = st.results[qId];
+    if(!topicMap[q.skill]) topicMap[q.skill]={correct:0,wrong:0,total:0,time:0,count:0};
+    topicMap[q.skill].total++;
+    if(res){
+      if(res.correct) topicMap[q.skill].correct++;
+      else topicMap[q.skill].wrong++;
+      topicMap[q.skill].time += (res.time||0);
+      topicMap[q.skill].count++;
+    }
+  });
+
+  const answeredQs = st.assigned.filter(id=>st.results[id]);
+  const times = answeredQs.map(id=>st.results[id].time||0);
+  const avgTime = times.length>0?Math.round(times.reduce((a,b)=>a+b,0)/times.length):0;
+  const maxTime = times.length>0?Math.max(...times):0;
+  const pct = st.done>0?Math.round(st.correct/st.done*100):0;
+
+  // Practice ground stats (all answered questions including non-assigned)
+  const allAnswered = Object.keys(st.results);
+  const pgOnly = allAnswered.filter(id=>!st.assigned.includes(id));
+
+  body.innerHTML = `
+    <div class="analytics-wrap">
+      <div class="student-subnav">
+        <button class="student-back-btn" onclick="renderStudentHome()">← Home</button>
+        <span style="font-size:.9rem;font-weight:700;color:var(--navy)">My Analytics</span>
+      </div>
+
+      <div class="analytics-section">
+        <div class="analytics-section-title">Overall Performance</div>
+        <div class="analytics-stats-row">
+          <div class="an-card"><div class="an-num" style="color:var(--blue)">${pct>0?pct+'%':'—'}</div><div class="an-key">Score</div></div>
+          <div class="an-card"><div class="an-num" style="color:var(--green)">${st.correct}</div><div class="an-key">Correct</div></div>
+          <div class="an-card"><div class="an-num" style="color:var(--red)">${st.wrong}</div><div class="an-key">Wrong</div></div>
+          <div class="an-card"><div class="an-num" style="color:var(--navy)">${avgTime>0?fmtTime(avgTime):'—'}</div><div class="an-key">Avg Time/Q</div></div>
+        </div>
+        <div class="analytics-stats-row" style="margin-top:10px">
+          <div class="an-card"><div class="an-num" style="color:var(--amber)">${st.done}</div><div class="an-key">Assigned Done</div></div>
+          <div class="an-card"><div class="an-num" style="color:var(--muted)">${st.total-st.done}</div><div class="an-key">Remaining</div></div>
+          <div class="an-card"><div class="an-num" style="color:var(--teal)">${pgOnly.length}</div><div class="an-key">Practice Ground</div></div>
+          <div class="an-card"><div class="an-num" style="color:var(--navy)">${maxTime>0?fmtTime(maxTime):'—'}</div><div class="an-key">Slowest Q</div></div>
+        </div>
+      </div>
+
+      ${Object.keys(topicMap).length>0?`
+      <div class="analytics-section">
+        <div class="analytics-section-title">Performance by Topic</div>
+        <div style="background:var(--white);border:1px solid var(--rule);border-radius:12px;padding:20px;box-shadow:var(--shadow)">
+          ${Object.entries(topicMap).map(([skill,data])=>{
+            const acc=data.count>0?Math.round(data.correct/data.count*100):0;
+            const color=acc>=80?'var(--green)':acc>=50?'var(--amber)':'var(--red)';
+            return `<div style="margin-bottom:18px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <div>
+                  <span style="font-size:.88rem;font-weight:700;color:var(--ink)">${skill}</span>
+                  <span style="font-size:.75rem;color:var(--muted);margin-left:8px">${data.correct}/${data.count} correct</span>
+                </div>
+                <div style="text-align:right">
+                  <span style="font-size:.82rem;font-family:var(--mono);color:${color};font-weight:700">${acc}%</span>
+                  <span style="font-size:.72rem;color:var(--muted);margin-left:8px">avg ${fmtTime(data.count>0?Math.round(data.time/data.count):0)}/q</span>
+                </div>
+              </div>
+              <div style="height:10px;background:var(--bg);border-radius:5px;overflow:hidden">
+                <div style="height:100%;width:${acc}%;background:${color};border-radius:5px;transition:width .8s ease"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`:''}
+
+      ${times.length>0?`
+      <div class="analytics-section">
+        <div class="analytics-section-title">Time per Question (last ${Math.min(times.length,20)} answered)</div>
+        <div style="background:var(--white);border:1px solid var(--rule);border-radius:12px;padding:20px;box-shadow:var(--shadow)">
+          <div style="display:flex;align-items:flex-end;gap:5px;height:130px;margin-bottom:10px">
+            ${times.slice(-20).map(t=>{
+              const ht=maxTime>0?Math.max(5,Math.round((t/maxTime)*120)):5;
+              const c=t>120?'var(--red)':t>60?'var(--amber)':'var(--blue)';
+              return `<div title="${fmtTime(t)}" style="flex:1;height:${ht}px;background:${c};border-radius:4px 4px 0 0;min-width:8px;cursor:default;transition:opacity .2s"
+                onmouseenter="this.style.opacity='.65'" onmouseleave="this.style.opacity='1'"></div>`;
+            }).join('')}
+          </div>
+          <div style="height:1px;background:var(--rule);margin-bottom:10px"></div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+            <div style="display:flex;gap:14px">
+              <span style="font-size:.75rem;color:var(--muted)"><span style="color:var(--blue)">●</span> &lt;1min</span>
+              <span style="font-size:.75rem;color:var(--muted)"><span style="color:var(--amber)">●</span> 1–2min</span>
+              <span style="font-size:.75rem;color:var(--muted)"><span style="color:var(--red)">●</span> &gt;2min</span>
+            </div>
+            <div style="text-align:right">
+              <span style="font-size:.78rem;color:var(--muted)">SAT target: ~1min 15sec/question</span>
+            </div>
+          </div>
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--rule);display:flex;gap:24px">
+            <div><div style="font-size:.72rem;color:var(--muted);margin-bottom:2px">Your average</div>
+              <div style="font-size:1.3rem;font-weight:500;font-family:var(--mono);color:var(--navy);letter-spacing:-.02em">${fmtTime(avgTime)}</div></div>
+            <div><div style="font-size:.72rem;color:var(--muted);margin-bottom:2px">Slowest question</div>
+              <div style="font-size:1.3rem;font-weight:500;font-family:var(--mono);color:var(--red);letter-spacing:-.02em">${fmtTime(maxTime)}</div></div>
+            <div><div style="font-size:.72rem;color:var(--muted);margin-bottom:2px">Fastest question</div>
+              <div style="font-size:1.3rem;font-weight:500;font-family:var(--mono);color:var(--green);letter-spacing:-.02em">${fmtTime(Math.min(...times.filter(t=>t>0)))}</div></div>
+          </div>
+        </div>
+      </div>`:''}
+
+      ${st.done===0&&pgOnly.length===0?`
+      <div class="no-work" style="padding:40px 0">
+        <div class="nw-icon">📊</div>
+        <h3>No data yet</h3>
+        <p style="font-size:.88rem;margin-top:8px">Complete some questions first to see your analytics.</p>
+      </div>`:''}
+    </div>`;
+}
+
+function startTimer(qId){
+  if(timerInterval) clearInterval(timerInterval);
+  qStartTime = Date.now();
+  updateTimerDisplay(0);
+  timerInterval = setInterval(()=>{
+    const secs = Math.floor((Date.now()-qStartTime)/1000);
+    updateTimerDisplay(secs);
+  }, 1000);
+}
+
+function stopTimer(qId){
+  if(timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+  const secs = qStartTime ? Math.floor((Date.now()-qStartTime)/1000) : 0;
+  sessionTimes[qId] = secs;
+  return secs;
+}
+
+function updateTimerDisplay(secs){
+  const el = document.getElementById('q-timer');
+  if(!el) return;
+  const m = Math.floor(secs/60);
+  const s = secs%60;
+  const timeStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const state = secs>120?'slow':secs>75?'warn':'';
+  el.className = 'q-timer' + (state?' '+state:'');
+  const strokeCol = state==='slow'?'#dc2626':state==='warn'?'#b45309':'var(--muted)';
+  el.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${strokeCol}" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${timeStr}`;
+}
+
+function renderQuestion(studentId, cachedStats){
+  const q = practiceQueue[practiceIndex];
+  const st = cachedStats || {total:practiceQueue.length, done:0};
+  const pct = Math.round(((st.done||0) + practiceIndex) / Math.max(st.total,1) * 100);
+  document.getElementById('student-progress').style.width = pct + '%';
+
+  // Also update the inline assigned progress bar if present
+  const assignedBar = document.getElementById('assigned-progress-bar');
+  const assignedCounter = document.getElementById('assigned-counter');
+  if(assignedBar) assignedBar.style.width = Math.round((practiceIndex / Math.max(practiceQueue.length,1)) * 100) + '%';
+  if(assignedCounter) assignedCounter.textContent = practiceIndex + 1;
+
+  const hasMCQ = q.options && q.options.length === 4 && q.answer;
+  const colors = ['#3b82f6','#8b5cf6','#f59e0b','#10b981'];
+  const total = practiceQueue.length;
+  const done  = practiceIndex;
+
+  const optionsHtml = hasMCQ
+    ? q.options.map((o,i) => `
+        <button class="assigned-opt" data-label="${o.l}" data-color="${colors[i]}"
+          onclick="selectAnswer('${studentId}','${q.id}','${o.l}')"
+          style="display:flex;align-items:center;gap:14px;padding:13px 17px;border-radius:12px;
+            border:2px solid #f0f0f0;background:var(--white);text-align:left;font-size:.93rem;
+            line-height:1.5;color:var(--ink);width:100%;cursor:pointer;font-family:var(--sans);transition:all .15s">
+          <span style="width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;
+            align-items:center;justify-content:center;font-size:.78rem;font-weight:800;
+            font-family:var(--mono);background:${colors[i]}22;color:${colors[i]}">${o.l}</span>
+          <span style="flex:1">${o.t}</span>
+        </button>`).join('')
+    : `<p class="free-response-note">Free-response — work it out on paper, then mark as reviewed.</p>
+       <button style="display:flex;align-items:center;gap:10px;padding:13px 18px;border-radius:12px;
+         border:2px solid var(--green);background:var(--green-lt);color:var(--green);
+         font-weight:700;cursor:pointer;font-family:var(--sans);font-size:.9rem;margin-top:8px"
+         onclick="markReviewed('${studentId}','${q.id}')">
+         <span style="width:24px;height:24px;border-radius:6px;background:var(--green);color:#fff;
+           display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0">✓</span>
+         Mark as reviewed
+       </button>`;
+
+  const mount = document.getElementById('q-mount');
+  if(!mount) return;
+
+  mount.innerHTML = `
+    <!-- Meta row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+          color:var(--blue);background:var(--blue-bg);padding:4px 12px;border-radius:20px;
+          border:1px solid #bfdbfe">${q.skill}</span>
+        <span style="font-size:.72rem;font-weight:700;padding:4px 11px;border-radius:20px;
+          background:#fef9ec;color:#92400e;border:1px solid #fde68a">🟡 Medium</span>
+      </div>
+      <div title="Time on this question — SAT target: ~75 sec" style="display:flex;align-items:center;border-radius:20px;background:var(--white);border:1.5px solid var(--rule)">
+        <span class="q-timer" id="q-timer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>00:00</span>
+      </div>
+    </div>
+
+    <!-- Question card -->
+    <div style="background:var(--white);border-radius:16px;overflow:hidden;
+      box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 20px rgba(13,27,62,.08);
+      border:1px solid var(--rule);margin-bottom:14px;animation:qSlide .3s cubic-bezier(.4,0,.2,1)">
+      <div class="pdf-canvas-wrap" style="border-bottom:1px solid var(--rule)">
+        <div class="pdf-loading">Loading question…</div>
+        <canvas id="pdf-canvas-${q.id}"></canvas>
+      </div>
+      <div style="padding:20px 24px">
+        <div style="display:grid;gap:10px">${optionsHtml}</div>
+        <div class="feedback-box" id="feedback-box"></div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="font-size:.75rem;color:var(--muted);font-family:var(--mono)">
+        ${practiceIndex+1} of ${total} remaining
+      </div>
+      <button id="btn-next" disabled
+        onclick="nextQuestion('${studentId}')"
+        style="display:flex;align-items:center;gap:6px;padding:11px 28px;border-radius:10px;
+          border:none;background:var(--rule);color:var(--muted);font-size:.9rem;font-weight:700;
+          cursor:not-allowed;font-family:var(--sans);transition:all .2s;min-width:120px;justify-content:center">
+        Next →
+      </button>
+    </div>`;
+
+  const canvas = document.getElementById('pdf-canvas-'+q.id);
+  if(canvas) renderPage(q.page, canvas);
+  startTimer(q.id);
+}
+
+async function selectAnswer(studentId,qId,chosen){
+  const q=QUESTION_BANK.find(q=>q.id===qId);
+  const correct=chosen===q.answer;
+  const timeSpent=stopTimer(qId);
+  const colors=['#3b82f6','#8b5cf6','#f59e0b','#10b981'];
+
+  // Style all option buttons
+  document.querySelectorAll('.assigned-opt').forEach(btn=>{
+    btn.disabled=true;
+    btn.style.cursor='default';
+    btn.onmouseenter=null; btn.onmouseleave=null;
+    btn.style.transform='none';
+    const lbl=btn.getAttribute('data-label');
+    if(lbl===q.answer){
+      btn.style.borderColor='var(--green)';btn.style.background='var(--green-lt)';
+      const badge=btn.querySelector('span:first-child');
+      if(badge){badge.style.background='var(--green)';badge.style.color='#fff';}
+      btn.innerHTML+=`<span style="color:var(--green);font-size:1rem;margin-left:auto">✓</span>`;
+    }
+    if(lbl===chosen&&!correct){
+      btn.style.borderColor='var(--red)';btn.style.background='var(--red-lt)';
+      const badge=btn.querySelector('span:first-child');
+      if(badge){badge.style.background='var(--red)';badge.style.color='#fff';}
+      btn.innerHTML+=`<span style="color:var(--red);font-size:1rem;margin-left:auto">✗</span>`;
+    }
+  });
+
+  // Feedback box
+  const fb=document.getElementById('feedback-box');
+  if(fb){
+    const timeStr=timeSpent>=60?`${Math.floor(timeSpent/60)}m ${timeSpent%60}s`:`${timeSpent}s`;
+    fb.style.cssText=`display:block;margin-top:16px;padding:14px 18px;border-radius:12px;
+      background:${correct?'#f0fdf4':'#fff8f8'};
+      border:1.5px solid ${correct?'#86efac':'#fca5a5'};animation:fadeIn .2s ease`;
+    fb.innerHTML=`<div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
+        color:${correct?'var(--green)':'var(--red)'};margin-bottom:4px">${correct?'✓ Correct':'✗ Incorrect'}</div>
+      <div style="font-size:.88rem;color:${correct?'#166534':'#7f1d1d'}">
+        The correct answer is <strong>${q.answer}</strong>.
+        <span style="opacity:.6;font-size:.78rem;margin-left:8px">⏱ ${timeStr}</span>
+      </div>`;
+  }
+
+  // Enable Next button with blue styling
+  const nextBtn=document.getElementById('btn-next');
+  if(nextBtn){
+    nextBtn.disabled=false;
+    nextBtn.style.background='var(--blue)';
+    nextBtn.style.color='#fff';
+    nextBtn.style.cursor='pointer';
+    nextBtn.onmouseenter=()=>nextBtn.style.background='#1d4ed8';
+    nextBtn.onmouseleave=()=>nextBtn.style.background='var(--blue)';
+  }
+
+  // Update local stats cache
+  if(currentStudentStats){
+    if(!currentStudentStats.results) currentStudentStats.results={};
+    currentStudentStats.results[qId]={chosen,correct,time:timeSpent};
+    if(correct) currentStudentStats.correct++;
+    else currentStudentStats.wrong++;
+    currentStudentStats.done++;
+  }
+  try{ await DB.recordAnswer(studentId,qId,chosen,correct,timeSpent); }
+  catch(e){ console.error('Failed to save answer',e); showToast('⚠ Answer may not have saved — check connection'); }
+}
+
+async function markReviewed(studentId,qId){
+  const timeSpent=stopTimer(qId);
+  const fb=document.getElementById('feedback-box');
+  if(fb){
+    fb.style.cssText=`display:block;margin-top:16px;padding:14px 18px;border-radius:12px;
+      background:#f0fdf4;border:1.5px solid #86efac;animation:fadeIn .2s ease`;
+    fb.innerHTML=`<div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--green);margin-bottom:4px">✓ Reviewed</div>
+      <div style="font-size:.88rem;color:#166534">Work out the answer on paper and check with your teacher.</div>`;
+  }
+  const nextBtn=document.getElementById('btn-next');
+  if(nextBtn){
+    nextBtn.disabled=false;
+    nextBtn.style.background='var(--blue)';
+    nextBtn.style.color='#fff';
+    nextBtn.style.cursor='pointer';
+    nextBtn.onmouseenter=()=>nextBtn.style.background='#1d4ed8';
+    nextBtn.onmouseleave=()=>nextBtn.style.background='var(--blue)';
+  }
+  try{ await DB.recordAnswer(studentId,qId,'reviewed',true,timeSpent); }
+  catch(e){ showToast('⚠ Could not save — check connection'); }
+}
+
+async function nextQuestion(studentId){
+  practiceIndex++;
+  if(practiceIndex>=practiceQueue.length){
+    // Refresh stats then go home — home will show completion state
+    currentStudentStats = await DB.getStats(studentId);
+    renderStudentHome();
+  } else {
+    renderQuestion(studentId);
+  }
+}
+
+function buildCompletionHTML(s, st, studentId, context='assigned') {
+  const pct = st.done > 0 ? Math.round(st.correct / st.done * 100) : 0;
+  const emoji = pct >= 90 ? '🏆' : pct >= 80 ? '🎉' : pct >= 60 ? '👍' : '📚';
+  const headline = pct >= 90 ? 'Outstanding!' : pct >= 80 ? 'Excellent work!' : pct >= 60 ? 'Good effort!' : 'Keep practicing!';
+  const subline = pct >= 80
+    ? `You're well above the SAT average. Keep it up!`
+    : pct >= 60
+    ? `Solid session — review the wrong ones and you'll get there.`
+    : `Every attempt builds the muscle. Review your mistakes below.`;
+
+  // Topic breakdown
+  const topicMap = {};
+  const qIds = context === 'assigned' ? st.assigned : Object.keys(pgSessionAnswers);
+  qIds.forEach(qId => {
+    const q = QUESTION_BANK.find(q => q.id === qId); if (!q) return;
+    const res = context === 'assigned' ? st.results[qId] : pgSessionAnswers[qId];
+    if (!topicMap[q.skill]) topicMap[q.skill] = { correct: 0, count: 0, time: 0 };
+    if (res) {
+      if (res.correct) topicMap[q.skill].correct++;
+      topicMap[q.skill].count++;
+      topicMap[q.skill].time += (res.time || 0);
+    }
+  });
+
+  // Time stats
+  const answeredQs = qIds.filter(id => context === 'assigned' ? st.results[id] : pgSessionAnswers[id]);
+  const times = answeredQs.map(id => {
+    const r = context === 'assigned' ? st.results[id] : pgSessionAnswers[id];
+    return r ? (r.time || 0) : 0;
+  });
+  const avgTime = times.length > 0 ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0;
+  const fmtTime = sec => sec >= 60 ? `${Math.floor(sec/60)}m ${sec%60}s` : `${sec}s`;
+
+  // Pacing badge
+  const pacingColor = avgTime === 0 ? 'var(--muted)' : avgTime <= 75 ? 'var(--green)' : avgTime <= 120 ? 'var(--amber)' : 'var(--red)';
+  const pacingLabel = avgTime === 0 ? '—' : avgTime <= 75 ? 'On pace ✓' : avgTime <= 120 ? 'A bit slow' : 'Too slow';
+
+  // WhatsApp share
+  const topTopics = Object.entries(topicMap)
+    .filter(([,d]) => d.count > 0)
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 2)
+    .map(([skill]) => skill.replace('Linear ', ''))
+    .join(' & ');
+  const shareText = encodeURIComponent(
+    `I just scored ${pct}% (${st.correct}/${st.done}) on SAT Math${topTopics ? ' — ' + topTopics : ''}! 📐\nPracticing with Prepgenix by @prepgenix\nhttps://prepgenix-sat.vercel.app/`
+  );
+  const whatsappUrl = `https://wa.me/?text=${shareText}`;
+
+  // Topic bars HTML
+  const topicBarsHTML = Object.entries(topicMap)
+    .filter(([, d]) => d.count > 0)
+    .map(([skill, data]) => {
+      const acc = data.count > 0 ? Math.round(data.correct / data.count * 100) : 0;
+      const barColor = acc >= 80 ? 'var(--green)' : acc >= 50 ? 'var(--amber)' : 'var(--red)';
+      const avgT = data.count > 0 ? Math.round(data.time / data.count) : 0;
+      return `<div class="score-topic-bar">
+        <div class="stb-head">
+          <span class="stb-name">${skill}</span>
+          <span class="stb-pct" style="color:${barColor}">${acc}% · ${data.correct}/${data.count}</span>
+        </div>
+        <div class="stb-track"><div class="stb-fill" style="width:${acc}%;background:${barColor}"></div></div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:3px">avg ${avgT > 0 ? fmtTime(avgT) : '—'}/question</div>
+      </div>`;
+    }).join('');
+
+  return `
+    <div class="score-screen">
+      <div class="score-emoji">${emoji}</div>
+      <h2>${headline}</h2>
+      <p class="score-sub">${subline}</p>
+
+      <div class="score-big">${pct}%</div>
+      <div class="score-total">${st.correct} correct out of ${st.done} answered</div>
+
+      <div class="score-grid">
+        <div class="score-stat c">
+          <span class="s-val">${st.correct}</span>
+          <span class="s-key">Correct</span>
+        </div>
+        <div class="score-stat w">
+          <span class="s-val">${st.wrong || (st.done - st.correct)}</span>
+          <span class="s-key">Wrong</span>
+        </div>
+        <div class="score-stat t">
+          <span class="s-val">${avgTime > 0 ? fmtTime(avgTime) : '—'}</span>
+          <span class="s-key">Avg / Q</span>
+        </div>
+        <div class="score-stat p">
+          <span class="s-val" style="color:${pacingColor}">${pacingLabel}</span>
+          <span class="s-key">Pacing</span>
+        </div>
+      </div>
+
+      ${topicBarsHTML ? `
+      <div style="text-align:left;margin-bottom:28px">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:14px">Performance by Topic</div>
+        ${topicBarsHTML}
+      </div>` : ''}
+
+      <a href="${whatsappUrl}" target="_blank" class="score-share-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.556 4.123 1.528 5.855L.057 23.882l6.187-1.43A11.946 11.946 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.032-1.38l-.36-.214-3.724.861.878-3.637-.235-.373A9.818 9.818 0 1 1 12 21.818z"/>
+        </svg>
+        Share on WhatsApp
+      </a>
+
+      <button onclick="renderStudentHome()" class="score-home-btn">
+        ← Back to Home
+      </button>
+    </div>`;
+}
+
+function renderFinalScore(s, st, studentId){
+  if(timerInterval) clearInterval(timerInterval);
+  document.getElementById('student-progress').style.width = '100%';
+  const el = document.getElementById('q-container');
+  if(el) el.innerHTML = buildCompletionHTML(s, st, studentId, 'assigned');
+}
+
+// ════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════
+loadPDF();
+</script>
+</body>
+</html>
