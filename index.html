@@ -39,7 +39,7 @@
   --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.06);
   --shadow-lg:0 8px 32px rgba(13,27,62,.18);
 }
-body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px;line-height:1.6}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.65}
 button{cursor:pointer;font-family:var(--sans);border:none}
 input,select{font-family:var(--sans)}
 .hidden{display:none!important}
@@ -205,7 +205,7 @@ input,select{font-family:var(--sans)}
 .main-content{flex:1;padding:28px 36px;max-width:none;width:100%}
 .panel{display:none}
 .panel.active{display:block;animation:fadeIn .25s ease}
-.section-title{font-size:1.2rem;font-weight:700;margin-bottom:4px;letter-spacing:-.01em;color:var(--navy)}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:4px;letter-spacing:-.01em;color:var(--navy)}
 .section-sub{font-size:.82rem;color:var(--muted);margin-bottom:28px}
 
 /* stat cards */
@@ -378,32 +378,32 @@ tr:hover td{background:#f8faff}
 @keyframes nextPulse{0%{box-shadow:0 0 0 0 rgba(43,91,224,.4)}70%{box-shadow:0 0 0 8px rgba(43,91,224,0)}100%{box-shadow:0 0 0 0 rgba(43,91,224,0)}}
 
 /* score screen */
-.score-screen{text-align:center;padding:32px 28px 28px;background:var(--white);border:1px solid var(--rule);border-radius:16px;box-shadow:var(--shadow)}
+.score-screen{text-align:center;padding:32px 28px 32px;background:var(--white);border:1px solid var(--rule);border-radius:16px;box-shadow:var(--shadow);overflow:visible}
 .score-emoji{font-size:2.4rem;margin-bottom:8px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}
 @keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
-.score-screen h2{font-family:var(--sans);font-size:1.25rem;font-weight:700;color:var(--navy);margin-bottom:4px}
+.score-screen h2{font-family:var(--sans);font-size:1.2rem;font-weight:700;color:var(--navy);margin-bottom:4px}
 .score-screen .score-sub{font-size:.82rem;color:var(--muted);margin-bottom:20px}
 .score-ring-wrap{display:flex;justify-content:center;margin-bottom:28px}
-.score-big{font-family:var(--serif);font-size:3.6rem;font-weight:700;line-height:1;color:var(--blue);margin-bottom:2px}
-.score-total{font-size:.8rem;color:var(--muted);margin-bottom:20px}
+.score-big{font-family:var(--sans);font-size:3.4rem;font-weight:800;line-height:1;color:var(--blue);margin-bottom:4px;letter-spacing:-.03em}
+.score-total{font-size:.85rem;color:var(--muted);margin-bottom:18px}
 .score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
-.score-stat{background:var(--bg);border:1px solid var(--rule);border-radius:10px;padding:12px 8px;text-align:center}
-.score-stat .s-val{font-family:var(--sans);font-size:1.3rem;font-weight:700;display:block;line-height:1;margin-bottom:3px}
-.score-stat .s-key{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.score-stat{background:var(--bg);border:1px solid var(--rule);border-radius:10px;padding:14px 8px;text-align:center}
+.score-stat .s-val{font-family:var(--sans);font-size:1.35rem;font-weight:700;display:block;line-height:1;margin-bottom:4px}
+.score-stat .s-key{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
 .score-stat.c .s-val{color:var(--green)}
 .score-stat.w .s-val{color:var(--red)}
 .score-stat.t .s-val{color:var(--teal)}
 .score-stat.p .s-val{color:var(--blue)}
 .score-topic-bar{margin-bottom:10px}
 .score-topic-bar .stb-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
-.score-topic-bar .stb-name{font-size:.82rem;font-weight:600;color:var(--ink)}
-.score-topic-bar .stb-pct{font-size:.75rem;font-family:var(--mono);font-weight:700}
+.score-topic-bar .stb-name{font-size:.88rem;font-weight:600;color:var(--ink)}
+.score-topic-bar .stb-pct{font-size:.82rem;font-family:var(--sans);font-weight:700}
 .score-topic-bar .stb-track{height:8px;background:var(--rule);border-radius:4px;overflow:hidden}
 .score-topic-bar .stb-fill{height:100%;border-radius:4px;transition:width .7s ease}
-.score-share-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 24px;border-radius:8px;border:none;background:#25d366;color:#fff;font-size:.82rem;font-weight:700;cursor:pointer;font-family:var(--sans);transition:all .18s;margin-bottom:10px;text-decoration:none}
+.score-share-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:180px;padding:11px 20px;border-radius:8px;border:none;background:#25d366;color:#fff;font-size:.88rem;font-weight:700;cursor:pointer;font-family:var(--sans);transition:all .18s;text-decoration:none}
 .score-share-btn:hover{background:#1ebe5d;transform:translateY(-1px)}
 .score-share-btn:active{transform:scale(.98)}
-.score-home-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 22px;border-radius:8px;border:1.5px solid var(--rule);background:var(--white);color:var(--ink-mid);font-size:.82rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.score-home-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:180px;padding:11px 20px;border-radius:8px;border:1.5px solid var(--rule);background:var(--white);color:var(--ink-mid);font-size:.88rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
 .score-home-btn:hover{border-color:var(--ink-mid);background:var(--bg)}
 .no-work{text-align:center;padding:80px 20px;color:var(--muted)}
 .no-work .nw-icon{font-size:3rem;margin-bottom:16px}
@@ -528,12 +528,12 @@ tr:hover td{background:#f8faff}
   /* Score screen */
   .score-screen{padding:28px 16px!important;border-radius:14px}
   .score-screen{padding:24px 16px 20px!important}
-  .score-big{font-size:3rem!important}
-  .score-total{font-size:.78rem}
+  .score-big{font-size:2.8rem!important}
+  .score-total{font-size:.82rem}
   .score-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
   .score-stat .s-val{font-size:1.2rem!important}
-  .score-stat .s-key{font-size:.62rem!important}
-  .score-share-btn,.score-home-btn{padding:9px 18px!important;font-size:.8rem!important}
+  .score-stat .s-key{font-size:.66rem!important}
+  .score-share-btn,.score-home-btn{min-width:140px!important;padding:10px 16px!important;font-size:.85rem!important}
 
   /* Analytics */
   .analytics-wrap{padding:16px 14px 48px!important}
@@ -3149,7 +3149,7 @@ function buildCompletionHTML(s, st, studentId, context='assigned') {
           <span class="stb-pct" style="color:${barColor}">${acc}% · ${data.correct}/${data.count}</span>
         </div>
         <div class="stb-track"><div class="stb-fill" style="width:${acc}%;background:${barColor}"></div></div>
-        <div style="font-size:.7rem;color:var(--muted);margin-top:3px">avg ${avgT > 0 ? fmtTime(avgT) : '—'}/question</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:4px">avg ${avgT > 0 ? fmtTime(avgT) : '—'}/question</div>
       </div>`;
     }).join('');
 
@@ -3183,11 +3183,11 @@ function buildCompletionHTML(s, st, studentId, context='assigned') {
 
       ${topicBarsHTML ? `
       <div style="text-align:left;margin-bottom:28px">
-        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:14px">Performance by Topic</div>
+        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:14px">Performance by Topic</div>
         ${topicBarsHTML}
       </div>` : ''}
 
-      <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:4px">
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:20px">
         <a href="${whatsappUrl}" target="_blank" class="score-share-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
