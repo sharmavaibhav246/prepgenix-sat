@@ -320,10 +320,28 @@ tr:hover td{background:#f8faff}
 /* assigned-opt hover — avoids inline quote conflicts */
 .assigned-opt:hover:not(:disabled){border-color:var(--blue)!important;background:#eff6ff!important;transform:translateX(3px)}
 .assigned-opt:disabled{cursor:default!important}
+/* ── TIMER WIDGET ── */
+.q-timer-wrap{display:flex;align-items:center;gap:10px;padding:5px 12px 5px 6px;border-radius:12px;background:var(--bg);border:1.5px solid var(--rule);transition:border-color .3s,background .3s}
+.q-timer-wrap.warn{border-color:#f59e0b;background:#fffbeb}
+.q-timer-wrap.slow{border-color:#f87171;background:#fff1f1;animation:timer-pulse .9s ease-in-out infinite}
+@keyframes timer-pulse{0%,100%{opacity:1}50%{opacity:.65}}
+.q-timer-ring{position:relative;width:34px;height:34px;flex-shrink:0}
+.q-timer-ring svg{position:absolute;top:0;left:0;transform:rotate(-90deg)}
+.q-timer-ring .ring-track{fill:none;stroke:var(--rule);stroke-width:3}
+.q-timer-ring .ring-fill{fill:none;stroke-width:3;stroke-linecap:round;stroke-dasharray:85;stroke-dashoffset:85;transition:stroke-dashoffset .9s linear,stroke .3s}
+.q-timer-text-col{display:flex;flex-direction:column;gap:1px}
+.q-timer-time{font-family:var(--mono);font-size:.9rem;font-weight:700;color:var(--ink-mid);line-height:1;transition:color .3s}
+.q-timer-wrap.warn .q-timer-time{color:#b45309}
+.q-timer-wrap.slow .q-timer-time{color:#dc2626}
+.q-timer-label{font-size:.6rem;color:var(--muted);letter-spacing:.04em;line-height:1;white-space:nowrap}
+/* time-taken badge shown after answering */
+.q-time-taken{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:12px;font-family:var(--mono);font-size:.78rem;font-weight:700;border:1.5px solid var(--rule);background:var(--bg);color:var(--muted)}
+.q-time-taken.fast{background:var(--green-lt);border-color:#6ee7b7;color:#065f46}
+.q-time-taken.ok{background:#fffbeb;border-color:#f59e0b;color:#92400e}
+.q-time-taken.slow-t{background:var(--red-lt);border-color:#fca5a5;color:#991b1b}
 .q-timer{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:.88rem;font-weight:700;color:var(--ink-mid);background:var(--bg);border:1.5px solid var(--rule);border-radius:10px;padding:6px 14px;min-width:80px;justify-content:center;transition:color .3s,border-color .3s,background .3s}
 .q-timer.warn{color:#b45309;border-color:#f59e0b;background:#fffbeb}
 .q-timer.slow{color:#dc2626;border-color:#f87171;background:#fff1f1;animation:timer-pulse .9s ease-in-out infinite}
-@keyframes timer-pulse{0%,100%{opacity:1}50%{opacity:.6}}
 .q-timer svg{flex-shrink:0}
 .btn-next{padding:11px 30px;border-radius:8px;background:var(--blue);color:#fff;font-size:.88rem;font-weight:700;transition:all .15s;letter-spacing:.02em}
 .btn-next:hover:not(:disabled){background:#1d4ed8}
@@ -884,6 +902,55 @@ async function teacherAPI(action, params={}) {
 }
 
 // ── Supabase Auth ─────────────────────────────────────────────
+const SESSION_KEY = 'prepgenix_session';
+const SESSION_TOKEN_KEY = 'prepgenix_device_token';
+const SESSION_CHECK_INTERVAL = 30000; // check every 30 seconds
+let _sessionCheckTimer = null;
+
+function generateToken() {
+  // Cryptographically random token
+  const arr = new Uint8Array(24);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function writeSessionToken(token) {
+  // Write to students table — RLS ensures only own row
+  try {
+    await supaREST('PATCH','students',{session_token:token},'');
+  } catch(e) { console.warn('Could not write session token:', e); }
+}
+
+async function verifySessionToken() {
+  // Read current token from DB and compare to local
+  const localToken = localStorage.getItem(SESSION_TOKEN_KEY);
+  if (!localToken || !currentUser || currentUser.role !== 'student') return;
+  try {
+    const r = await supaREST('GET','students','','?select=session_token');
+    const dbToken = r[0]?.session_token;
+    if (dbToken && dbToken !== localToken) {
+      // Another device logged in — force logout here
+      clearInterval(_sessionCheckTimer);
+      _sessionCheckTimer = null;
+      localStorage.removeItem(SESSION_TOKEN_KEY);
+      Auth.signOut().catch(()=>{});
+      currentUser = null;
+      hide('screen-student');
+      show('screen-login');
+      showToast('Signed out — your account was opened on another device.', 4000);
+    }
+  } catch(e) { /* network error — don't log out, try again next tick */ }
+}
+
+function startSessionCheck() {
+  if (_sessionCheckTimer) clearInterval(_sessionCheckTimer);
+  _sessionCheckTimer = setInterval(verifySessionToken, SESSION_CHECK_INTERVAL);
+}
+
+function stopSessionCheck() {
+  if (_sessionCheckTimer) { clearInterval(_sessionCheckTimer); _sessionCheckTimer = null; }
+}
+
 const Auth = {
   // Teacher logs in with their real email via Supabase Auth
   async signInTeacher(email, password) {
@@ -895,6 +962,7 @@ const Auth = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
     _sessionJwt = data.access_token;
+    Auth._persist({ role:'teacher', email, access_token:data.access_token, refresh_token:data.refresh_token, expires_at: Date.now() + (data.expires_in||3600)*1000 });
     return data;
   },
 
@@ -909,15 +977,63 @@ const Auth = {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error_description || data.msg || 'Login failed');
     _sessionJwt = data.access_token;
+    Auth._persist({ role:'student', username, access_token:data.access_token, refresh_token:data.refresh_token, expires_at: Date.now() + (data.expires_in||3600)*1000 });
     return data;
   },
 
   async signOut() {
-    if (!_sessionJwt) return;
-    await fetch(`${SUPA_URL}/auth/v1/logout`, {
-      method: 'POST', headers: authH()
-    }).catch(()=>{});
+    if (_sessionJwt) {
+      await fetch(`${SUPA_URL}/auth/v1/logout`, {
+        method: 'POST', headers: authH()
+      }).catch(()=>{});
+    }
     _sessionJwt = null;
+    try { localStorage.removeItem(SESSION_KEY); } catch(e){}
+  },
+
+  _persist(data) {
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify(data)); } catch(e){}
+  },
+
+  // Refresh an expired JWT using the refresh token
+  async _refresh(refreshToken) {
+    const res = await fetch(`${SUPA_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: anonH(),
+      body: JSON.stringify({ refresh_token: refreshToken })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.access_token) return null;
+    return data;
+  },
+
+  // Try to restore session from localStorage on page load
+  // Returns {role, username/email} if successful, null if not
+  async restoreSession() {
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(SESSION_KEY)); } catch(e){ return null; }
+    if (!saved) return null;
+
+    // If JWT is still valid (with 60s buffer), use it directly
+    if (saved.access_token && saved.expires_at > Date.now() + 60000) {
+      _sessionJwt = saved.access_token;
+      return saved;
+    }
+
+    // JWT expired — try to refresh it
+    if (saved.refresh_token) {
+      const refreshed = await Auth._refresh(saved.refresh_token).catch(()=>null);
+      if (refreshed) {
+        _sessionJwt = refreshed.access_token;
+        Auth._persist({ ...saved, access_token: refreshed.access_token, refresh_token: refreshed.refresh_token, expires_at: Date.now() + (refreshed.expires_in||3600)*1000 });
+        return saved;
+      }
+    }
+
+    // Can't restore — clear stale session
+    try { localStorage.removeItem(SESSION_KEY); } catch(e){}
+    return null;
   }
 };
 
@@ -1079,8 +1195,13 @@ async function doLogin(){
         btn.textContent='Sign In as Student';btn.disabled=false;
         return;
       }
+      // Single-device enforcement: generate a new session token and write to DB
+      const deviceToken = generateToken();
+      localStorage.setItem(SESSION_TOKEN_KEY, deviceToken);
+      writeSessionToken(deviceToken); // fire-and-forget, non-blocking
       currentUser={role:'student',id:s.id};
       hide('screen-login'); show('screen-student');
+      startSessionCheck();
       renderStudentPractice(s.id);
     }
   } catch(e){
@@ -1098,6 +1219,8 @@ document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key===
 document.getElementById('login-user').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('login-pass').focus()});
 
 function doLogout(){
+  stopSessionCheck();
+  localStorage.removeItem(SESSION_TOKEN_KEY);
   Auth.signOut().catch(()=>{});
   currentUser=null;hide('screen-teacher');hide('screen-student');show('screen-login');
   document.getElementById('login-user').value='';document.getElementById('login-pass').value='';
@@ -1881,9 +2004,17 @@ function renderPracticeGroundQuestion(){
               border:1.5px solid ${res.correct?'#a7f3d0':'#fca5a5'}">
               ${res.correct?'✓ Correct':'✗ Incorrect'}
              </span>`
-          : `<div style="display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;
-              background:var(--white);border:1.5px solid var(--rule)">
-              <span class="q-timer" id="q-timer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>00:00</span>
+          : `<div id="q-timer-wrap" class="q-timer-wrap" title="SAT target: 75 seconds per question">
+              <div class="q-timer-ring">
+                <svg width="34" height="34" viewBox="0 0 34 34">
+                  <circle class="ring-track" cx="17" cy="17" r="13.5"/>
+                  <circle class="ring-fill" id="q-timer-ring-fill" cx="17" cy="17" r="13.5"/>
+                </svg>
+              </div>
+              <div class="q-timer-text-col">
+                <span class="q-timer-time" id="q-timer-time">00:00</span>
+                <span class="q-timer-label">SAT: 75s target</span>
+              </div>
              </div>`
         }
       </div>
@@ -1995,6 +2126,7 @@ async function selectPracticeGroundAnswer(qId, chosen){
   const q = QUESTION_BANK.find(q=>q.id===qId);
   const correct = chosen === q.answer;
   const timeSpent = stopTimer(qId);
+  showTimeTaken(timeSpent);
 
   document.querySelectorAll('.assigned-opt').forEach(btn=>{
     btn.disabled = true;
@@ -2038,14 +2170,9 @@ async function selectPracticeGroundAnswer(qId, chosen){
   }
 
   // Store in session answers ONLY — practice ground is fully independent from assigned practice
+  // These are NOT saved to the DB (only assigned questions go to DB)
   pgSessionAnswers[qId] = {chosen, correct, time: timeSpent};
-  pgSaveSession(currentStudentId); // persist across logout/refresh
-
-  // Save to DB for analytics (time tracking) but do NOT update currentStudentStats
-  // so assigned practice results remain untouched
-  try{
-    await DB.recordAnswer(currentStudentId, qId, chosen, correct, timeSpent);
-  } catch(e){ showToast('⚠ Answer may not have saved'); }
+  pgSaveSession(currentStudentId); // persist across logout/refresh via localStorage
 }
 
 // ── MODE 2: ASSIGNED QUESTIONS ───────────────────
@@ -2286,15 +2413,22 @@ function stopTimer(qId){
 }
 
 function updateTimerDisplay(secs){
-  const el = document.getElementById('q-timer');
-  if(!el) return;
+  const wrap = document.getElementById('q-timer-wrap');
+  const timeEl = document.getElementById('q-timer-time');
+  const ringFill = document.getElementById('q-timer-ring-fill');
+  if(!wrap||!timeEl) return;
   const m = Math.floor(secs/60);
   const s = secs%60;
-  const timeStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  timeEl.textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
   const state = secs>120?'slow':secs>75?'warn':'';
-  el.className = 'q-timer' + (state?' '+state:'');
-  const strokeCol = state==='slow'?'#dc2626':state==='warn'?'#b45309':'var(--muted)';
-  el.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${strokeCol}" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${timeStr}`;
+  wrap.className = 'q-timer-wrap'+(state?' '+state:'');
+  if(ringFill){
+    const TARGET=75;
+    const progress=Math.min(secs/TARGET,1);
+    const CIRC=85;
+    ringFill.style.strokeDashoffset=CIRC-(progress*CIRC);
+    ringFill.style.stroke=state==='slow'?'#dc2626':state==='warn'?'#f59e0b':'#059669';
+  }
 }
 
 function renderQuestion(studentId, cachedStats){
@@ -2349,8 +2483,17 @@ function renderQuestion(studentId, cachedStats){
         <span style="font-size:.72rem;font-weight:700;padding:4px 11px;border-radius:20px;
           background:#fef9ec;color:#92400e;border:1px solid #fde68a">🟡 Medium</span>
       </div>
-      <div title="Time on this question — SAT target: ~75 sec" style="display:flex;align-items:center;border-radius:20px;background:var(--white);border:1.5px solid var(--rule)">
-        <span class="q-timer" id="q-timer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>00:00</span>
+      <div id="q-timer-wrap" class="q-timer-wrap" title="SAT target: 75 seconds per question">
+        <div class="q-timer-ring">
+          <svg width="34" height="34" viewBox="0 0 34 34">
+            <circle class="ring-track" cx="17" cy="17" r="13.5"/>
+            <circle class="ring-fill" id="q-timer-ring-fill" cx="17" cy="17" r="13.5"/>
+          </svg>
+        </div>
+        <div class="q-timer-text-col">
+          <span class="q-timer-time" id="q-timer-time">00:00</span>
+          <span class="q-timer-label">SAT: 75s target</span>
+        </div>
       </div>
     </div>
 
@@ -2387,10 +2530,21 @@ function renderQuestion(studentId, cachedStats){
   startTimer(q.id);
 }
 
+function showTimeTaken(secs){
+  const wrap=document.getElementById('q-timer-wrap');
+  if(!wrap) return;
+  const m=Math.floor(secs/60), s=secs%60;
+  const display=m>0?m+'m '+String(s).padStart(2,'0')+'s':secs+'s';
+  const cls=secs<=75?'fast':secs<=120?'ok':'slow-t';
+  const label=secs<=75?'Great pace':'Over target';
+  wrap.outerHTML=`<div class="q-time-taken ${cls}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${display} — ${label}</div>`;
+}
+
 async function selectAnswer(studentId,qId,chosen){
   const q=QUESTION_BANK.find(q=>q.id===qId);
   const correct=chosen===q.answer;
   const timeSpent=stopTimer(qId);
+  showTimeTaken(timeSpent);
   const colors=['#3b82f6','#8b5cf6','#f59e0b','#10b981'];
 
   // Style all option buttons
@@ -2454,6 +2608,7 @@ async function selectAnswer(studentId,qId,chosen){
 
 async function markReviewed(studentId,qId){
   const timeSpent=stopTimer(qId);
+  showTimeTaken(timeSpent);
   const fb=document.getElementById('feedback-box');
   if(fb){
     fb.style.cssText=`display:block;margin-top:16px;padding:14px 18px;border-radius:12px;
@@ -2607,9 +2762,49 @@ function renderFinalScore(s, st, studentId){
 }
 
 // ════════════════════════════════════════════════
-//  INIT
+//  INIT — restore session or show login
 // ════════════════════════════════════════════════
-loadPDF();
+async function boot() {
+  loadPDF();
+
+  const saved = await Auth.restoreSession();
+  if (!saved) {
+    // No valid session — stay on login screen
+    return;
+  }
+
+  try {
+    if (saved.role === 'teacher') {
+      currentUser = { role: 'teacher' };
+      hide('screen-login'); show('screen-teacher');
+      document.getElementById('teacher-username-label').textContent = saved.email || '';
+      DB.purgeExpired().catch(e => console.warn('Purge failed:', e));
+      renderTeacher();
+    } else {
+      // Re-fetch student row to check expiry
+      const s = await DB.getStudentSelf();
+      if (!s) {
+        await Auth.signOut();
+        return;
+      }
+      if (s.expires_at && new Date(s.expires_at) < new Date()) {
+        showToast('Your access has expired. Please contact your teacher.');
+        await Auth.signOut();
+        return;
+      }
+      currentUser = { role: 'student', id: s.id };
+      hide('screen-login'); show('screen-student');
+      startSessionCheck();
+      renderStudentPractice(s.id);
+    }
+  } catch(e) {
+    // Session restore failed — fall back to login screen silently
+    console.warn('Session restore failed:', e);
+    await Auth.signOut();
+  }
+}
+
+boot();
 </script>
 </body>
 </html>
