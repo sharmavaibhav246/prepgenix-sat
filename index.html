@@ -67,9 +67,14 @@ input,select{font-family:var(--sans)}
 }
 .login-left::before{
   content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,var(--navy) 0%,var(--navy-lt) 100%);
+  background:linear-gradient(135deg,#0d1b3e 0%,#1a2f5e 40%,#0d1b3e 100%);
   z-index:-1;
 }
+.login-left-orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.18;pointer-events:none}
+.login-left-orb1{width:320px;height:320px;background:#4f46e5;top:-80px;right:-60px;animation:orbFloat 8s ease-in-out infinite}
+.login-left-orb2{width:220px;height:220px;background:#2b5be0;bottom:60px;left:-40px;animation:orbFloat 11s ease-in-out infinite reverse}
+.login-left-orb3{width:180px;height:180px;background:#6366f1;bottom:180px;right:80px;animation:orbFloat 9s ease-in-out infinite 2s}
+@keyframes orbFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-20px) scale(1.06)}}
 .login-left-brand{
   font-family:var(--serif);font-size:2.2rem;font-weight:700;
   color:#fff;letter-spacing:-.03em;line-height:1.1;margin-bottom:16px;
@@ -179,6 +184,8 @@ input,select{font-family:var(--sans)}
 /* ══ TEACHER — dark navy sidebar ══ */
 #screen-teacher{display:flex;flex-direction:column;min-height:100vh;background:var(--bg)}
 .top-bar{background:var(--navy);color:#fff;padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(13,27,62,.3)}
+.top-bar::before,.student-top::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#2b5be0,#6366f1,#2b5be0);background-size:200% 100%;animation:accentShift 4s ease infinite;z-index:1}
+@keyframes accentShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 .top-bar-brand{font-family:var(--serif);font-size:1.05rem;font-weight:700;letter-spacing:-.01em;color:#fff}
 .top-bar-brand span{color:#60a5fa}
 .top-bar-center{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.1)}
@@ -187,15 +194,15 @@ input,select{font-family:var(--sans)}
 .top-bar-user{font-size:.78rem;color:rgba(255,255,255,.55);font-family:var(--mono)}
 .btn-logout{font-size:.72rem;font-family:var(--mono);padding:6px 14px;border-radius:6px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.12);transition:all .2s}
 .btn-logout:hover{background:rgba(255,255,255,.14);color:#fff}
-.teacher-layout{display:flex;flex:1}
-.sidebar{width:228px;min-height:calc(100vh - 62px);background:#0a1628;padding:20px 0;flex-shrink:0}
-.sidebar-section-label{font-size:.65rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.3);padding:16px 24px 8px;margin-top:8px}
-.sidebar-nav-item{display:flex;align-items:center;gap:12px;padding:10px 24px;font-size:.855rem;font-weight:500;color:rgba(255,255,255,.6);cursor:pointer;transition:all .15s;border-left:3px solid transparent;margin:1px 0}
-.sidebar-nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
-.sidebar-nav-item.active{color:#fff;background:rgba(43,91,224,.25);border-left-color:var(--blue-lt);font-weight:600}
-.sidebar-nav-item .icon{font-size:.95rem;width:20px;text-align:center;opacity:.8}
+.teacher-layout{display:flex;flex-direction:column;flex:1}
+.sidebar{display:flex;align-items:center;gap:4px;background:var(--white);border-bottom:1px solid var(--rule);padding:0 28px;overflow-x:auto;flex-shrink:0}
+.sidebar-section-label{display:none}
+.sidebar-nav-item{display:flex;align-items:center;gap:8px;padding:0 16px;height:48px;font-size:.845rem;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;border-bottom:2.5px solid transparent;white-space:nowrap;margin:0;border-left:none}
+.sidebar-nav-item:hover{color:var(--navy);background:var(--bg)}
+.sidebar-nav-item.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;background:transparent}
+.sidebar-nav-item .icon{font-size:.9rem;opacity:.8}
 .sidebar-nav-item.active .icon{opacity:1}
-.main-content{flex:1;padding:32px 36px;max-width:1000px}
+.main-content{flex:1;padding:28px 36px;max-width:none;width:100%}
 .panel{display:none}
 .panel.active{display:block;animation:fadeIn .25s ease}
 .section-title{font-size:1.45rem;font-weight:700;margin-bottom:5px;letter-spacing:-.02em;color:var(--navy)}
@@ -291,7 +298,7 @@ tr:hover td{background:#f8faff}
 
 /* ══ STUDENT SCREEN — teal/blue theme ══ */
 #screen-student{display:flex;flex-direction:column;min-height:100vh;background:var(--bg)}
-.student-top{background:var(--navy);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(13,27,62,.3)}
+.student-top{background:var(--navy);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(13,27,62,.3);overflow:visible}
 .student-top-left{display:flex;align-items:center;gap:14px}
 .student-brand{font-family:var(--serif);color:#fff;font-size:1rem;font-weight:700}
 .student-brand span{color:#60a5fa}
@@ -307,6 +314,10 @@ tr:hover td{background:#f8faff}
 .q-skill-pill{font-family:var(--mono);font-size:.66rem;padding:4px 12px;border-radius:20px;background:var(--blue-bg);color:var(--blue);border:1px solid #bfdbfe;font-weight:600}
 .q-card{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow);animation:qSlide .3s cubic-bezier(.4,0,.2,1)}
 @keyframes qSlide{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes qSlideLeft{from{opacity:0;transform:translateX(32px)}to{opacity:1;transform:translateX(0)}}
+@keyframes qSlideRight{from{opacity:0;transform:translateX(-32px)}to{opacity:1;transform:translateX(0)}}
+.q-slide-left{animation:qSlideLeft .22s cubic-bezier(.4,0,.2,1)}
+.q-slide-right{animation:qSlideRight .22s cubic-bezier(.4,0,.2,1)}
 
 /* PDF canvas */
 .pdf-canvas-wrap{width:100%;background:var(--white);display:flex;justify-content:center;align-items:flex-start;min-height:80px;border-bottom:1px solid var(--rule);position:relative;overflow:hidden;padding:22px 28px 16px}
@@ -364,6 +375,7 @@ tr:hover td{background:#f8faff}
 .btn-next:hover:not(:disabled){background:#1d4ed8}
 .btn-next:active:not(:disabled){transform:scale(.97)}
 .btn-next:disabled{opacity:.35;cursor:default}
+@keyframes nextPulse{0%{box-shadow:0 0 0 0 rgba(43,91,224,.4)}70%{box-shadow:0 0 0 8px rgba(43,91,224,0)}100%{box-shadow:0 0 0 0 rgba(43,91,224,0)}}
 
 /* score screen */
 .score-screen{text-align:center;padding:48px 36px;background:var(--white);border:1px solid var(--rule);border-radius:20px;box-shadow:var(--shadow)}
@@ -420,7 +432,9 @@ tr:hover td{background:#f8faff}
 .mode-card.analytics-mode .mode-card-icon{background:#fef3c7}
 .mode-card-title{font-size:1.05rem;font-weight:700;color:var(--navy);margin-bottom:6px}
 .mode-card-desc{font-size:.82rem;color:var(--muted);line-height:1.55;flex:1}
-.mode-card-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px}
+.mode-card-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:16px}
+.mode-card-arrow{font-size:.8rem;color:var(--muted);opacity:0;transform:translateX(-4px);transition:all .2s}
+.mode-card:hover .mode-card-arrow{opacity:1;transform:translateX(0)}
 .mode-card-badge{display:inline-block;font-size:.7rem;font-family:var(--mono);font-weight:600;padding:4px 10px;border-radius:20px}
 .mode-card.practice-ground .mode-card-badge{background:var(--blue-bg);color:var(--blue)}
 .mode-card.practice-assigned .mode-card-badge{background:var(--green-lt);color:var(--green)}
@@ -428,7 +442,7 @@ tr:hover td{background:#f8faff}
 .mode-card-fresh{font-size:.68rem;font-weight:600;padding:4px 10px;border-radius:6px;border:1.5px solid var(--rule);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--sans);transition:all .15s;white-space:nowrap;line-height:1}
 .mode-card-fresh:hover{border-color:#ef4444;color:#ef4444}
 /* cards use column flex so footer always sits at bottom */
-.mode-card{display:flex;flex-direction:column}
+.mode-card{display:flex;flex-direction:column;min-height:220px}
 
 /* student nav tabs (breadcrumb-style back button) */
 .student-subnav{display:flex;align-items:center;gap:12px;margin-bottom:20px}
@@ -541,25 +555,36 @@ tr:hover td{background:#f8faff}
 <!-- ══════════════ SCREEN: LOGIN ══════════════ -->
 <div id="screen-login" class="screen">
   <div class="login-left">
+    <div class="login-left-orb login-left-orb1"></div>
+    <div class="login-left-orb login-left-orb2"></div>
+    <div class="login-left-orb login-left-orb3"></div>
     <div>
       <div class="login-left-brand">Prepgenix<br><span>SAT Math</span></div>
       <p class="login-left-tag">By Vaibhav Sharma · Perfect SAT Math Score · Princeton Review Certified</p>
     </div>
     <div style="display:flex;flex-direction:column;gap:14px">
       <div class="login-proof-item">
-        <div class="login-proof-icon">📐</div>
+        <div class="login-proof-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
         <span>Real College Board questions — Algebra & beyond</span>
       </div>
       <div class="login-proof-item">
-        <div class="login-proof-icon">⚡</div>
+        <div class="login-proof-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
         <span>Instant feedback on every answer you attempt</span>
       </div>
       <div class="login-proof-item">
-        <div class="login-proof-icon">⏱</div>
+        <div class="login-proof-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
         <span>SAT-paced timer to build real test awareness</span>
       </div>
       <div class="login-proof-item">
-        <div class="login-proof-icon">📊</div>
+        <div class="login-proof-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
         <span>Topic-by-topic accuracy tracking for every student</span>
       </div>
     </div>
@@ -633,6 +658,17 @@ tr:hover td{background:#f8faff}
       <div class="signin-spinner"></div>
       <span id="signin-status-text">Signing in…</span>
     </div>
+    <div id="forgot-section" style="display:none;margin-top:16px;padding:16px;background:var(--bg);border-radius:10px;border:1px solid var(--rule)">
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Enter your username and we'll reset your password to a temporary one. Contact your teacher if you don't know your username.</p>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="forgot-user" placeholder="Your username" style="flex:1;padding:9px 12px;border:1.5px solid var(--rule);border-radius:8px;font-size:.88rem;outline:none;font-family:var(--sans)">
+        <button onclick="doForgotPassword()" style="padding:9px 16px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-weight:700;cursor:pointer;font-size:.83rem;font-family:var(--sans);white-space:nowrap">Send reset</button>
+      </div>
+      <p id="forgot-msg" style="font-size:.75rem;margin-top:8px;display:none"></p>
+    </div>
+    <p id="forgot-toggle" style="text-align:center;margin-top:14px;font-size:.78rem;color:var(--muted)">
+      Forgot your password? <span onclick="document.getElementById('forgot-section').style.display=document.getElementById('forgot-section').style.display==='none'?'block':'none'" style="color:var(--blue);cursor:pointer;font-weight:600">Get help</span>
+    </p>
   </div>
 </div>
 
@@ -647,14 +683,26 @@ tr:hover td{background:#f8faff}
   </div>
   <div class="teacher-layout">
     <nav class="sidebar">
-      <div class="sidebar-section-label" style="margin-top:4px">Overview</div>
-      <div class="sidebar-nav-item active" onclick="switchPanel('panel-overview',this)"><span class="icon">📊</span> Dashboard</div>
-      <div class="sidebar-section-label">Manage</div>
-      <div class="sidebar-nav-item" onclick="switchPanel('panel-students',this)"><span class="icon">👥</span> Students</div>
-      <div class="sidebar-nav-item" onclick="switchPanel('panel-assign',this)"><span class="icon">📋</span> Assign Questions</div>
-      <div class="sidebar-section-label">Reports</div>
-      <div class="sidebar-nav-item" onclick="switchPanel('panel-results',this)"><span class="icon">📈</span> Results</div>
-      <div class="sidebar-nav-item" onclick="switchPanel('panel-deadline',this)"><span class="icon">⏰</span> Deadlines</div>
+      <div class="sidebar-nav-item active" onclick="switchPanel('panel-overview',this)">
+        <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+        Dashboard
+      </div>
+      <div class="sidebar-nav-item" onclick="switchPanel('panel-students',this)">
+        <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        Students
+      </div>
+      <div class="sidebar-nav-item" onclick="switchPanel('panel-assign',this)">
+        <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>
+        Assign
+      </div>
+      <div class="sidebar-nav-item" onclick="switchPanel('panel-results',this)">
+        <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+        Results
+      </div>
+      <div class="sidebar-nav-item" onclick="switchPanel('panel-deadline',this)">
+        <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+        Deadlines
+      </div>
     </nav>
     <div class="main-content">
 
@@ -668,8 +716,19 @@ tr:hover td{background:#f8faff}
             <span class="card-title">Student Progress</span>
             <button class="btn-sm btn-danger" onclick="resetAllStudents()" style="font-size:.72rem">↺ Reset All</button>
           </div>
-          <table><thead><tr><th>Student</th><th>Assigned</th><th>Completed</th><th>Score</th><th>Deadline</th><th>Status</th><th></th></tr></thead>
-          <tbody id="overview-tbody"></tbody></table>
+          <table>
+            <thead><tr><th>Student</th><th>Assigned</th><th>Completed</th><th>Score</th><th>Deadline</th><th>Status</th><th></th></tr></thead>
+            <tbody id="overview-tbody"></tbody>
+            <tfoot id="overview-tfoot" style="display:none">
+              <tr style="background:var(--bg);border-top:2px solid var(--rule)">
+                <td style="font-weight:700;font-size:.82rem;color:var(--navy);padding:12px 24px">Class total</td>
+                <td id="tfoot-assigned" style="font-weight:700;font-family:var(--mono);font-size:.82rem"></td>
+                <td id="tfoot-done" style="font-weight:700;font-family:var(--mono);font-size:.82rem"></td>
+                <td id="tfoot-avg" style="font-weight:700;font-family:var(--mono);font-size:.82rem"></td>
+                <td></td><td></td><td></td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
 
@@ -1311,6 +1370,32 @@ function doLogout(){
   document.getElementById('login-user').value='';document.getElementById('login-pass').value='';
 }
 
+// ── Forgot password — triggers Supabase password recovery ────────────
+async function doForgotPassword(){
+  const u = document.getElementById('forgot-user').value.trim();
+  const msg = document.getElementById('forgot-msg');
+  if(!u){ msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='Enter your username first.'; return; }
+  const email = u + '@prepgenix.student';
+  try {
+    const res = await fetch(`${SUPA_URL}/auth/v1/recover`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','apikey':SUPA_ANON},
+      body: JSON.stringify({ email })
+    });
+    msg.style.display = 'block';
+    if(res.ok){
+      msg.style.color = 'var(--green)';
+      msg.textContent = 'Reset email sent — but student accounts use internal emails. Contact your teacher to get your password reset directly.';
+    } else {
+      msg.style.color = 'var(--muted)';
+      msg.textContent = 'Contact your teacher at sharmavaibhav246@gmail.com to reset your password.';
+    }
+  } catch(e) {
+    msg.style.display = 'block'; msg.style.color = 'var(--muted)';
+    msg.textContent = 'Contact your teacher to reset your password.';
+  }
+}
+
 // ── Live login stats — fetched once on page load ──────────────────────
 async function loadLoginStats(){
   try {
@@ -1414,6 +1499,14 @@ async function renderOverview(){
     });
     const avg=totalDone>0?Math.round(totalCorrect/totalDone*100):0;
     const totalAssigned = statsArr.reduce((a,st)=>a+st.total,0);
+    // Update sticky totals row
+    const tfoot = document.getElementById('overview-tfoot');
+    if(tfoot && students.length > 0){
+      tfoot.style.display='';
+      document.getElementById('tfoot-assigned').textContent = totalAssigned;
+      document.getElementById('tfoot-done').textContent = totalDone;
+      document.getElementById('tfoot-avg').textContent = avg > 0 ? avg + '%' : '—';
+    }
 
     // Snapshot-based deltas — compare current values to last dashboard visit
     const SNAP_KEY = 'prepgenix_dashboard_snap';
@@ -1936,6 +2029,13 @@ async function renderStudentHome(){
       <div class="student-home-greeting">
         <h2>${greeting}, ${s.name.split(' ')[0]} 👋</h2>
         <p>${st.total > 0 ? `${st.done} of ${st.total} assigned questions completed${pct !== null ? ` · ${pct}% score` : ''}` : 'No questions assigned yet — explore the practice ground below.'}</p>
+        ${st.total > 0 ? `
+        <div style="margin-top:10px;max-width:300px">
+          <div style="height:5px;background:var(--rule);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${Math.round(st.done/st.total*100)}%;background:linear-gradient(90deg,#2b5be0,#6366f1);border-radius:3px;transition:width .6s ease"></div>
+          </div>
+          <div style="font-size:.7rem;color:var(--muted);margin-top:4px;font-family:var(--mono)">${Math.round(st.done/st.total*100)}% complete</div>
+        </div>` : ''}
       </div>
 
       <div class="mode-cards">
@@ -1951,11 +2051,14 @@ async function renderStudentHome(){
           <div id="pg-home-desc" class="mode-card-desc">Browse and attempt any of the 136 SAT Algebra questions. Filter by topic and practice at your own pace.</div>
           <div class="mode-card-footer">
             <span class="mode-card-badge" id="pg-home-badge">136 questions</span>
-            <button id="pg-fresh-btn" class="mode-card-fresh"
-              style="display:none"
-              onclick="event.stopPropagation();openModal('Reset session','This will clear your Practice Ground session. Assigned question results are unaffected.',()=>renderPracticeGround(undefined,true))">
-              ↺ Reset session
-            </button>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button id="pg-fresh-btn" class="mode-card-fresh"
+                style="display:none"
+                onclick="event.stopPropagation();openModal('Reset session','This will clear your Practice Ground session. Assigned question results are unaffected.',resetPracticeGround)">
+                ↺ Reset session
+              </button>
+              <span class="mode-card-arrow">→</span>
+            </div>
           </div>
         </div>
 
@@ -1974,6 +2077,7 @@ async function renderStudentHome(){
             : "Your teacher hasn't assigned any questions yet."}</div>
           <div class="mode-card-footer">
             <span class="mode-card-badge">${unanswered.length > 0 ? unanswered.length + ' remaining' : 'Complete'}</span>
+            <span class="mode-card-arrow">→</span>
           </div>
         </div>
 
@@ -1988,6 +2092,7 @@ async function renderStudentHome(){
           <div class="mode-card-desc">View your performance breakdown by topic, time spent per question, and accuracy trends.</div>
           <div class="mode-card-footer">
             <span class="mode-card-badge">${st.done > 0 ? st.done + ' answered' : 'No data yet'}</span>
+            <span class="mode-card-arrow">→</span>
           </div>
         </div>
 
@@ -2067,16 +2172,27 @@ function pgClearSession(sid){
   pgSessionAnswers = {};
 }
 
+// Dedicated reset — clears session and updates badge in place, no full re-render
+function resetPracticeGround(){
+  pgClearSession(currentStudentId);
+  pgIndex = 0;
+  pgQueue = [];
+  // Update the badge and desc in place without re-rendering the whole home screen
+  const badge = document.getElementById('pg-home-badge');
+  const desc  = document.getElementById('pg-home-desc');
+  const btn   = document.getElementById('pg-fresh-btn');
+  if(badge){ badge.textContent = MCQ_QUESTIONS.length + ' questions'; badge.style.background=''; badge.style.color=''; }
+  if(desc)  desc.textContent = 'Browse and attempt any of the ' + MCQ_QUESTIONS.length + ' SAT Algebra questions. Filter by topic and practice at your own pace.';
+  if(btn)   btn.style.display = 'none';
+  showToast('✓ Practice Ground reset — starting fresh');
+}
+
 function renderPracticeGround(startIdx, forceNew){
   if(timerInterval) clearInterval(timerInterval);
 
-  // forceNew = student clicked "Start Fresh"
+  // forceNew kept for backwards compat but resetPracticeGround() is now preferred
   if(forceNew) {
-    pgClearSession(currentStudentId);
-    pgIndex = 0;
-    pgQueue = [];
-    // Go back to home screen so the badge resets visibly before starting
-    renderStudentHome();
+    resetPracticeGround();
     return;
   }
 
@@ -2360,12 +2476,15 @@ async function selectPracticeGroundAnswer(qId, chosen){
       background:${correct?'#f0fdf4':'#fff8f8'};
       border:1.5px solid ${correct?'#86efac':'#fca5a5'};animation:fadeIn .2s ease`;
     const timeStr = timeSpent>=60?`${Math.floor(timeSpent/60)}m ${timeSpent%60}s`:`${timeSpent}s`;
-    fb.innerHTML = `<div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
-        color:${correct?'var(--green)':'var(--red)'};margin-bottom:4px">${correct?'✓ Correct':'✗ Incorrect'}</div>
-      <div style="font-size:.88rem;color:${correct?'#166534':'#7f1d1d'}">
-        The correct answer is <strong>${q.answer}</strong>.
-        <span style="opacity:.6;font-size:.78rem;margin-left:8px">⏱ ${timeStr}</span>
-      </div>`;
+    const skillTip = getSkillTip(q.skill);
+    fb.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:${correct?'var(--green)':'var(--red)'}">${correct?'✓ Correct':'✗ Incorrect'}</span>
+        <span style="font-size:.72rem;color:var(--muted);font-family:var(--mono)">⏱ ${timeStr}</span>
+      </div>
+      <div style="font-size:.88rem;color:${correct?'#166534':'#7f1d1d'};margin-bottom:${skillTip?'8px':'0'}">
+        ${correct?'Well done!':'The correct answer is <strong>'+q.answer+'</strong>.'}
+      </div>
+      ${skillTip?`<div style="font-size:.8rem;color:var(--ink-mid);background:rgba(0,0,0,.04);border-radius:7px;padding:8px 11px;line-height:1.55;border-left:3px solid ${correct?'var(--green)':'var(--blue)'}">💡 ${skillTip}</div>`:''}`;
   }
 
   // Enable Next button
@@ -2398,7 +2517,17 @@ async function renderAssignedPractice(){
     body.innerHTML = `
       <div style="max-width:720px;margin:0 auto">
         <div class="student-subnav"><button class="student-back-btn" onclick="renderStudentHome()">← Home</button></div>
-        <div class="no-work"><div class="nw-icon">📚</div><h3>No questions assigned yet</h3><p>Your teacher hasn't assigned any questions yet. Check back soon.</p></div>
+        <div class="no-work">
+          <svg width="72" height="72" viewBox="0 0 72 72" fill="none" style="margin-bottom:16px">
+            <circle cx="36" cy="36" r="36" fill="#eef2ff"/>
+            <path d="M24 28h24M24 36h16M24 44h12" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="52" cy="46" r="8" fill="#fff" stroke="#6366f1" stroke-width="2"/>
+            <path d="M52 43v3l2 2" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <h3>No questions yet</h3>
+          <p style="max-width:280px;margin:0 auto">Your teacher will assign questions soon. Try the Practice Ground in the meantime!</p>
+          <button onclick="renderStudentHome()" style="margin-top:20px;padding:10px 24px;border-radius:8px;border:1.5px solid var(--blue);background:var(--blue-bg);color:var(--blue);font-weight:600;cursor:pointer;font-family:var(--sans);font-size:.88rem">← Back to home</button>
+        </div>
       </div>`;
     return;
   }
@@ -2487,6 +2616,17 @@ async function renderAssignedPractice(){
 
 // ── MODE 3: ANALYTICS ────────────────────────────
 // ── Topic accuracy bar chart — returns HTML string, safe outside template literals ──
+// ── Skill tips shown in feedback after answering ──────────────
+function getSkillTip(skill) {
+  const tips = {
+    'Linear Equations (1 var)': 'Isolate the variable by performing the same operation on both sides. Watch for distribution and combining like terms.',
+    'Linear Equations (2 vars)': 'Look for substitution or elimination. If given a graph, use slope-intercept form y = mx + b.',
+    'Linear Functions': 'The slope is the rate of change. The y-intercept is the starting value. Match the context to the equation.',
+    'Linear Inequalities': 'Solve like an equation but flip the inequality sign when multiplying or dividing by a negative number.',
+  };
+  return tips[skill] || null;
+}
+
 function buildTopicChart(topicMap) {
   const entries = Object.entries(topicMap);
   if (!entries.length) return '';
@@ -2673,7 +2813,7 @@ function updateTimerDisplay(secs){
   }
 }
 
-function renderQuestion(studentId, cachedStats){
+function renderQuestion(studentId, cachedStats, slideDir){
   const q = practiceQueue[practiceIndex];
   const st = cachedStats || {total:practiceQueue.length, done:0};
   const pct = Math.round(((st.done||0) + practiceIndex) / Math.max(st.total,1) * 100);
@@ -2742,7 +2882,8 @@ function renderQuestion(studentId, cachedStats){
     <!-- Question card -->
     <div style="background:var(--white);border-radius:16px;overflow:hidden;
       box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 20px rgba(13,27,62,.08);
-      border:1px solid var(--rule);margin-bottom:14px;animation:qSlide .3s cubic-bezier(.4,0,.2,1)">
+      border:1px solid var(--rule);margin-bottom:14px"
+      class="${slideDir==='left'?'q-slide-left':slideDir==='right'?'q-slide-right':'q-slide-left'}">
       <div class="pdf-canvas-wrap" style="border-bottom:1px solid var(--rule)">
         <div class="pdf-loading">Loading question…</div>
         <canvas id="pdf-canvas-${q.id}"></canvas>
@@ -2760,9 +2901,9 @@ function renderQuestion(studentId, cachedStats){
       </div>
       <button id="btn-next" disabled
         onclick="nextQuestion('${studentId}')"
-        style="display:flex;align-items:center;gap:6px;padding:11px 28px;border-radius:10px;
+        style="display:flex;align-items:center;gap:6px;padding:12px 0;border-radius:10px;
           border:none;background:var(--rule);color:var(--muted);font-size:.9rem;font-weight:700;
-          cursor:not-allowed;font-family:var(--sans);transition:all .2s;min-width:120px;justify-content:center">
+          cursor:not-allowed;font-family:var(--sans);transition:all .25s;width:100%;justify-content:center">
         Next →
       </button>
     </div>`;
@@ -2818,12 +2959,15 @@ async function selectAnswer(studentId,qId,chosen){
     fb.style.cssText=`display:block;margin-top:16px;padding:14px 18px;border-radius:12px;
       background:${correct?'#f0fdf4':'#fff8f8'};
       border:1.5px solid ${correct?'#86efac':'#fca5a5'};animation:fadeIn .2s ease`;
-    fb.innerHTML=`<div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
-        color:${correct?'var(--green)':'var(--red)'};margin-bottom:4px">${correct?'✓ Correct':'✗ Incorrect'}</div>
-      <div style="font-size:.88rem;color:${correct?'#166534':'#7f1d1d'}">
-        The correct answer is <strong>${q.answer}</strong>.
-        <span style="opacity:.6;font-size:.78rem;margin-left:8px">⏱ ${timeStr}</span>
-      </div>`;
+    const sTip = getSkillTip(q.skill);
+    fb.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:${correct?'var(--green)':'var(--red)'}">${correct?'✓ Correct':'✗ Incorrect'}</span>
+        <span style="font-size:.72rem;color:var(--muted);font-family:var(--mono)">⏱ ${timeStr}</span>
+      </div>
+      <div style="font-size:.88rem;color:${correct?'#166534':'#7f1d1d'};margin-bottom:${sTip?'8px':'0'}">
+        ${correct?'Well done!':'The correct answer is <strong>'+q.answer+'</strong>.'}
+      </div>
+      ${sTip?`<div style="font-size:.8rem;color:var(--ink-mid);background:rgba(0,0,0,.04);border-radius:7px;padding:8px 11px;line-height:1.55;border-left:3px solid ${correct?'var(--green)':'var(--blue)'}">💡 ${sTip}</div>`:''}`;
   }
 
   // Enable Next button with blue styling
@@ -2833,6 +2977,7 @@ async function selectAnswer(studentId,qId,chosen){
     nextBtn.style.background='var(--blue)';
     nextBtn.style.color='#fff';
     nextBtn.style.cursor='pointer';
+    nextBtn.style.animation='nextPulse .9s ease 2';
     nextBtn.onmouseenter=()=>nextBtn.style.background='#1d4ed8';
     nextBtn.onmouseleave=()=>nextBtn.style.background='var(--blue)';
   }
@@ -2878,7 +3023,7 @@ async function nextQuestion(studentId){
     currentStudentStats = await DB.getStats(currentStudentId);
     renderStudentHome();
   } else {
-    renderQuestion(studentId);
+    renderQuestion(studentId, null, 'left');
     updateDotNav();
   }
 }
@@ -2887,9 +3032,10 @@ function jumpToQuestion(idx, studentId){
   const maxAllowed = practiceQueue.findIndex(q=>!currentStudentStats?.results?.[q.id]);
   const effectiveMax = maxAllowed === -1 ? practiceQueue.length - 1 : maxAllowed;
   if(idx > effectiveMax) return;
+  const dir = idx > practiceIndex ? 'left' : 'right';
   practiceIndex = idx;
   if(timerInterval) clearInterval(timerInterval);
-  renderQuestion(studentId);
+  renderQuestion(studentId, null, dir);
   updateDotNav();
 }
 
