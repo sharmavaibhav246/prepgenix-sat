@@ -1931,21 +1931,28 @@ async function renderStudentHome(){
 
       <div class="mode-cards">
 
-        <div class="mode-card practice-ground" onclick="renderPracticeGround()">
-          <span class="mode-card-icon">🏋️</span>
-          <div class="mode-card-title">Practice Ground</div>
-          <div id="pg-home-desc" class="mode-card-desc">Browse and attempt any of the 136 SAT Algebra questions in the app. Filter by topic and practice at your own pace.</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px">
-            <span class="mode-card-badge" id="pg-home-badge">136 questions</span>
-            <button id="pg-fresh-btn" onclick="event.stopPropagation();openModal('Reset Practice Ground','This will clear your current session progress. Your assigned question results are not affected. Start fresh?',()=>renderPracticeGround(undefined,true))"
-              style="display:none;font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:6px;
-              border:1.5px solid var(--rule);background:var(--white);color:var(--muted);cursor:pointer;
-              font-family:var(--sans);transition:all .15s;white-space:nowrap"
-              onmouseenter="this.style.borderColor='var(--red)';this.style.color='var(--red)'"
-              onmouseleave="this.style.borderColor='var(--rule)';this.style.color='var(--muted)'">
-              ↺ Start fresh
-            </button>
+        <!-- Practice Ground card wrapper — button sits outside the clickable card -->
+        <div style="position:relative">
+          <div class="mode-card practice-ground" onclick="renderPracticeGround()">
+            <span class="mode-card-icon">🏋️</span>
+            <div class="mode-card-title">Practice Ground</div>
+            <div id="pg-home-desc" class="mode-card-desc">Browse and attempt any of the 136 SAT Algebra questions in the app. Filter by topic and practice at your own pace.</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+              <span class="mode-card-badge" id="pg-home-badge">136 questions</span>
+            </div>
           </div>
+          <!-- Start fresh sits outside the card so it never inherits the card's onclick -->
+          <button id="pg-fresh-btn"
+            onclick="openModal('Reset Practice Ground','This will clear your current session progress. Your assigned question results are not affected. Start fresh?',()=>renderPracticeGround(undefined,true))"
+            style="display:none;position:absolute;bottom:14px;right:14px;
+              font-size:.68rem;font-weight:700;padding:5px 12px;border-radius:6px;
+              border:1.5px solid var(--rule);background:var(--white);color:var(--muted);
+              cursor:pointer;font-family:var(--sans);transition:all .15s;white-space:nowrap;
+              z-index:10"
+            onmouseenter="this.style.borderColor='var(--red)';this.style.color='var(--red)'"
+            onmouseleave="this.style.borderColor='var(--rule)';this.style.color='var(--muted)'">
+            ↺ Start fresh
+          </button>
         </div>
 
         <div class="mode-card practice-assigned" onclick="renderAssignedPractice()">
