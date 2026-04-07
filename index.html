@@ -413,13 +413,22 @@ tr:hover td{background:#f8faff}
 .mode-card.practice-assigned:hover{border-color:var(--green);box-shadow:0 8px 28px rgba(5,150,105,.15)}
 .mode-card.analytics-mode{border-color:#fed7aa}
 .mode-card.analytics-mode:hover{border-color:var(--amber);box-shadow:0 8px 28px rgba(217,119,6,.15)}
-.mode-card-icon{font-size:2.2rem;margin-bottom:14px;display:block}
+.mode-card-icon{width:48px;height:48px;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mode-card-icon svg{width:26px;height:26px}
+.mode-card.practice-ground .mode-card-icon{background:#eef2ff}
+.mode-card.practice-assigned .mode-card-icon{background:#d1fae5}
+.mode-card.analytics-mode .mode-card-icon{background:#fef3c7}
 .mode-card-title{font-size:1.05rem;font-weight:700;color:var(--navy);margin-bottom:6px}
-.mode-card-desc{font-size:.82rem;color:var(--muted);line-height:1.55}
-.mode-card-badge{display:inline-block;margin-top:14px;font-size:.7rem;font-family:var(--mono);font-weight:600;padding:3px 10px;border-radius:20px}
+.mode-card-desc{font-size:.82rem;color:var(--muted);line-height:1.55;flex:1}
+.mode-card-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px}
+.mode-card-badge{display:inline-block;font-size:.7rem;font-family:var(--mono);font-weight:600;padding:4px 10px;border-radius:20px}
 .mode-card.practice-ground .mode-card-badge{background:var(--blue-bg);color:var(--blue)}
 .mode-card.practice-assigned .mode-card-badge{background:var(--green-lt);color:var(--green)}
 .mode-card.analytics-mode .mode-card-badge{background:#fef3c7;color:#92400e}
+.mode-card-fresh{font-size:.68rem;font-weight:600;padding:4px 10px;border-radius:6px;border:1.5px solid var(--rule);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--sans);transition:all .15s;white-space:nowrap;line-height:1}
+.mode-card-fresh:hover{border-color:#ef4444;color:#ef4444}
+/* cards use column flex so footer always sits at bottom */
+.mode-card{display:flex;flex-direction:column}
 
 /* student nav tabs (breadcrumb-style back button) */
 .student-subnav{display:flex;align-items:center;gap:12px;margin-bottom:20px}
@@ -467,7 +476,7 @@ tr:hover td{background:#f8faff}
   .student-home-greeting h2{font-size:1.4rem}
   .mode-cards{grid-template-columns:1fr;gap:12px}
   .mode-card{padding:20px 18px}
-  .mode-card-icon{font-size:1.8rem;margin-bottom:10px}
+  .mode-card-icon{width:44px;height:44px;margin-bottom:12px}
   .mode-card-title{font-size:.95rem}
   .mode-card-desc{font-size:.8rem}
 
@@ -1931,44 +1940,55 @@ async function renderStudentHome(){
 
       <div class="mode-cards">
 
-        <!-- Practice Ground card wrapper — button sits outside the clickable card -->
-        <div style="position:relative">
-          <div class="mode-card practice-ground" onclick="renderPracticeGround()">
-            <span class="mode-card-icon">🏋️</span>
-            <div class="mode-card-title">Practice Ground</div>
-            <div id="pg-home-desc" class="mode-card-desc">Browse and attempt any of the 136 SAT Algebra questions in the app. Filter by topic and practice at your own pace.</div>
-            <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-              <span class="mode-card-badge" id="pg-home-badge">136 questions</span>
-            </div>
+        <!-- Practice Ground -->
+        <div class="mode-card practice-ground" onclick="renderPracticeGround()">
+          <div class="mode-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6.5 6.5h11M6.5 17.5h11M4 12h16M2 9l2 3-2 3M22 9l-2 3 2 3"/>
+            </svg>
           </div>
-          <!-- Start fresh sits outside the card so it never inherits the card's onclick -->
-          <button id="pg-fresh-btn"
-            onclick="openModal('Reset Practice Ground','This will clear your current session progress. Your assigned question results are not affected. Start fresh?',()=>renderPracticeGround(undefined,true))"
-            style="display:none;position:absolute;bottom:14px;right:14px;
-              font-size:.68rem;font-weight:700;padding:5px 12px;border-radius:6px;
-              border:1.5px solid var(--rule);background:var(--white);color:var(--muted);
-              cursor:pointer;font-family:var(--sans);transition:all .15s;white-space:nowrap;
-              z-index:10"
-            onmouseenter="this.style.borderColor='var(--red)';this.style.color='var(--red)'"
-            onmouseleave="this.style.borderColor='var(--rule)';this.style.color='var(--muted)'">
-            ↺ Start fresh
-          </button>
+          <div class="mode-card-title">Practice Ground</div>
+          <div id="pg-home-desc" class="mode-card-desc">Browse and attempt any of the 136 SAT Algebra questions. Filter by topic and practice at your own pace.</div>
+          <div class="mode-card-footer">
+            <span class="mode-card-badge" id="pg-home-badge">136 questions</span>
+            <button id="pg-fresh-btn" class="mode-card-fresh"
+              style="display:none"
+              onclick="event.stopPropagation();openModal('Reset session','This will clear your Practice Ground session. Assigned question results are unaffected.',()=>renderPracticeGround(undefined,true))">
+              ↺ Reset session
+            </button>
+          </div>
         </div>
 
+        <!-- Assigned Questions -->
         <div class="mode-card practice-assigned" onclick="renderAssignedPractice()">
-          <span class="mode-card-icon">📋</span>
+          <div class="mode-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+              <rect x="9" y="3" width="6" height="4" rx="1"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          </div>
           <div class="mode-card-title">Assigned Questions</div>
           <div class="mode-card-desc">${st.total > 0
-            ? `Practice the ${st.total} questions your teacher assigned. ${unanswered.length > 0 ? `<strong style="color:var(--green)">${unanswered.length} remaining.</strong>` : '✅ All done!'}`
-            : 'Your teacher hasn\'t assigned any questions yet.'}</div>
-          <span class="mode-card-badge">${unanswered.length} remaining</span>
+            ? `Your teacher assigned ${st.total} questions. ${unanswered.length > 0 ? `<strong style="color:var(--green)">${unanswered.length} remaining.</strong>` : '✅ All done!'}`
+            : "Your teacher hasn't assigned any questions yet."}</div>
+          <div class="mode-card-footer">
+            <span class="mode-card-badge">${unanswered.length > 0 ? unanswered.length + ' remaining' : 'Complete'}</span>
+          </div>
         </div>
 
+        <!-- My Analytics -->
         <div class="mode-card analytics-mode" onclick="renderStudentAnalytics()">
-          <span class="mode-card-icon">📊</span>
+          <div class="mode-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 20V10M12 20V4M6 20v-6"/>
+            </svg>
+          </div>
           <div class="mode-card-title">My Analytics</div>
-          <div class="mode-card-desc">View your performance breakdown by topic, time spent per question, accuracy trends, and session history.</div>
-          <span class="mode-card-badge">${st.done > 0 ? `${st.done} sessions analysed` : 'No data yet'}</span>
+          <div class="mode-card-desc">View your performance breakdown by topic, time spent per question, and accuracy trends.</div>
+          <div class="mode-card-footer">
+            <span class="mode-card-badge">${st.done > 0 ? st.done + ' answered' : 'No data yet'}</span>
+          </div>
         </div>
 
       </div>
