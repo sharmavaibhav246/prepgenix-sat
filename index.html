@@ -2604,7 +2604,7 @@ async function renderAssignedPractice(){
       <!-- Dot nav — click any dot to jump to that question -->
       <div id="q-dot-nav" style="display:flex;gap:6px;flex-wrap:wrap;padding:0 4px;margin-bottom:16px;justify-content:center">
         ${unanswered.map((qId,i)=>`
-          <button onclick="jumpToQuestion(${i},'${studentId}')"
+          <button onclick="jumpToQuestion(${i},'${currentStudentId}')"
             id="dot-${i}"
             title="Question ${i+1}"
             style="width:28px;height:28px;border-radius:50%;border:2px solid var(--rule);
