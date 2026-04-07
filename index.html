@@ -1342,6 +1342,7 @@ async function doLogin(){
       writeSessionToken(deviceToken); // fire-and-forget, non-blocking
       currentUser={role:'student',id:s.id};
       hide('screen-login'); show('screen-student');
+      history.replaceState({screen:'home'}, '', '#home');
       startSessionCheck();
       renderStudentPractice(s.id);
     }
@@ -1368,6 +1369,7 @@ function doLogout(){
   localStorage.removeItem(SESSION_TOKEN_KEY);
   Auth.signOut().catch(()=>{});
   currentUser=null;hide('screen-teacher');hide('screen-student');show('screen-login');
+  history.replaceState(null, '', window.location.pathname);
   document.getElementById('login-user').value='';document.getElementById('login-pass').value='';
 }
 
@@ -1427,6 +1429,17 @@ async function loadLoginStats(){
   }
 }
 window.addEventListener('DOMContentLoaded', ()=>{ loadLoginStats(); });
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', function(e) {
+  if(!currentUser || currentUser.role !== 'student') return;
+  const screen = e.state?.screen || 'home';
+  if(screen === 'home') renderStudentHome();
+  else if(screen === 'assigned') renderAssignedPractice();
+  else if(screen === 'practice') renderPracticeGround();
+  else if(screen === 'analytics') renderStudentAnalytics();
+  else renderStudentHome();
+});
 
 // ════════════════════════════════════════════════
 //  TEACHER
@@ -2004,6 +2017,7 @@ async function renderStudentPractice(studentId){
 }
 
 async function renderStudentHome(){
+  history.pushState({screen:'home'}, '', '#home');
   const s = currentStudentData;
   const st = currentStudentStats;
   const body = document.getElementById('student-body');
@@ -2207,6 +2221,11 @@ function renderPracticeGround(startIdx, forceNew){
     const diffOk  = pgFilters.difficulty.length === 0 || pgFilters.difficulty.includes(q.difficulty);
     return topicOk && diffOk;
   });
+  // Shuffle using Fisher-Yates every time Practice Ground is opened
+  for(let i = filtered.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
+  }
   pgQueue = filtered;
 
   // If resuming (no startIdx, no forceNew), jump to first unanswered question
@@ -2218,6 +2237,7 @@ function renderPracticeGround(startIdx, forceNew){
     pgIndex = firstUnanswered >= 0 ? firstUnanswered : 0;
   }
 
+  history.pushState({screen:'practice'}, '', '#practice');
   renderPracticeGroundQuestion();
 }
 
@@ -2570,6 +2590,7 @@ async function renderAssignedPractice(){
   // Build practice queue from unanswered
   practiceQueue = unanswered.map(id=>QUESTION_BANK.find(q=>q.id===id)).filter(Boolean);
   practiceIndex = 0;
+  history.pushState({screen:'assigned'}, '', '#assigned');
 
   body.style.padding = '32px 20px 60px';
 
@@ -2677,6 +2698,7 @@ function buildTopicChart(topicMap) {
 }
 
 async function renderStudentAnalytics(){
+  history.pushState({screen:'analytics'}, '', '#analytics');
   const body = document.getElementById('student-body');
   body.style.padding = '0';
   body.innerHTML = `<div style="padding:60px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:.85rem">Loading analytics…</div>`;
