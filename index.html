@@ -2041,32 +2041,20 @@ async function renderStudentHome(){
 
       <div class="mode-cards">
 
-        <!-- Practice Ground — wrapper lets button live outside the clickable card -->
-        <div style="position:relative">
-          <div class="mode-card practice-ground" onclick="renderPracticeGround()">
-            <div class="mode-card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6.5 6.5h11M6.5 17.5h11M4 12h16M2 9l2 3-2 3M22 9l-2 3 2 3"/>
-              </svg>
-            </div>
-            <div class="mode-card-title">Practice Ground</div>
-            <div id="pg-home-desc" class="mode-card-desc">Browse and attempt any of the 136 SAT Algebra questions. Filter by topic and practice at your own pace.</div>
-            <div class="mode-card-footer">
-              <span class="mode-card-badge" id="pg-home-badge">136 questions</span>
-              <span class="mode-card-arrow">→</span>
-            </div>
+        <!-- Practice Ground — button inside card, click handled via pgCardClick() -->
+        <div class="mode-card practice-ground" id="pg-card" onclick="pgCardClick(event)">
+          <div class="mode-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6.5 6.5h11M6.5 17.5h11M4 12h16M2 9l2 3-2 3M22 9l-2 3 2 3"/>
+            </svg>
           </div>
-          <!-- Reset button is a sibling of the card, NOT a child — can never bubble into card onclick -->
-          <button id="pg-fresh-btn"
-            onclick="openModal('Reset session','This will clear your Practice Ground session. Assigned question results are unaffected.',resetPracticeGround)"
-            style="display:none;position:absolute;bottom:16px;right:16px;
-              font-size:.68rem;font-weight:600;padding:5px 12px;border-radius:6px;
-              border:1.5px solid var(--rule);background:var(--white);color:var(--muted);
-              cursor:pointer;font-family:var(--sans);transition:all .15s;white-space:nowrap;z-index:2"
-            onmouseenter="this.style.borderColor='#ef4444';this.style.color='#ef4444'"
-            onmouseleave="this.style.borderColor='var(--rule)';this.style.color='var(--muted)'">
-            ↺ Reset session
-          </button>
+          <div class="mode-card-title">Practice Ground</div>
+          <div id="pg-home-desc" class="mode-card-desc">Browse and attempt any of the 136 SAT Algebra questions. Filter by topic and practice at your own pace.</div>
+          <div class="mode-card-footer">
+            <span class="mode-card-badge" id="pg-home-badge">136 questions</span>
+            <button id="pg-fresh-btn" class="mode-card-fresh" style="display:none">↺ Reset session</button>
+            <span class="mode-card-arrow">→</span>
+          </div>
         </div>
 
         <!-- Assigned Questions -->
@@ -2180,6 +2168,16 @@ function pgClearSession(sid){
 }
 
 // Dedicated reset — clears session and updates badge in place, no full re-render
+function pgCardClick(e){
+  // If click came from the reset button or its children, show modal
+  if(e.target.closest('#pg-fresh-btn')){
+    e.stopPropagation();
+    openModal('Reset session','This will clear your Practice Ground session. Assigned question results are unaffected.',resetPracticeGround);
+    return;
+  }
+  renderPracticeGround();
+}
+
 function resetPracticeGround(){
   pgClearSession(currentStudentId);
   pgIndex = 0;
