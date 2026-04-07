@@ -1093,6 +1093,27 @@ const DB = {
 };
 
 // ════════════════════════════════════════════════
+//  TEACHER DATA CACHE
+// ════════════════════════════════════════════════
+// One fetch loads everything. Invalidated on any write operation.
+let _teacherCache = null; // { students, statsMap, fetchedAt }
+const CACHE_TTL = 30000;  // 30 seconds
+
+async function getTeacherData(forceRefresh = false) {
+  const now = Date.now();
+  if (!forceRefresh && _teacherCache && (now - _teacherCache.fetchedAt) < CACHE_TTL) {
+    return _teacherCache;
+  }
+  const data = await teacherAPI('getBulkStats');
+  _teacherCache = { students: data.students, statsMap: data.statsMap, fetchedAt: now };
+  return _teacherCache;
+}
+
+function invalidateTeacherCache() {
+  _teacherCache = null;
+}
+
+// ════════════════════════════════════════════════
 //  APP STATE
 // ════════════════════════════════════════════════
 let currentUser=null, loginTab='student', activePanelId='panel-overview';
@@ -1248,8 +1269,8 @@ function renderTeacher(){ renderOverview(); renderAssign(); }
 async function renderOverview(){
   loading('overview-stats','Loading…');loading('overview-tbody','');
   try {
-    const students=await DB.getStudents();
-    const statsArr=await Promise.all(students.map(s=>DB.getStatsForStudent(s.id)));
+    const {students, statsMap} = await getTeacherData();
+    const statsArr = students.map(s => statsMap[s.id] || {total:0,done:0,correct:0,wrong:0,results:{},assigned:[]});
     let totalDone=0,totalCorrect=0;
     const tbody=document.getElementById('overview-tbody');
     tbody.innerHTML='';
@@ -1312,7 +1333,7 @@ function resetStudent(id, name){
     async () => {
       try{
         await DB.resetStudent(id);
-        renderOverview();
+        invalidateTeacherCache(); renderOverview();
         showToast(`✓ ${name} reset — ready for new questions`);
       } catch(e){ showToast('Error resetting student'); console.error(e); }
     }
@@ -1326,7 +1347,7 @@ function resetAllStudents(){
     async () => {
       try{
         await DB.resetAllStudents();
-        renderOverview();
+        invalidateTeacherCache(); renderOverview();
         showToast('✓ All students reset — ready for new questions');
       } catch(e){ showToast('Error resetting students'); console.error(e); }
     }
@@ -1337,8 +1358,8 @@ function resetAllStudents(){
 async function renderStudents(){
   loading('students-tbody','Loading students…');
   try {
-    const students=await DB.getStudents();
-    const statsArr=await Promise.all(students.map(s=>DB.getStatsForStudent(s.id)));
+    const {students, statsMap} = await getTeacherData();
+    const statsArr = students.map(s => statsMap[s.id] || {total:0,done:0,correct:0,wrong:0,results:{},assigned:[]});
     const tbody=document.getElementById('students-tbody');
     tbody.innerHTML='';
     const now=new Date();
@@ -1404,7 +1425,7 @@ async function addStudent(){
     await DB.addStudent(name,user,pass,days);
     ['new-name','new-user','new-pass'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('new-days').value='31';
-    renderStudents(); renderOverview(); refreshAssignTarget();
+    invalidateTeacherCache(); renderStudents(); renderOverview(); refreshAssignTarget();
     showToast(`✓ ${name} added — access for ${days} days`);
   } catch(e){ showToast(e.message.includes('unique')?'Username already taken':'Error adding student'); }
 }
@@ -1414,14 +1435,14 @@ async function updateDays(sid,name){
   if(days<1||days>365){showToast('Enter 1–365 days');return;}
   try{
     await DB.updateAccessDays(sid,days);
-    renderStudents();
+    invalidateTeacherCache(); renderStudents();
     showToast(`✓ ${name}: access extended by ${days} days from now`);
   }catch(e){ showToast('Error updating access'); }
 }
 
 function removeStudent(id,name){
   openModal('Remove student',`Remove "${name}" and all their data? This cannot be undone.`,async()=>{
-    try{ await DB.removeStudent(id); renderStudents(); renderOverview(); refreshAssignTarget(); showToast(`Removed ${name}`); }
+    try{ await DB.removeStudent(id); invalidateTeacherCache(); renderStudents(); renderOverview(); refreshAssignTarget(); showToast(`Removed ${name}`); }
     catch(e){ showToast('Error removing student'); }
   });
 }
@@ -1592,7 +1613,8 @@ async function refreshAssignTarget(){
   const prev=sel.value;
   sel.innerHTML='<option value="all">→ All Students</option>';
   try{
-    const students=await DB.getStudents();
+    // Use cached data if available — no extra network call needed
+    const {students} = await getTeacherData();
     students.forEach(s=>sel.innerHTML+=`<option value="${s.id}">${s.name}</option>`);
   }catch(e){}
   if(prev)sel.value=prev;
@@ -1612,7 +1634,7 @@ async function doAssign(){
       const s=await DB.getStudent(target);
       showToast(`✓ Questions assigned to ${s.name}`);
     }
-    clearSelection(); renderOverview();
+    invalidateTeacherCache(); clearSelection(); renderOverview();
   }catch(e){
     console.error(e);
     showToast('Error assigning — check console for details');
@@ -1626,7 +1648,7 @@ async function renderResults(){
   const prev=sel.value;
   sel.innerHTML='<option value="">— Select a student —</option>';
   try{
-    const students=await DB.getStudents();
+    const {students} = await getTeacherData();
     students.forEach(s=>sel.innerHTML+=`<option value="${s.id}">${s.name}</option>`);
     if(prev){sel.value=prev;loadStudentResults();}
   }catch(e){}
@@ -1667,7 +1689,7 @@ async function loadStudentResults(){
 async function renderDeadlines(){
   loading('deadline-tbody','Loading…');
   try{
-    const students=await DB.getStudents();
+    const {students} = await getTeacherData();
     const tbody=document.getElementById('deadline-tbody');
     tbody.innerHTML='';
     students.forEach(s=>{
@@ -1760,7 +1782,7 @@ async function renderStudentHome(){
           <div id="pg-home-desc" class="mode-card-desc">Browse and attempt any of the 136 SAT Algebra questions in the app. Filter by topic and practice at your own pace.</div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px">
             <span class="mode-card-badge" id="pg-home-badge">136 questions</span>
-            <button id="pg-fresh-btn" onclick="event.stopPropagation();renderPracticeGround(undefined,true)"
+            <button id="pg-fresh-btn" onclick="event.stopPropagation();openModal('Reset Practice Ground','This will clear your current session progress. Your assigned question results are not affected. Start fresh?',()=>renderPracticeGround(undefined,true))"
               style="display:none;font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:6px;
               border:1.5px solid var(--rule);background:var(--white);color:var(--muted);cursor:pointer;
               font-family:var(--sans);transition:all .15s;white-space:nowrap"
@@ -1870,6 +1892,10 @@ function renderPracticeGround(startIdx, forceNew){
   if(forceNew) {
     pgClearSession(currentStudentId);
     pgIndex = 0;
+    pgQueue = [];
+    // Go back to home screen so the badge resets visibly before starting
+    renderStudentHome();
+    return;
   }
 
   // Build queue based on active filters (multi-select)
