@@ -415,7 +415,7 @@ tr:hover td{background:#f8faff}
 .student-home-greeting{margin-bottom:36px}
 .student-home-greeting h2{font-family:var(--serif);font-size:1.9rem;font-weight:700;color:var(--navy);letter-spacing:-.02em;margin-bottom:4px}
 .student-home-greeting p{font-size:.9rem;color:var(--muted)}
-.mode-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:36px}
+.mode-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:36px;isolation:isolate}
 .mode-card{background:var(--white);border:2px solid var(--rule);border-radius:16px;padding:28px 24px;cursor:pointer;transition:all .2s;text-align:left;position:relative;overflow:hidden}
 .mode-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s}
 .mode-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.1)}
@@ -435,7 +435,7 @@ tr:hover td{background:#f8faff}
 .mode-card-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:16px}
 .mode-card-arrow{font-size:.8rem;color:var(--muted);opacity:0;transform:translateX(-4px);transition:all .2s}
 .mode-card:hover .mode-card-arrow{opacity:1;transform:translateX(0)}
-.mode-card-badge{display:inline-block;font-size:.7rem;font-family:var(--mono);font-weight:600;padding:4px 10px;border-radius:20px}
+.mode-card-badge{display:inline-block;font-size:.7rem;font-family:var(--mono);font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .mode-card.practice-ground .mode-card-badge{background:var(--blue-bg);color:var(--blue)}
 .mode-card.practice-assigned .mode-card-badge{background:var(--green-lt);color:var(--green)}
 .mode-card.analytics-mode .mode-card-badge{background:#fef3c7;color:#92400e}
@@ -2041,7 +2041,7 @@ async function renderStudentHome(){
       <div class="mode-cards">
 
         <!-- Practice Ground -->
-        <div class="mode-card practice-ground" onclick="renderPracticeGround()">
+        <div class="mode-card practice-ground" onclick="if(event.target.closest('#pg-fresh-btn'))return;renderPracticeGround()">
           <div class="mode-card-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6.5 6.5h11M6.5 17.5h11M4 12h16M2 9l2 3-2 3M22 9l-2 3 2 3"/>
@@ -2054,7 +2054,7 @@ async function renderStudentHome(){
             <div style="display:flex;align-items:center;gap:8px">
               <button id="pg-fresh-btn" class="mode-card-fresh"
                 style="display:none"
-                onclick="event.stopPropagation();openModal('Reset session','This will clear your Practice Ground session. Assigned question results are unaffected.',resetPracticeGround)">
+                onclick="openModal('Reset session','This will clear your Practice Ground session. Assigned question results are unaffected.',resetPracticeGround)">
                 ↺ Reset session
               </button>
               <span class="mode-card-arrow">→</span>
@@ -2108,7 +2108,7 @@ async function renderStudentHome(){
   if(pgBadge && pgAnswered > 0){
     const pgCorrect = Object.values(pgSessionAnswers).filter(a=>a.correct).length;
     const pgPct     = Math.round(pgCorrect/pgAnswered*100);
-    pgBadge.textContent = `${pgAnswered}/${pgTotal} done · ${pgPct}% correct`;
+    pgBadge.textContent = `${pgAnswered}/${pgTotal} · ${pgPct}% correct`;
     pgBadge.style.background = 'var(--green-lt)';
     pgBadge.style.color = '#065f46';
     if(pgDesc) pgDesc.textContent = `Session in progress — ${pgTotal - pgAnswered} questions remaining. Tap to continue.`;
