@@ -39,7 +39,7 @@
   --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.06);
   --shadow-lg:0 8px 32px rgba(13,27,62,.18);
 }
-body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.6}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;font-size:14px;line-height:1.6}
 button{cursor:pointer;font-family:var(--sans);border:none}
 input,select{font-family:var(--sans)}
 .hidden{display:none!important}
@@ -96,7 +96,7 @@ input,select{font-family:var(--sans)}
 .login-live-stats{display:flex;gap:0;margin-top:32px;border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.04)}
 .login-stat-block{flex:1;padding:14px 16px;text-align:center;border-right:1px solid rgba(255,255,255,.08)}
 .login-stat-block:last-child{border-right:none}
-.login-stat-num{font-family:var(--serif);font-size:1.6rem;font-weight:700;color:#fff;line-height:1;transition:opacity .3s}
+.login-stat-num{font-family:var(--sans);font-size:1.5rem;font-weight:700;color:#fff;line-height:1;transition:opacity .3s}
 .login-stat-num.loading{opacity:.3}
 .login-stat-key{font-size:.68rem;color:rgba(255,255,255,.45);margin-top:4px;letter-spacing:.05em;text-transform:uppercase}
 /* sign-in spinner */
@@ -205,7 +205,7 @@ input,select{font-family:var(--sans)}
 .main-content{flex:1;padding:28px 36px;max-width:none;width:100%}
 .panel{display:none}
 .panel.active{display:block;animation:fadeIn .25s ease}
-.section-title{font-size:1.45rem;font-weight:700;margin-bottom:5px;letter-spacing:-.02em;color:var(--navy)}
+.section-title{font-size:1.2rem;font-weight:700;margin-bottom:4px;letter-spacing:-.01em;color:var(--navy)}
 .section-sub{font-size:.82rem;color:var(--muted);margin-bottom:28px}
 
 /* stat cards */
@@ -279,7 +279,7 @@ tr:hover td{background:#f8faff}
 .student-select-row select{flex:1;padding:10px 14px;border:1.5px solid var(--rule);border-radius:var(--radius);font-size:.9rem;background:var(--white);outline:none;cursor:pointer}
 .results-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
 .rs-card{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius);padding:16px 18px;text-align:center;box-shadow:var(--shadow)}
-.rs-card .rs-num{font-family:var(--serif);font-size:1.8rem;font-weight:700;line-height:1;margin-bottom:4px;color:var(--ink)}
+.rs-card .rs-num{font-family:var(--sans);font-size:1.5rem;font-weight:700;line-height:1;margin-bottom:4px;color:var(--ink)}
 .rs-card .rs-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
 .rs-card.correct .rs-num{color:var(--green)}
 .rs-card.wrong .rs-num{color:var(--red)}
@@ -378,32 +378,32 @@ tr:hover td{background:#f8faff}
 @keyframes nextPulse{0%{box-shadow:0 0 0 0 rgba(43,91,224,.4)}70%{box-shadow:0 0 0 8px rgba(43,91,224,0)}100%{box-shadow:0 0 0 0 rgba(43,91,224,0)}}
 
 /* score screen */
-.score-screen{text-align:center;padding:48px 36px;background:var(--white);border:1px solid var(--rule);border-radius:20px;box-shadow:var(--shadow)}
-.score-emoji{font-size:3.2rem;margin-bottom:12px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}
+.score-screen{text-align:center;padding:32px 28px 28px;background:var(--white);border:1px solid var(--rule);border-radius:16px;box-shadow:var(--shadow)}
+.score-emoji{font-size:2.4rem;margin-bottom:8px;animation:popIn .5s cubic-bezier(.34,1.56,.64,1)}
 @keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
-.score-screen h2{font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--navy);margin-bottom:6px}
-.score-screen .score-sub{font-size:.88rem;color:var(--muted);margin-bottom:28px}
+.score-screen h2{font-family:var(--sans);font-size:1.25rem;font-weight:700;color:var(--navy);margin-bottom:4px}
+.score-screen .score-sub{font-size:.82rem;color:var(--muted);margin-bottom:20px}
 .score-ring-wrap{display:flex;justify-content:center;margin-bottom:28px}
-.score-big{font-family:var(--serif);font-size:4.5rem;font-weight:700;line-height:1;color:var(--blue);margin-bottom:4px}
-.score-total{font-size:.85rem;color:var(--muted);margin-bottom:28px}
-.score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
-.score-stat{background:var(--bg);border:1px solid var(--rule);border-radius:12px;padding:14px 10px;text-align:center}
-.score-stat .s-val{font-family:var(--mono);font-size:1.5rem;font-weight:500;display:block;line-height:1;margin-bottom:4px;letter-spacing:-.02em}
-.score-stat .s-key{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.score-big{font-family:var(--serif);font-size:3.6rem;font-weight:700;line-height:1;color:var(--blue);margin-bottom:2px}
+.score-total{font-size:.8rem;color:var(--muted);margin-bottom:20px}
+.score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.score-stat{background:var(--bg);border:1px solid var(--rule);border-radius:10px;padding:12px 8px;text-align:center}
+.score-stat .s-val{font-family:var(--sans);font-size:1.3rem;font-weight:700;display:block;line-height:1;margin-bottom:3px}
+.score-stat .s-key{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
 .score-stat.c .s-val{color:var(--green)}
 .score-stat.w .s-val{color:var(--red)}
 .score-stat.t .s-val{color:var(--teal)}
 .score-stat.p .s-val{color:var(--blue)}
-.score-topic-bar{margin-bottom:12px}
+.score-topic-bar{margin-bottom:10px}
 .score-topic-bar .stb-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
 .score-topic-bar .stb-name{font-size:.82rem;font-weight:600;color:var(--ink)}
 .score-topic-bar .stb-pct{font-size:.75rem;font-family:var(--mono);font-weight:700}
 .score-topic-bar .stb-track{height:8px;background:var(--rule);border-radius:4px;overflow:hidden}
 .score-topic-bar .stb-fill{height:100%;border-radius:4px;transition:width .7s ease}
-.score-share-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border-radius:12px;border:none;background:#25d366;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;font-family:var(--sans);transition:all .18s;margin-bottom:12px}
+.score-share-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 24px;border-radius:8px;border:none;background:#25d366;color:#fff;font-size:.82rem;font-weight:700;cursor:pointer;font-family:var(--sans);transition:all .18s;margin-bottom:10px;text-decoration:none}
 .score-share-btn:hover{background:#1ebe5d;transform:translateY(-1px)}
 .score-share-btn:active{transform:scale(.98)}
-.score-home-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border-radius:12px;border:1.5px solid var(--rule);background:var(--white);color:var(--ink-mid);font-size:.9rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.score-home-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 22px;border-radius:8px;border:1.5px solid var(--rule);background:var(--white);color:var(--ink-mid);font-size:.82rem;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
 .score-home-btn:hover{border-color:var(--ink-mid);background:var(--bg)}
 .no-work{text-align:center;padding:80px 20px;color:var(--muted)}
 .no-work .nw-icon{font-size:3rem;margin-bottom:16px}
@@ -412,9 +412,9 @@ tr:hover td{background:#f8faff}
 
 /* student home dashboard */
 .student-home{width:100%;max-width:860px;margin:0 auto;padding:40px 20px 60px;animation:fadeIn .3s ease}
-.student-home-greeting{margin-bottom:36px}
-.student-home-greeting h2{font-family:var(--serif);font-size:1.9rem;font-weight:700;color:var(--navy);letter-spacing:-.02em;margin-bottom:4px}
-.student-home-greeting p{font-size:.9rem;color:var(--muted)}
+.student-home-greeting{margin-bottom:28px}
+.student-home-greeting h2{font-family:var(--sans);font-size:1.6rem;font-weight:700;color:var(--navy);letter-spacing:-.02em;margin-bottom:4px}
+.student-home-greeting p{font-size:.85rem;color:var(--muted)}
 .mode-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:36px;isolation:isolate;align-items:stretch}
 .mode-card{background:var(--white);border:2px solid var(--rule);border-radius:16px;padding:28px 24px;cursor:pointer;transition:all .2s;text-align:left;position:relative;overflow:hidden}
 .mode-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s}
@@ -488,7 +488,7 @@ tr:hover td{background:#f8faff}
 
   /* Home dashboard */
   .student-home{padding:20px 14px 48px!important}
-  .student-home-greeting h2{font-size:1.4rem}
+  .student-home-greeting h2{font-size:1.3rem}
   .mode-cards{grid-template-columns:1fr;gap:12px}
   .mode-card{padding:20px 18px}
   .mode-card-icon{width:44px;height:44px;margin-bottom:12px}
@@ -527,12 +527,13 @@ tr:hover td{background:#f8faff}
 
   /* Score screen */
   .score-screen{padding:28px 16px!important;border-radius:14px}
-  .score-big{font-size:3.6rem!important}
-  .score-total{font-size:.82rem}
-  .score-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
-  .score-stat .s-val{font-size:1.4rem!important}
-  .score-stat .s-key{font-size:.65rem!important}
-  .score-share-btn{font-size:.88rem!important;padding:13px!important}
+  .score-screen{padding:24px 16px 20px!important}
+  .score-big{font-size:3rem!important}
+  .score-total{font-size:.78rem}
+  .score-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
+  .score-stat .s-val{font-size:1.2rem!important}
+  .score-stat .s-key{font-size:.62rem!important}
+  .score-share-btn,.score-home-btn{padding:9px 18px!important;font-size:.8rem!important}
 
   /* Analytics */
   .analytics-wrap{padding:16px 14px 48px!important}
@@ -3186,17 +3187,18 @@ function buildCompletionHTML(s, st, studentId, context='assigned') {
         ${topicBarsHTML}
       </div>` : ''}
 
-      <a href="${whatsappUrl}" target="_blank" class="score-share-btn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0">
-          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.556 4.123 1.528 5.855L.057 23.882l6.187-1.43A11.946 11.946 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.032-1.38l-.36-.214-3.724.861.878-3.637-.235-.373A9.818 9.818 0 1 1 12 21.818z"/>
-        </svg>
-        Share on WhatsApp
-      </a>
-
-      <button onclick="renderStudentHome()" class="score-home-btn">
-        ← Back to Home
-      </button>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:4px">
+        <a href="${whatsappUrl}" target="_blank" class="score-share-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+            <path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.556 4.123 1.528 5.855L.057 23.882l6.187-1.43A11.946 11.946 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.032-1.38l-.36-.214-3.724.861.878-3.637-.235-.373A9.818 9.818 0 1 1 12 21.818z"/>
+          </svg>
+          Share on WhatsApp
+        </a>
+        <button onclick="renderStudentHome()" class="score-home-btn">
+          ← Back to Home
+        </button>
+      </div>
     </div>`;
 }
 
