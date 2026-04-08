@@ -3636,12 +3636,16 @@ async function extractPDFText(file) {
 
 // Detect if a page needs image rendering (has equations/graphs/tables)
 function pageNeedsImage(pageText) {
-  // Heuristics: very little text (likely a graph), or contains math symbols
   const stripped = pageText.replace(/\s+/g, ' ').trim();
-  if (stripped.length < 80) return true; // almost no text = likely a diagram
-  // Common equation/graph indicators in SAT PDFs
+  // Very little text = likely a diagram/graph
+  if (stripped.length < 80) return true;
+  // Math symbols and visual indicators
   const mathIndicators = /[²³√∑∫÷×≤≥≠≈∞πθ]|f\(x\)|y\s*=|ax\s*[+\-]|graph|table|figure|diagram|\^2|\^3/i;
-  return mathIndicators.test(stripped);
+  if (mathIndicators.test(stripped)) return true;
+  // Fractions and expressions likely to be garbled in text extraction
+  const fractionIndicators = /\d+\/\d+|\band\b.*\band\b|−\s*\d|–\s*\d/;
+  if (fractionIndicators.test(stripped)) return true;
+  return false;
 }
 
 // Render a single PDF page to base64 image
@@ -3725,13 +3729,13 @@ async function runImport() {
       text: `Extract ALL SAT Math questions from the above text and images.
 For each question return JSON with:
 - id: Question ID (from "ID: XXXXXXXX" or "Question ID XXXXXXXX")
-- question_text: the full question stem text (everything after the ID line and before the answer options). Include any equations written as plain text. If the question has a graph/table/diagram that cannot be expressed as text, write "[See graph]" or "[See table]" as appropriate.
+- question_text: the full question stem text (everything after the ID line and before the answer options). Include equations as plain text e.g. "(x+6)/3 = (x+6)/13". For graphs/diagrams that truly cannot be expressed as text, write "[Graph]".
 - skill: normalize to short form e.g. "Linear Equations (1 var)", "Linear Equations (2 vars)", "Systems of Equations", "Quadratics", "Functions", "Geometry", "Statistics"
 - type: "MCQ" if has A/B/C/D options, "FRQ" if free response
-- options: for MCQ array of {l,t} e.g. [{"l":"A","t":"14"},{"l":"B","t":"65"},...], for FRQ []
+- options: for MCQ array of {l,t}. CRITICAL: always extract the ACTUAL option text — never write "[not visible]" or "[unclear]" or any placeholder. If an option contains a fraction like -7/3, write it as "-7/3". If it shows two numbers like "-7 and -3", write "-7 and -3". Look carefully at both the text and images.
 - answer: correct answer letter for MCQ, numeric/expression for FRQ (from answers PDF)
 - difficulty: "Easy", "Medium", or "Hard" (from "Question Difficulty:" in answers PDF)
-Return ONLY a valid JSON array, no markdown fences, no explanation.`
+CRITICAL: Return ONLY a valid JSON array, no markdown fences, no explanation. Never use placeholder text for any field.`
     });
 
     importLog('🤖 Sending to Claude AI for extraction…');
