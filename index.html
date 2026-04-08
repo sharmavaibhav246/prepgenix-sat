@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Prepgenix — Digital SAT Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
-<style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   /* Core palette — inspired by College Board Bluebook + Princeton Review */
@@ -850,81 +848,72 @@ tr:hover td{background:#f8faff}
       <!-- IMPORT QUESTIONS -->
       <div id="panel-import" class="panel">
         <h2 class="section-title">Import Questions</h2>
-        <p class="section-sub">Upload a questions PDF and answers PDF — Claude AI will extract and add them to the question bank automatically.</p>
+        <p class="section-sub">Upload an Excel file (.xlsx) with your questions. All fields are read directly — no AI parsing needed.</p>
 
-        <div class="card" style="max-width:680px">
-          <div class="card-header"><span class="card-title">Upload PDFs</span></div>
+        <div class="card" style="max-width:700px">
+          <div class="card-header">
+            <span class="card-title">Upload Excel File</span>
+            <a href="#" onclick="downloadTemplate()" style="font-size:.78rem;color:var(--blue);text-decoration:none;font-weight:600">⬇ Download Template</a>
+          </div>
           <div style="padding:24px;display:flex;flex-direction:column;gap:20px">
 
-            <!-- Drop zones -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-              <!-- Questions PDF -->
-              <div>
-                <label style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:8px">Questions PDF</label>
-                <div id="drop-questions" onclick="document.getElementById('file-questions').click()"
-                  style="border:2px dashed var(--rule);border-radius:12px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)">
-                  <div id="qicon" style="font-size:1.6rem;margin-bottom:8px">📄</div>
-                  <div id="qlabel" style="font-size:.82rem;color:var(--muted);word-break:break-all">Click to upload</div>
-                  <div id="qsize" style="font-size:.72rem;color:var(--muted);margin-top:3px"></div>
-                </div>
-                <input type="file" id="file-questions" accept=".pdf" style="display:none" onchange="handleFileSelect('questions',this)">
-              </div>
-              <!-- Answers PDF -->
-              <div>
-                <label style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:8px">Answers PDF</label>
-                <div id="drop-answers" onclick="document.getElementById('file-answers').click()"
-                  style="border:2px dashed var(--rule);border-radius:12px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)">
-                  <div id="aicon" style="font-size:1.6rem;margin-bottom:8px">📄</div>
-                  <div id="alabel" style="font-size:.82rem;color:var(--muted);word-break:break-all">Click to upload</div>
-                  <div id="asize" style="font-size:.72rem;color:var(--muted);margin-top:3px"></div>
-                </div>
-                <input type="file" id="file-answers" accept=".pdf" style="display:none" onchange="handleFileSelect('answers',this)">
+            <!-- Excel column reference -->
+            <div style="background:var(--bg);border-radius:10px;padding:14px 16px;font-size:.78rem;color:var(--ink-mid);line-height:1.8">
+              <strong style="display:block;margin-bottom:6px;color:var(--navy)">Required columns in your Excel file:</strong>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 20px">
+                <span><code style="color:var(--blue)">id</code> — Question ID (e.g. 3cdbf026)</span>
+                <span><code style="color:var(--blue)">question</code> — Full question text</span>
+                <span><code style="color:var(--blue)">skill</code> — Topic (e.g. Linear Equations)</span>
+                <span><code style="color:var(--blue)">difficulty</code> — Easy / Medium / Hard</span>
+                <span><code style="color:var(--blue)">type</code> — MCQ or FRQ</span>
+                <span><code style="color:var(--blue)">option_a</code> through <code style="color:var(--blue)">option_d</code> — MCQ choices</span>
+                <span><code style="color:var(--blue)">answer</code> — A/B/C/D or numeric</span>
+                <span><code style="color:var(--blue)">explanation</code> — Shown after answering</span>
+                <span><code style="color:var(--blue)">image_url</code> — Optional image URL</span>
               </div>
             </div>
 
-            <!-- Page numbering and skill are both auto-detected -->
-            <div style="background:var(--blue-bg);border-radius:9px;padding:11px 14px;font-size:.82rem;color:var(--blue);display:flex;align-items:center;gap:8px">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              Page numbers, skill/topic, and difficulty are all extracted automatically from the PDFs. New questions will start from page <strong id="import-next-page">—</strong>.
+            <!-- Drop zone -->
+            <div id="excel-drop" onclick="document.getElementById('file-excel').click()"
+              style="border:2px dashed var(--rule);border-radius:12px;padding:36px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)">
+              <div id="excel-icon" style="font-size:2rem;margin-bottom:10px">📊</div>
+              <div id="excel-label" style="font-size:.88rem;font-weight:600;color:var(--muted)">Click to upload .xlsx file</div>
+              <div id="excel-size" style="font-size:.72rem;color:var(--muted);margin-top:4px"></div>
             </div>
+            <input type="file" id="file-excel" accept=".xlsx,.xls" style="display:none" onchange="handleExcelSelect(this)">
 
-            <!-- Extract button -->
-            <button id="import-btn" onclick="runImport()"
-              style="background:var(--blue);color:#fff;border-radius:9px;padding:12px 24px;font-size:.9rem;font-weight:600;font-family:var(--sans);border:none;cursor:pointer;transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-              Extract &amp; Add to Question Bank
+            <!-- Import button -->
+            <button id="import-btn" onclick="runExcelImport()"
+              style="background:var(--blue);color:#fff;border-radius:9px;padding:13px 24px;font-size:.9rem;font-weight:600;font-family:var(--sans);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Import to Question Bank
             </button>
 
-            <!-- Progress / log -->
+            <!-- Log -->
             <div id="import-log" style="display:none;background:#0d1b3e;border-radius:10px;padding:16px;font-family:var(--mono);font-size:.78rem;color:#7dd3fc;line-height:1.8;max-height:260px;overflow-y:auto"></div>
 
-            <!-- Preview table -->
+            <!-- Preview -->
             <div id="import-preview" style="display:none">
               <div style="font-size:.82rem;font-weight:600;color:var(--ink-mid);margin-bottom:10px" id="import-preview-title"></div>
               <div style="overflow-x:auto;border-radius:10px;border:1.5px solid var(--rule)">
-                <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+                <table style="width:100%;border-collapse:collapse;font-size:.78rem">
                   <thead>
                     <tr style="background:var(--bg)">
-                      <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">#</th>
-                      <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">ID</th>
-                      <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">Skill</th>
-                      <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">Type</th>
-                      <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">Answer</th>
-                      <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">Difficulty</th>
+                      <th style="padding:9px 12px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">#</th>
+                      <th style="padding:9px 12px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">ID</th>
+                      <th style="padding:9px 12px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">Question</th>
+                      <th style="padding:9px 12px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">Skill</th>
+                      <th style="padding:9px 12px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">Type</th>
+                      <th style="padding:9px 12px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">Answer</th>
+                      <th style="padding:9px 12px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">Difficulty</th>
                     </tr>
                   </thead>
                   <tbody id="import-preview-tbody"></tbody>
                 </table>
               </div>
               <div style="display:flex;gap:10px;margin-top:14px">
-                <button onclick="confirmImport()"
-                  style="background:var(--green);color:#fff;border-radius:8px;padding:10px 22px;font-size:.85rem;font-weight:600;font-family:var(--sans);border:none;cursor:pointer">
-                  ✓ Add These Questions
-                </button>
-                <button onclick="cancelImport()"
-                  style="background:var(--rule);color:var(--ink-mid);border-radius:8px;padding:10px 22px;font-size:.85rem;font-weight:600;font-family:var(--sans);border:none;cursor:pointer">
-                  Cancel
-                </button>
+                <button onclick="confirmImport()" style="background:var(--green);color:#fff;border-radius:8px;padding:10px 22px;font-size:.85rem;font-weight:600;font-family:var(--sans);border:none;cursor:pointer">✓ Add These Questions</button>
+                <button onclick="cancelImport()" style="background:var(--rule);color:var(--ink-mid);border-radius:8px;padding:10px 22px;font-size:.85rem;font-weight:600;font-family:var(--sans);border:none;cursor:pointer">Cancel</button>
               </div>
             </div>
 
@@ -982,100 +971,6 @@ function getMCQ() {
 
 // Per-page crop coords in PDF points (y_start, y_end|null)
 // y_start = bottom of "ID:" badge, y_end = top of "A." option (null = free response)
-const PAGE_CLIPS={1:[804.1,764.0],2:[804.1,null],3:[804.1,null],4:[804.1,683.8],5:[804.1,748.3],6:[804.1,748.3],7:[804.1,748.3],8:[804.1,748.3],9:[804.1,728.0],10:[804.1,null],11:[804.1,748.3],12:[804.1,732.5],13:[804.1,764.0],14:[804.1,764.0],15:[804.1,743.0],16:[804.1,726.5],17:[804.1,731.0],18:[804.1,null],19:[804.1,null],20:[804.1,748.3],21:[804.1,748.3],22:[804.1,null],23:[804.1,764.0],24:[804.1,743.8],25:[804.1,764.0],26:[804.1,685.3],27:[804.1,689.0],28:[804.1,null],29:[804.1,685.3],30:[804.1,null],31:[804.1,360.5],32:[804.1,732.5],33:[804.1,748.3],34:[804.1,764.0],35:[804.1,669.5],36:[804.1,685.3],37:[804.1,748.3],38:[804.1,748.3],39:[804.1,null],40:[804.1,748.3],41:[804.1,748.3],42:[804.1,null],43:[804.1,null],44:[804.1,748.3],45:[804.1,748.3],46:[804.1,748.3],47:[804.1,748.3],48:[804.1,748.3],49:[804.1,748.3],50:[804.1,748.3],51:[804.1,748.3],52:[804.1,748.3],53:[804.1,748.3],54:[804.1,748.3],55:[804.1,748.3],56:[804.1,748.3],57:[804.1,748.3],58:[804.1,748.3],59:[804.1,null],60:[804.1,748.3],61:[804.1,748.3],62:[804.1,669.5],63:[804.1,748.3],64:[804.1,748.3],65:[804.1,748.3],66:[804.1,748.3],67:[804.1,748.3],68:[804.1,748.3],69:[804.1,null],70:[804.1,748.3],71:[804.1,null],72:[804.1,748.3],73:[804.1,748.3],74:[804.1,748.3],75:[804.1,669.5],76:[804.1,748.3],77:[804.1,669.5],78:[804.1,null],79:[804.1,null],80:[804.1,748.3],81:[804.1,748.3]};
-
-let pdfDoc = null;
-
-async function loadPDF() {
-  try {
-    pdfDoc = await pdfjsLib.getDocument('./questions.pdf').promise;
-  } catch(e) {
-    console.warn('PDF load failed:', e.message);
-  }
-}
-
-async function renderPage(pageNum, canvas) {
-  const loadingEl = canvas.closest('.pdf-canvas-wrap')?.querySelector('.pdf-loading');
-  if (!pdfDoc) {
-    if (loadingEl) loadingEl.textContent = '⚠ PDF not found — place questions.pdf in the same folder as index.html';
-    return;
-  }
-  try {
-    const page = await pdfDoc.getPage(pageNum);
-    const PAGE_HEIGHT_PTS = 841.9;
-    const clip = PAGE_CLIPS[pageNum] || [165, null];
-    // Detect coordinate system:
-    // New PDFs store y from bottom (yStart ~804 = just below ID badge)
-    // Old PDFs store y from bottom (yStart ~148 = further up the page)
-    // PDF.js renders with y=0 at TOP, so convert to top-origin for clipping
-    let yStart, yEnd, yEndActual;
-    const rawStart = clip[0];
-    const rawEnd   = clip[1];
-    if (rawStart > 400) {
-      // New-style: values are from bottom, close to top of page
-      yStart = PAGE_HEIGHT_PTS - rawStart;  // ~37.8 pts from top
-      yEnd   = rawEnd !== null ? PAGE_HEIGHT_PTS - rawEnd : null;
-      yEndActual = yEnd !== null ? yEnd : yStart + 220;
-    } else {
-      // Old-style: values are from bottom, further down the page
-      // Original logic: offsetY = -(yStart * scale) meant "skip yStart pts from top"
-      // which was wrong for bottom-origin — but keeping for backward compat
-      yStart = PAGE_HEIGHT_PTS - rawStart;
-      yEnd   = rawEnd !== null ? PAGE_HEIGHT_PTS - rawEnd : null;
-      yEndActual = yEnd !== null ? yEnd : yStart + 220;
-    }
-
-    const wrap = canvas.closest('.pdf-canvas-wrap');
-    const wrapW = (wrap?.clientWidth || 660);
-
-    const baseViewport = page.getViewport({ scale: 1 });
-    const pageW = baseViewport.width; // ~595 pts
-
-    // On mobile, enforce a minimum scale so text stays readable.
-    // Min scale ensures text is at least ~14px equivalent on screen.
-    const isMobile = window.innerWidth < 640;
-    const minScale = isMobile ? 1.2 : 1.0;
-    const maxScale = 2.5;
-    const rawScale = wrapW / pageW;
-    const scale = Math.min(Math.max(rawScale, minScale), maxScale);
-
-    const clipH = yEndActual - yStart;
-    const cssW = Math.round(pageW * scale);
-    const cssH = Math.round(clipH * scale);
-
-    // Always render at devicePixelRatio for crisp text on retina/OLED screens
-    const dpr = Math.min(window.devicePixelRatio || 1, 3); // cap at 3x to avoid memory issues
-    canvas.style.width  = cssW + 'px';
-    canvas.style.height = cssH + 'px';
-    canvas.style.maxWidth = '100%';
-    canvas.width  = Math.round(cssW * dpr);
-    canvas.height = Math.round(cssH * dpr);
-
-    // If canvas is wider than wrap on mobile, make it scrollable
-    if(wrap && cssW > wrapW) {
-      wrap.style.overflowX = 'auto';
-      wrap.style.justifyContent = 'flex-start';
-    } else if(wrap) {
-      wrap.style.overflowX = 'hidden';
-      wrap.style.justifyContent = 'center';
-    }
-
-    const ctx = canvas.getContext('2d');
-    const offsetY = -(yStart * scale * dpr);
-    ctx.save();
-    ctx.translate(0, offsetY);
-    const scaledViewport = page.getViewport({ scale: scale * dpr });
-    await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
-    ctx.restore();
-
-    if (loadingEl) loadingEl.style.display = 'none';
-    if (wrap) wrap.style.minHeight = cssH + 'px';
-
-  } catch(e) {
-    console.error('Render error page', pageNum, e);
-    if (loadingEl) loadingEl.textContent = 'Error rendering question.';
-  }
-}
 
 // ════════════════════════════════════════════════
 //  DATABASE LAYER  (Secure — v2)
@@ -2488,6 +2383,8 @@ function renderPracticeGroundQuestion(){
         <!-- PDF question area -->
         <div style="padding:22px 24px 18px;border-bottom:1px solid var(--rule);font-size:.97rem;line-height:1.75;color:var(--ink)">
           ${q.question_text ? q.question_text.replace(/\n/g,'<br>') : '<span style="color:var(--muted);font-size:.85rem;font-family:var(--mono)">ID: '+q.id+'</span>'}
+          ${q.image_url ? '<img src="'+q.image_url+'" style="max-width:100%;margin-top:14px;border-radius:8px;display:block" alt="Question diagram">' : ''}
+          ${q.image_url ? '<img src="'+q.image_url+'" style="max-width:100%;margin-top:14px;border-radius:8px;display:block" alt="Question diagram">' : ''}
         </div>
 
         <!-- Options or Free-response input -->
@@ -2647,7 +2544,7 @@ async function selectPracticeGroundAnswer(qId, chosen){
       background:${correct?'#f0fdf4':'#fff8f8'};
       border:1.5px solid ${correct?'#86efac':'#fca5a5'};animation:fadeIn .2s ease`;
     const timeStr = timeSpent>=60?`${Math.floor(timeSpent/60)}m ${timeSpent%60}s`:`${timeSpent}s`;
-    const skillTip = getSkillTip(q.skill);
+    const skillTip = q.explanation || getSkillTip(q.skill);
     fb.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <span style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:${correct?'var(--green)':'var(--red)'}">${correct?'✓ Correct':'✗ Incorrect'}</span>
         <span style="font-size:.72rem;color:var(--muted);font-family:var(--mono)">⏱ ${timeStr}</span>
@@ -2730,7 +2627,7 @@ function submitFreeResponse(qId) {
   if (fb) {
     fb.style.display = 'block';
     const timeStr = timeSpent >= 60 ? `${Math.floor(timeSpent/60)}m ${timeSpent%60}s` : `${timeSpent}s`;
-    const skillTip = getSkillTip(q.skill);
+    const skillTip = q.explanation || getSkillTip(q.skill);
     fb.innerHTML = `
       <div style="margin-top:16px;padding:14px 18px;border-radius:12px;
         background:${correct?'#f0fdf4':'#fff8f8'};
@@ -3154,6 +3051,8 @@ function renderQuestion(studentId, cachedStats, slideDir){
       class="${slideDir==='left'?'q-slide-left':slideDir==='right'?'q-slide-right':'q-slide-left'}">
       <div style="padding:22px 24px 18px;border-bottom:1px solid var(--rule);font-size:.97rem;line-height:1.75;color:var(--ink)">
         ${q.question_text ? q.question_text.replace(/\n/g,'<br>') : '<span style="color:var(--muted);font-size:.85rem;font-family:var(--mono)">ID: '+q.id+'</span>'}
+          ${q.image_url ? '<img src="'+q.image_url+'" style="max-width:100%;margin-top:14px;border-radius:8px;display:block" alt="Question diagram">' : ''}
+          ${q.image_url ? '<img src="'+q.image_url+'" style="max-width:100%;margin-top:14px;border-radius:8px;display:block" alt="Question diagram">' : ''}
       </div>
       <div style="padding:20px 24px">
         <div style="display:grid;gap:10px">${optionsHtml}</div>
@@ -3224,7 +3123,7 @@ async function selectAnswer(studentId,qId,chosen){
     fb.style.cssText=`display:block;margin-top:16px;padding:14px 18px;border-radius:12px;
       background:${correct?'#f0fdf4':'#fff8f8'};
       border:1.5px solid ${correct?'#86efac':'#fca5a5'};animation:fadeIn .2s ease`;
-    const sTip = getSkillTip(q.skill);
+    const sTip = q.explanation || getSkillTip(q.skill);
     fb.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <span style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:${correct?'var(--green)':'var(--red)'}">${correct?'✓ Correct':'✗ Incorrect'}</span>
         <span style="font-size:.72rem;color:var(--muted);font-family:var(--mono)">⏱ ${timeStr}</span>
@@ -3469,7 +3368,9 @@ async function loadQuestionsFromDB() {
       difficulty: r.difficulty,
       options: r.options || [],
       answer: r.answer,
-      question_text: r.question_text || ''
+      question_text: r.question_text || '',
+      explanation: r.explanation || '',
+      image_url: r.image_url || ''
     }));
     // Update stat counter
     const qEl = document.getElementById('stat-questions');
@@ -3491,7 +3392,9 @@ async function saveQuestionsToDB(questions) {
       difficulty: q.difficulty || 'Easy',
       options: q.options || [],
       answer: q.answer,
-      question_text: q.question_text || ''
+      question_text: q.question_text || '',
+      explanation: q.explanation || '',
+      image_url: q.image_url || ''
     })))
   });
   if (!res.ok) throw new Error(await res.text());
@@ -3538,45 +3441,49 @@ async function boot() {
   }
 }
 
-boot();
-
 // ════════════════════════════════════════════════
-//  IMPORT QUESTIONS — AI-powered PDF extraction
+//  EXCEL IMPORT
 // ════════════════════════════════════════════════
-let importFiles = { questions: null, answers: null };
+let excelFile = null;
 let importPendingQuestions = [];
 
 function renderImport() {
-  importFiles = { questions: null, answers: null };
+  excelFile = null;
   importPendingQuestions = [];
-  ['qlabel','alabel'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.textContent='Click to upload'; el.style.color='var(--muted)'; el.style.fontWeight=''; }});
-  ['qicon','aicon'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent='📄'; });
-  ['qsize','asize'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=''; });
-  ['drop-questions','drop-answers'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.style.borderColor='var(--rule)'; el.style.background='var(--bg)'; }});
-  ['file-questions','file-answers'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  const log=document.getElementById('import-log'); if(log){ log.style.display='none'; log.innerHTML=''; }
-  const prev=document.getElementById('import-preview'); if(prev) prev.style.display='none';
-  const btn=document.getElementById('import-btn'); if(btn){ btn.disabled=false; btn.style.opacity='1'; btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> Extract &amp; Add to Question Bank'; }
-  // Show next page number
+  const icon  = document.getElementById('excel-icon');
+  const label = document.getElementById('excel-label');
+  const size  = document.getElementById('excel-size');
+  const drop  = document.getElementById('excel-drop');
+  const fi    = document.getElementById('file-excel');
+  const log   = document.getElementById('import-log');
+  const prev  = document.getElementById('import-preview');
+  const btn   = document.getElementById('import-btn');
+  if(icon)  icon.textContent  = '📊';
+  if(label){ label.textContent = 'Click to upload .xlsx file'; label.style.color = 'var(--muted)'; label.style.fontWeight = '600'; }
+  if(size)  size.textContent  = '';
+  if(drop){ drop.style.borderColor = 'var(--rule)'; drop.style.background = 'var(--bg)'; }
+  if(fi)    fi.value = '';
+  if(log){  log.style.display = 'none'; log.innerHTML = ''; }
+  if(prev)  prev.style.display = 'none';
+  if(btn){  btn.disabled = false; btn.style.opacity = '1'; }
   const npEl = document.getElementById('import-next-page');
   if(npEl) npEl.textContent = QUESTION_BANK.length + 1;
 }
 
-function handleFileSelect(type, input) {
+function handleExcelSelect(input) {
   const file = input.files[0];
   if (!file) return;
-  importFiles[type] = file;
-  const isQ = type === 'questions';
-  const icon  = document.getElementById(isQ ? 'qicon'  : 'aicon');
-  const label = document.getElementById(isQ ? 'qlabel' : 'alabel');
-  const size  = document.getElementById(isQ ? 'qsize'  : 'asize');
-  const drop  = document.getElementById(isQ ? 'drop-questions' : 'drop-answers');
-  const kb = (file.size / 1024).toFixed(0);
+  excelFile = file;
+  const icon  = document.getElementById('excel-icon');
+  const label = document.getElementById('excel-label');
+  const size  = document.getElementById('excel-size');
+  const drop  = document.getElementById('excel-drop');
   const mb = (file.size / (1024*1024)).toFixed(1);
-  if (icon)  icon.textContent = '✅';
-  if (label){ label.textContent = file.name; label.style.color = 'var(--ink)'; label.style.fontWeight = '600'; }
-  if (size)  size.textContent = file.size > 1024*1024 ? mb + ' MB' : kb + ' KB';
-  if (drop){ drop.style.borderColor = 'var(--green)'; drop.style.background = 'var(--green-lt)'; }
+  const kb = (file.size / 1024).toFixed(0);
+  if(icon)  icon.textContent = '✅';
+  if(label){ label.textContent = file.name; label.style.color = 'var(--ink)'; label.style.fontWeight = '700'; }
+  if(size)  size.textContent = file.size > 1024*1024 ? mb+' MB' : kb+' KB';
+  if(drop){ drop.style.borderColor = 'var(--green)'; drop.style.background = 'var(--green-lt)'; }
 }
 
 function importLog(msg, color) {
@@ -3590,204 +3497,76 @@ function importLog(msg, color) {
   log.scrollTop = log.scrollHeight;
 }
 
-async function pdfToBase64(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result.split(',')[1]);
-    r.onerror = () => rej(new Error('File read failed'));
-    r.readAsDataURL(file);
-  });
-}
-
-async function callProxy(body) {
-  let response;
-  try {
-    response = await fetch(`${SUPA_URL}/functions/v1/claude-proxy`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPA_ANON, 'Authorization': 'Bearer ' + SUPA_ANON },
-      body: JSON.stringify(body)
-    });
-  } catch(e) {
-    throw new Error('Cannot reach claude-proxy — check it is deployed in Supabase. (' + e.message + ')');
-  }
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Proxy error ${response.status}: ${errText}`);
-  }
-  const data = await response.json();
-  if (data.error) throw new Error('Anthropic error: ' + (data.error.message || JSON.stringify(data.error)));
-  if (!data.content) throw new Error('Unexpected response: ' + JSON.stringify(data));
-  return data.content.map(c => c.text || '').join('');
-}
-
-// Extract text from all pages of a PDF file
-async function extractPDFText(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  let fullText = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const pageText = content.items.map(item => item.str).join(' ');
-    fullText += `\n--- PAGE ${i} ---\n` + pageText;
-  }
-  return { text: fullText, pdf };
-}
-
-// Detect if a page needs image rendering (has equations/graphs/tables)
-function pageNeedsImage(pageText) {
-  const stripped = pageText.replace(/\s+/g, ' ').trim();
-  // Very little text = likely a diagram/graph
-  if (stripped.length < 80) return true;
-  // Math symbols and visual indicators
-  const mathIndicators = /[²³√∑∫÷×≤≥≠≈∞πθ]|f\(x\)|y\s*=|ax\s*[+\-]|graph|table|figure|diagram|\^2|\^3/i;
-  if (mathIndicators.test(stripped)) return true;
-  // Fractions and expressions likely to be garbled in text extraction
-  const fractionIndicators = /\d+\/\d+|\band\b.*\band\b|−\s*\d|–\s*\d/;
-  if (fractionIndicators.test(stripped)) return true;
-  return false;
-}
-
-// Render a single PDF page to base64 image
-async function renderPageToBase64(pdfObj, pageNum) {
-  const page = await pdfObj.getPage(pageNum);
-  const viewport = page.getViewport({ scale: 1.5 });
-  const canvas = document.createElement('canvas');
-  canvas.width = viewport.width;
-  canvas.height = viewport.height;
-  const ctx = canvas.getContext('2d');
-  await page.render({ canvasContext: ctx, viewport }).promise;
-  return canvas.toDataURL('image/jpeg', 0.7).split(',')[1]; // base64 jpeg
-}
-
-async function runImport() {
-  if (!importFiles.questions || !importFiles.answers) {
-    showToast('Upload both PDFs first'); return;
-  }
-  const pageStart = QUESTION_BANK.length + 1;
+async function runExcelImport() {
+  if (!excelFile) { showToast('Upload an Excel file first'); return; }
   const btn = document.getElementById('import-btn');
   const log = document.getElementById('import-log');
-
   btn.disabled = true; btn.style.opacity = '.6';
-  btn.textContent = '⏳ Extracting…';
-  if(log){ log.style.display='block'; log.innerHTML=''; }
+  if(log){ log.style.display = 'block'; log.innerHTML = ''; }
   document.getElementById('import-preview').style.display = 'none';
 
-  importLog('📄 Reading PDFs…');
+  importLog('📊 Reading Excel file…');
 
   try {
-    // Extract text from both PDFs using PDF.js (free, no API cost)
-    importLog('📝 Extracting text from PDFs…');
-    const [qExtracted, aExtracted] = await Promise.all([
-      extractPDFText(importFiles.questions),
-      extractPDFText(importFiles.answers)
-    ]);
+    const arrayBuffer = await excelFile.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-    // Detect which pages need image rendering
-    const qPdf = qExtracted.pdf;
-    const imageParts = [];
-    const pageImageMap = {};
+    if (!rows.length) throw new Error('No rows found in Excel file');
+    importLog(`📋 Found ${rows.length} row(s) in sheet "${workbook.SheetNames[0]}"`);
 
-    importLog('🔍 Detecting pages with graphs/equations…');
-    for (let i = 1; i <= qPdf.numPages; i++) {
-      const page = await qPdf.getPage(i);
-      const content = await page.getTextContent();
-      const pageText = content.items.map(item => item.str).join(' ');
-      if (pageNeedsImage(pageText)) {
-        const b64 = await renderPageToBase64(qPdf, i);
-        pageImageMap[i] = b64;
-        imageParts.push({ pageNum: i, b64 });
-      }
-    }
+    // Validate required columns
+    const required = ['id', 'question', 'answer'];
+    const cols = Object.keys(rows[0]).map(k => k.toLowerCase().trim());
+    const missing = required.filter(r => !cols.includes(r));
+    if (missing.length) throw new Error(`Missing required columns: ${missing.join(', ')}`);
 
-    const imageCount = imageParts.length;
-    importLog(`🖼 ${imageCount} page(s) need image rendering, ${qPdf.numPages - imageCount} text-only`);
-
-    // Build content array for Claude — text first, then images for visual pages
-    const contentParts = [];
-
-    // Questions text
-    contentParts.push({
-      type: 'text',
-      text: `QUESTIONS PDF TEXT:\n${qExtracted.text}\n\nANSWERS PDF TEXT:\n${aExtracted.text}`
-    });
-
-    // Add images only for pages that need them
-    for (const { pageNum, b64 } of imageParts) {
-      contentParts.push({
-        type: 'text',
-        text: `[IMAGE OF QUESTIONS PDF PAGE ${pageNum} — contains graphs/equations/tables:]`
-      });
-      contentParts.push({
-        type: 'image',
-        source: { type: 'base64', media_type: 'image/jpeg', data: b64 }
-      });
-    }
-
-    contentParts.push({
-      type: 'text',
-      text: `Extract ALL SAT Math questions from the above text and images.
-For each question return JSON with:
-- id: Question ID (from "ID: XXXXXXXX" or "Question ID XXXXXXXX")
-- question_text: the full question stem text (everything after the ID line and before the answer options). Include equations as plain text e.g. "(x+6)/3 = (x+6)/13". For graphs/diagrams that truly cannot be expressed as text, write "[Graph]".
-- skill: normalize to short form e.g. "Linear Equations (1 var)", "Linear Equations (2 vars)", "Systems of Equations", "Quadratics", "Functions", "Geometry", "Statistics"
-- type: "MCQ" if has A/B/C/D options, "FRQ" if free response
-- options: for MCQ array of {l,t}. CRITICAL: always extract the ACTUAL option text — never write "[not visible]" or "[unclear]" or any placeholder. If an option contains a fraction like -7/3, write it as "-7/3". If it shows two numbers like "-7 and -3", write "-7 and -3". Look carefully at both the text and images.
-- answer: correct answer letter for MCQ, numeric/expression for FRQ (from answers PDF)
-- difficulty: "Easy", "Medium", or "Hard" (from "Question Difficulty:" in answers PDF)
-CRITICAL: Return ONLY a valid JSON array, no markdown fences, no explanation. Never use placeholder text for any field.`
-    });
-
-    importLog('🤖 Sending to Claude AI for extraction…');
-
-    const rawText = await callProxy({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 8000,
-      messages: [{ role: 'user', content: contentParts }]
-    });
-
-    importLog('✅ Extraction complete. Parsing results…');
-    const clean = rawText.replace(/```json|```/g, '').trim();
-    const extracted = JSON.parse(clean);
-
-    if (!Array.isArray(extracted) || extracted.length === 0) {
-      throw new Error('No questions found in extraction result');
-    }
-
-    // Check for duplicates against existing bank
+    const pageStart = QUESTION_BANK.length + 1;
     const existingIds = new Set(QUESTION_BANK.map(q => q.id));
-    const newOnes   = extracted.filter(q => !existingIds.has(q.id));
-    const dupeCount = extracted.length - newOnes.length;
 
-    if (dupeCount > 0) importLog(`⚠️ ${dupeCount} question(s) already in bank — skipped`, '#fbbf24');
+    const parsed = rows.map((row, i) => {
+      // Normalize keys to lowercase
+      const r = {};
+      Object.keys(row).forEach(k => { r[k.toLowerCase().trim()] = String(row[k]).trim(); });
 
-    // Build final question objects with page numbers and auto-detected skill
-    importPendingQuestions = newOnes.map((q, i) => ({
-      id: q.id,
-      page: pageStart + i,
-      skill: q.skill || 'Unknown',
-      difficulty: q.difficulty || 'Hard',
-      options: q.options || [],
-      answer: q.answer,
-      question_text: q.question_text || ''
-    }));
+      const type = (r.type || '').toUpperCase() === 'FRQ' ? 'FRQ' : 'MCQ';
+      const options = type === 'MCQ' ? [
+        r.option_a ? { l: 'A', t: r.option_a } : null,
+        r.option_b ? { l: 'B', t: r.option_b } : null,
+        r.option_c ? { l: 'C', t: r.option_c } : null,
+        r.option_d ? { l: 'D', t: r.option_d } : null,
+      ].filter(Boolean) : [];
 
-    // Report all unique skills found
-    const skillsFound = [...new Set(importPendingQuestions.map(q => q.skill))];
-    importLog(`📚 Skills detected: ${skillsFound.join(', ')}`, '#c4b5fd');
+      return {
+        id: r.id,
+        page: pageStart + i,
+        skill: r.skill || 'General',
+        difficulty: r.difficulty || 'Easy',
+        question_text: r.question || '',
+        options,
+        answer: r.answer || '',
+        explanation: r.explanation || '',
+        image_url: r.image_url || r.image || ''
+      };
+    }).filter(q => q.id && q.answer);
 
-    importLog(`📋 Found ${extracted.length} questions → ${importPendingQuestions.length} new to add`, '#86efac');
+    const newOnes = parsed.filter(q => !existingIds.has(q.id));
+    const dupes = parsed.length - newOnes.length;
+    if (dupes > 0) importLog(`⚠️ ${dupes} question(s) already in bank — will be skipped`, '#fbbf24');
 
-    // Show preview table
-    showImportPreview(importPendingQuestions);
+    const skills = [...new Set(newOnes.map(q => q.skill))];
+    importLog(`📚 Skills found: ${skills.join(', ')}`, '#c4b5fd');
+    importLog(`✅ ${newOnes.length} new question(s) ready to add`, '#86efac');
+
+    importPendingQuestions = newOnes;
+    showImportPreview(newOnes);
 
     btn.disabled = false; btn.style.opacity = '1';
-    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> Extract &amp; Add to Question Bank';
 
   } catch(e) {
     importLog('❌ Error: ' + e.message, '#fca5a5');
     btn.disabled = false; btn.style.opacity = '1';
-    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> Retry Extraction';
   }
 }
 
@@ -3796,53 +3575,39 @@ function showImportPreview(questions) {
   const title   = document.getElementById('import-preview-title');
   const tbody   = document.getElementById('import-preview-tbody');
   if (!preview || !tbody) return;
-
-  title.textContent = `${questions.length} question(s) ready to add — review before confirming:`;
-  tbody.innerHTML = questions.map((q, i) => `
+  title.textContent = `${questions.length} question(s) ready — review before adding:`;
+  tbody.innerHTML = questions.map(q => `
     <tr style="border-bottom:1px solid var(--rule)">
-      <td style="padding:9px 14px;color:var(--muted);font-family:var(--mono)">${q.page}</td>
-      <td style="padding:9px 14px;font-family:var(--mono);color:var(--navy)">${q.id}</td>
-      <td style="padding:9px 14px;font-size:.78rem;color:var(--ink-mid)">${q.skill}</td>
-      <td style="padding:9px 14px">${q.options.length ? 'MCQ' : 'FRQ'}</td>
-      <td style="padding:9px 14px;font-family:var(--mono);font-weight:600;color:var(--green)">${q.answer}</td>
-      <td style="padding:9px 14px"><span style="font-size:.72rem;padding:2px 8px;border-radius:20px;background:${q.difficulty==='Hard'?'var(--red-lt)':q.difficulty==='Medium'?'var(--amber-lt)':'var(--green-lt)'};color:${q.difficulty==='Hard'?'var(--red)':q.difficulty==='Medium'?'var(--amber)':'var(--green)'}">${q.difficulty||'—'}</span></td>
+      <td style="padding:8px 12px;color:var(--muted);font-family:var(--mono)">${q.page}</td>
+      <td style="padding:8px 12px;font-family:var(--mono);color:var(--navy);font-size:.72rem">${q.id}</td>
+      <td style="padding:8px 12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${q.question_text}">${q.question_text.slice(0,60)}${q.question_text.length>60?'…':''}</td>
+      <td style="padding:8px 12px;font-size:.75rem;color:var(--ink-mid)">${q.skill}</td>
+      <td style="padding:8px 12px">${q.options.length ? 'MCQ' : 'FRQ'}</td>
+      <td style="padding:8px 12px;font-family:var(--mono);font-weight:700;color:var(--green)">${q.answer}</td>
+      <td style="padding:8px 12px"><span style="font-size:.7rem;padding:2px 8px;border-radius:20px;background:${q.difficulty==='Hard'?'var(--red-lt)':q.difficulty==='Medium'?'var(--amber-lt)':'var(--green-lt)'};color:${q.difficulty==='Hard'?'var(--red)':q.difficulty==='Medium'?'var(--amber)':'var(--green)'}">${q.difficulty}</span></td>
     </tr>`).join('');
-
   preview.style.display = 'block';
 }
 
 function confirmImport() {
   if (!importPendingQuestions.length) { showToast('Nothing to add'); return; }
-
   const questions = [...importPendingQuestions];
   importPendingQuestions = [];
   document.getElementById('import-preview').style.display = 'none';
-
   importLog('💾 Saving to database…', '#7dd3fc');
 
   saveQuestionsToDB(questions).then(() => {
-    // Also push into live QUESTION_BANK
     questions.forEach(q => QUESTION_BANK.push(q));
-
     const qEl = document.getElementById('stat-questions');
     if (qEl) qEl.textContent = QUESTION_BANK.length;
-
-    importLog(`🎉 ${questions.length} question(s) saved to database! Total: ${QUESTION_BANK.length}`, '#86efac');
-    importLog('✅ Questions are permanently saved — no download needed.', '#86efac');
-
-    // Update next page counter
+    importLog(`🎉 ${questions.length} question(s) saved! Total in bank: ${QUESTION_BANK.length}`, '#86efac');
     const npEl = document.getElementById('import-next-page');
     if (npEl) npEl.textContent = QUESTION_BANK.length + 1;
-
     if (activePanelId === 'panel-assign') renderAssign();
-    showToast(`✓ ${questions.length} questions saved to database`);
-
+    showToast(`✓ ${questions.length} questions saved`);
   }).catch(err => {
-    importLog('❌ Database save failed: ' + err.message, '#fca5a5');
-    importLog('💡 Make sure the questions table exists in Supabase.', '#fbbf24');
-    // Still add to local bank for this session
-    questions.forEach(q => QUESTION_BANK.push(q));
-    showToast('Save failed — check console');
+    importLog('❌ Save failed: ' + err.message, '#fca5a5');
+    importLog('💡 Check that questions table exists in Supabase with all required columns.', '#fbbf24');
   });
 }
 
@@ -3852,20 +3617,22 @@ function cancelImport() {
   importLog('Import cancelled.', '#9ca3af');
 }
 
-function downloadUpdatedHTML() {
-  // Serialize the current live QUESTION_BANK back into the HTML source
-  const src = document.documentElement.outerHTML;
-  const bankJSON = JSON.stringify(QUESTION_BANK);
-  // Replace the QUESTION_BANK array in the source with the live one
-  const updated = src.replace(/const QUESTION_BANK = \[[\s\S]*?\];/, 'const QUESTION_BANK = ' + bankJSON + ';');
-  const blob = new Blob([updated], { type: 'text/html' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'index.html';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  showToast('✓ Updated HTML downloaded');
+function downloadTemplate() {
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['id','question','skill','difficulty','type','option_a','option_b','option_c','option_d','answer','explanation','image_url'],
+    ['abc12345','If 3x = 12, what is the value of x?','Linear Equations (1 var)','Easy','MCQ','1','4','3','12','B','Divide both sides by 3 to get x = 4.',''],
+    ['def67890','What is the slope of the line y = 2x + 5?','Linear Equations (2 vars)','Medium','FRQ','','','','','2','Slope is the coefficient of x in slope-intercept form.',''],
+  ]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Questions');
+  XLSX.writeFile(wb, 'prepgenix_questions_template.xlsx');
 }
+
+boot();
+
+// ════════════════════════════════════════════════
+//  IMPORT QUESTIONS — AI-powered PDF extraction
+// ════════════════════════════════════════════════
 </script>
 </body>
 </html>
