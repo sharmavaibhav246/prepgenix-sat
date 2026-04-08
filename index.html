@@ -3599,9 +3599,13 @@ Return a JSON array like:
   {"id":"def456","skill":"Systems of Equations","type":"FRQ","options":[],"answer":"74","difficulty":"Medium"}
 ]`;
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(`${SUPA_URL}/functions/v1/claude-proxy`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPA_ANON,
+        'Authorization': 'Bearer ' + SUPA_ANON
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 4000,
