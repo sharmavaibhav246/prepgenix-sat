@@ -3614,13 +3614,49 @@ async function callProxy(body) {
   return data.content.map(c => c.text || '').join('');
 }
 
+// Extract text from all pages of a PDF file
+async function extractPDFText(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let fullText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items.map(item => item.str).join(' ');
+    fullText += `\n--- PAGE ${i} ---\n` + pageText;
+  }
+  return { text: fullText, pdf };
+}
+
+// Detect if a page needs image rendering (has equations/graphs/tables)
+function pageNeedsImage(pageText) {
+  // Heuristics: very little text (likely a graph), or contains math symbols
+  const stripped = pageText.replace(/\s+/g, ' ').trim();
+  if (stripped.length < 80) return true; // almost no text = likely a diagram
+  // Common equation/graph indicators in SAT PDFs
+  const mathIndicators = /[²³√∑∫÷×≤≥≠≈∞πθ]|f\(x\)|y\s*=|ax\s*[+\-]|graph|table|figure|diagram|\^2|\^3/i;
+  return mathIndicators.test(stripped);
+}
+
+// Render a single PDF page to base64 image
+async function renderPageToBase64(pdfObj, pageNum) {
+  const page = await pdfObj.getPage(pageNum);
+  const viewport = page.getViewport({ scale: 1.5 });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const ctx = canvas.getContext('2d');
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  return canvas.toDataURL('image/jpeg', 0.7).split(',')[1]; // base64 jpeg
+}
+
 async function runImport() {
   if (!importFiles.questions || !importFiles.answers) {
     showToast('Upload both PDFs first'); return;
   }
   const pageStart = QUESTION_BANK.length + 1;
-  const btn       = document.getElementById('import-btn');
-  const log       = document.getElementById('import-log');
+  const btn = document.getElementById('import-btn');
+  const log = document.getElementById('import-log');
 
   btn.disabled = true; btn.style.opacity = '.6';
   btn.textContent = '⏳ Extracting…';
@@ -3630,61 +3666,78 @@ async function runImport() {
   importLog('📄 Reading PDFs…');
 
   try {
-    const [qB64, aB64] = await Promise.all([
-      pdfToBase64(importFiles.questions),
-      pdfToBase64(importFiles.answers)
+    // Extract text from both PDFs using PDF.js (free, no API cost)
+    importLog('📝 Extracting text from PDFs…');
+    const [qExtracted, aExtracted] = await Promise.all([
+      extractPDFText(importFiles.questions),
+      extractPDFText(importFiles.answers)
     ]);
 
-    // ── Call 1: Extract questions + options + skill from questions PDF ──
-    importLog('🤖 Step 1/2 — Extracting questions…');
-    const prompt1 = `Extract ALL SAT Math questions from this PDF.
+    // Detect which pages need image rendering
+    const qPdf = qExtracted.pdf;
+    const imageParts = [];
+    const pageImageMap = {};
+
+    importLog('🔍 Detecting pages with graphs/equations…');
+    for (let i = 1; i <= qPdf.numPages; i++) {
+      const page = await qPdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(item => item.str).join(' ');
+      if (pageNeedsImage(pageText)) {
+        const b64 = await renderPageToBase64(qPdf, i);
+        pageImageMap[i] = b64;
+        imageParts.push({ pageNum: i, b64 });
+      }
+    }
+
+    const imageCount = imageParts.length;
+    importLog(`🖼 ${imageCount} page(s) need image rendering, ${qPdf.numPages - imageCount} text-only`);
+
+    // Build content array for Claude — text first, then images for visual pages
+    const contentParts = [];
+
+    // Questions text
+    contentParts.push({
+      type: 'text',
+      text: `QUESTIONS PDF TEXT:\n${qExtracted.text}\n\nANSWERS PDF TEXT:\n${aExtracted.text}`
+    });
+
+    // Add images only for pages that need them
+    for (const { pageNum, b64 } of imageParts) {
+      contentParts.push({
+        type: 'text',
+        text: `[IMAGE OF QUESTIONS PDF PAGE ${pageNum} — contains graphs/equations/tables:]`
+      });
+      contentParts.push({
+        type: 'image',
+        source: { type: 'base64', media_type: 'image/jpeg', data: b64 }
+      });
+    }
+
+    contentParts.push({
+      type: 'text',
+      text: `Extract ALL SAT Math questions from the above text and images.
 For each question return JSON with:
-- id: the Question ID (from "ID: XXXXXXXX" or "Question ID XXXXXXXX")
-- skill: normalize the Skill column to short form e.g. "Linear Equations (1 var)", "Linear Equations (2 vars)", "Systems of Equations", "Quadratics", "Functions", "Geometry", "Statistics"
+- id: Question ID (from "ID: XXXXXXXX" or "Question ID XXXXXXXX")  
+- skill: normalize to short form e.g. "Linear Equations (1 var)", "Linear Equations (2 vars)", "Systems of Equations", "Quadratics", "Functions", "Geometry", "Statistics"
 - type: "MCQ" if has A/B/C/D options, "FRQ" if free response
-- options: for MCQ array of {l,t} objects, for FRQ empty array []
-Return ONLY a JSON array, no markdown, no explanation.`;
-
-    const raw1 = await callProxy({
-      model: 'claude-haiku-4-5-20251001', max_tokens: 4000,
-      messages: [{ role: 'user', content: [
-        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: qB64 } },
-        { type: 'text', text: prompt1 }
-      ]}]
+- options: for MCQ array of {l,t} e.g. [{"l":"A","t":"14"},{"l":"B","t":"65"},...], for FRQ []
+- answer: correct answer letter for MCQ, numeric/expression for FRQ (from answers PDF)
+- difficulty: "Easy", "Medium", or "Hard" (from "Question Difficulty:" in answers PDF)
+Return ONLY a valid JSON array, no markdown fences, no explanation.`
     });
 
-    const questions = JSON.parse(raw1.replace(/```json|```/g, '').trim());
-    importLog(`📋 Found ${questions.length} questions. Step 2/2 — Extracting answers…`);
+    importLog('🤖 Sending to Claude AI for extraction…');
 
-    // ── Call 2: Extract answers + difficulty from answers PDF ──
-    const ids = questions.map(q => q.id).join(', ');
-    const prompt2 = `From this SAT answer key PDF, extract the correct answer and difficulty for each question.
-Question IDs to find: ${ids}
-For each return JSON with:
-- id: the Question ID
-- answer: correct answer letter (A/B/C/D) for MCQ, or the numeric answer for FRQ
-- difficulty: "Easy", "Medium", or "Hard" from the "Question Difficulty:" label
-Return ONLY a JSON array, no markdown, no explanation.`;
-
-    const raw2 = await callProxy({
-      model: 'claude-haiku-4-5-20251001', max_tokens: 2000,
-      messages: [{ role: 'user', content: [
-        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: aB64 } },
-        { type: 'text', text: prompt2 }
-      ]}]
+    const rawText = await callProxy({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4000,
+      messages: [{ role: 'user', content: contentParts }]
     });
 
-    const answers = JSON.parse(raw2.replace(/```json|```/g, '').trim());
-    importLog('✅ Extraction complete. Merging results…');
-
-    // Merge answers into questions
-    const answerMap = {};
-    answers.forEach(a => { answerMap[a.id] = a; });
-    const extracted = questions.map(q => ({
-      ...q,
-      answer: answerMap[q.id]?.answer || '?',
-      difficulty: answerMap[q.id]?.difficulty || 'Easy'
-    }));
+    importLog('✅ Extraction complete. Parsing results…');
+    const clean = rawText.replace(/```json|```/g, '').trim();
+    const extracted = JSON.parse(clean);
 
     if (!Array.isArray(extracted) || extracted.length === 0) {
       throw new Error('No questions found in extraction result');
