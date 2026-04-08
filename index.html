@@ -3718,7 +3718,16 @@ function confirmImport() {
   // Hide preview, show success log
   document.getElementById('import-preview').style.display = 'none';
   importLog(`🎉 ${count} question(s) added to the bank! Total: ${QUESTION_BANK.length}`, '#86efac');
-  importLog('⚠️  Remember: download the updated index.html to make changes permanent.', '#fbbf24');
+
+  // Show inline download button in the log
+  const log = document.getElementById('import-log');
+  if (log) {
+    const btn = document.createElement('button');
+    btn.onclick = downloadUpdatedHTML;
+    btn.textContent = '⬇ Download Updated index.html';
+    btn.style.cssText = 'margin-top:10px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:.82rem;font-weight:600;font-family:var(--mono);cursor:pointer;width:100%;letter-spacing:.02em';
+    log.appendChild(btn);
+  }
 
   // Trigger re-render of assign panel if it was cached
   if (activePanelId === 'panel-assign') renderAssign();
