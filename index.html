@@ -862,9 +862,10 @@ tr:hover td{background:#f8faff}
               <div>
                 <label style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:8px">Questions PDF</label>
                 <div id="drop-questions" onclick="document.getElementById('file-questions').click()"
-                  style="border:2px dashed var(--rule);border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)">
-                  <div style="font-size:1.6rem;margin-bottom:8px">📄</div>
-                  <div id="qlabel" style="font-size:.82rem;color:var(--muted)">Click to upload</div>
+                  style="border:2px dashed var(--rule);border-radius:12px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)">
+                  <div id="qicon" style="font-size:1.6rem;margin-bottom:8px">📄</div>
+                  <div id="qlabel" style="font-size:.82rem;color:var(--muted);word-break:break-all">Click to upload</div>
+                  <div id="qsize" style="font-size:.72rem;color:var(--muted);margin-top:3px"></div>
                 </div>
                 <input type="file" id="file-questions" accept=".pdf" style="display:none" onchange="handleFileSelect('questions',this)">
               </div>
@@ -872,9 +873,10 @@ tr:hover td{background:#f8faff}
               <div>
                 <label style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:8px">Answers PDF</label>
                 <div id="drop-answers" onclick="document.getElementById('file-answers').click()"
-                  style="border:2px dashed var(--rule);border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)">
-                  <div style="font-size:1.6rem;margin-bottom:8px">✅</div>
-                  <div id="alabel" style="font-size:.82rem;color:var(--muted)">Click to upload</div>
+                  style="border:2px dashed var(--rule);border-radius:12px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)">
+                  <div id="aicon" style="font-size:1.6rem;margin-bottom:8px">📄</div>
+                  <div id="alabel" style="font-size:.82rem;color:var(--muted);word-break:break-all">Click to upload</div>
+                  <div id="asize" style="font-size:.72rem;color:var(--muted);margin-top:3px"></div>
                 </div>
                 <input type="file" id="file-answers" accept=".pdf" style="display:none" onchange="handleFileSelect('answers',this)">
               </div>
@@ -3547,7 +3549,9 @@ let importPendingQuestions = [];
 function renderImport() {
   importFiles = { questions: null, answers: null };
   importPendingQuestions = [];
-  ['qlabel','alabel'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent='Click to upload'; });
+  ['qlabel','alabel'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.textContent='Click to upload'; el.style.color='var(--muted)'; el.style.fontWeight=''; }});
+  ['qicon','aicon'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent='📄'; });
+  ['qsize','asize'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=''; });
   ['drop-questions','drop-answers'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.style.borderColor='var(--rule)'; el.style.background='var(--bg)'; }});
   ['file-questions','file-answers'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   const log=document.getElementById('import-log'); if(log){ log.style.display='none'; log.innerHTML=''; }
@@ -3562,10 +3566,17 @@ function handleFileSelect(type, input) {
   const file = input.files[0];
   if (!file) return;
   importFiles[type] = file;
-  const label = document.getElementById(type === 'questions' ? 'qlabel' : 'alabel');
-  const drop  = document.getElementById(type === 'questions' ? 'drop-questions' : 'drop-answers');
-  if(label) label.textContent = file.name;
-  if(drop){ drop.style.borderColor='var(--blue)'; drop.style.background='var(--blue-bg)'; }
+  const isQ = type === 'questions';
+  const icon  = document.getElementById(isQ ? 'qicon'  : 'aicon');
+  const label = document.getElementById(isQ ? 'qlabel' : 'alabel');
+  const size  = document.getElementById(isQ ? 'qsize'  : 'asize');
+  const drop  = document.getElementById(isQ ? 'drop-questions' : 'drop-answers');
+  const kb = (file.size / 1024).toFixed(0);
+  const mb = (file.size / (1024*1024)).toFixed(1);
+  if (icon)  icon.textContent = '✅';
+  if (label){ label.textContent = file.name; label.style.color = 'var(--ink)'; label.style.fontWeight = '600'; }
+  if (size)  size.textContent = file.size > 1024*1024 ? mb + ' MB' : kb + ' KB';
+  if (drop){ drop.style.borderColor = 'var(--green)'; drop.style.background = 'var(--green-lt)'; }
 }
 
 function importLog(msg, color) {
