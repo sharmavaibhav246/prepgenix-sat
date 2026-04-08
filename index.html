@@ -2484,9 +2484,8 @@ function renderPracticeGroundQuestion(){
         border:1px solid var(--rule);margin-bottom:14px;animation:qSlide .3s cubic-bezier(.4,0,.2,1)">
 
         <!-- PDF question area -->
-        <div class="pdf-canvas-wrap" style="border-bottom:1px solid var(--rule)">
-          <div class="pdf-loading">Loading question…</div>
-          <canvas id="pdf-canvas-${q.id}"></canvas>
+        <div style="padding:22px 24px 18px;border-bottom:1px solid var(--rule);font-size:.97rem;line-height:1.75;color:var(--ink)">
+          ${q.question_text ? q.question_text.replace(/\n/g,'<br>') : '<span style="color:var(--muted);font-size:.85rem;font-family:var(--mono)">ID: '+q.id+'</span>'}
         </div>
 
         <!-- Options or Free-response input -->
@@ -2613,8 +2612,6 @@ function renderPracticeGroundQuestion(){
   }, 0);
 
   // Render PDF page
-  const canvas = document.getElementById('pdf-canvas-'+q.id);
-  if(canvas) renderPage(q.page, canvas);
   if(!wasAnswered) startTimer(q.id);
 }
 
@@ -3153,9 +3150,8 @@ function renderQuestion(studentId, cachedStats, slideDir){
       box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 20px rgba(13,27,62,.08);
       border:1px solid var(--rule);margin-bottom:14px"
       class="${slideDir==='left'?'q-slide-left':slideDir==='right'?'q-slide-right':'q-slide-left'}">
-      <div class="pdf-canvas-wrap" style="border-bottom:1px solid var(--rule)">
-        <div class="pdf-loading">Loading question…</div>
-        <canvas id="pdf-canvas-${q.id}"></canvas>
+      <div style="padding:22px 24px 18px;border-bottom:1px solid var(--rule);font-size:.97rem;line-height:1.75;color:var(--ink)">
+        ${q.question_text ? q.question_text.replace(/\n/g,'<br>') : '<span style="color:var(--muted);font-size:.85rem;font-family:var(--mono)">ID: '+q.id+'</span>'}
       </div>
       <div style="padding:20px 24px">
         <div style="display:grid;gap:10px">${optionsHtml}</div>
@@ -3177,8 +3173,6 @@ function renderQuestion(studentId, cachedStats, slideDir){
       </button>
     </div>`;
 
-  const canvas = document.getElementById('pdf-canvas-'+q.id);
-  if(canvas) renderPage(q.page, canvas);
   startTimer(q.id);
   updateDotNav();
 }
@@ -3472,7 +3466,8 @@ async function loadQuestionsFromDB() {
       skill: r.skill,
       difficulty: r.difficulty,
       options: r.options || [],
-      answer: r.answer
+      answer: r.answer,
+      question_text: r.question_text || ''
     }));
     // Update stat counter
     const qEl = document.getElementById('stat-questions');
@@ -3493,14 +3488,14 @@ async function saveQuestionsToDB(questions) {
       skill: q.skill,
       difficulty: q.difficulty || 'Easy',
       options: q.options || [],
-      answer: q.answer
+      answer: q.answer,
+      question_text: q.question_text || ''
     })))
   });
   if (!res.ok) throw new Error(await res.text());
 }
 
 async function boot() {
-  loadPDF();
   // Always load questions from Supabase first
   await loadQuestionsFromDB();
 
@@ -3718,7 +3713,8 @@ async function runImport() {
       type: 'text',
       text: `Extract ALL SAT Math questions from the above text and images.
 For each question return JSON with:
-- id: Question ID (from "ID: XXXXXXXX" or "Question ID XXXXXXXX")  
+- id: Question ID (from "ID: XXXXXXXX" or "Question ID XXXXXXXX")
+- question_text: the full question stem text (everything after the ID line and before the answer options). Include any equations written as plain text. If the question has a graph/table/diagram that cannot be expressed as text, write "[See graph]" or "[See table]" as appropriate.
 - skill: normalize to short form e.g. "Linear Equations (1 var)", "Linear Equations (2 vars)", "Systems of Equations", "Quadratics", "Functions", "Geometry", "Statistics"
 - type: "MCQ" if has A/B/C/D options, "FRQ" if free response
 - options: for MCQ array of {l,t} e.g. [{"l":"A","t":"14"},{"l":"B","t":"65"},...], for FRQ []
@@ -3757,7 +3753,8 @@ Return ONLY a valid JSON array, no markdown fences, no explanation.`
       skill: q.skill || 'Unknown',
       difficulty: q.difficulty || 'Hard',
       options: q.options || [],
-      answer: q.answer
+      answer: q.answer,
+      question_text: q.question_text || ''
     }));
 
     // Report all unique skills found
