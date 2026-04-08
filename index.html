@@ -3593,6 +3593,27 @@ async function pdfToBase64(file) {
   });
 }
 
+async function callProxy(body) {
+  let response;
+  try {
+    response = await fetch(`${SUPA_URL}/functions/v1/claude-proxy`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPA_ANON, 'Authorization': 'Bearer ' + SUPA_ANON },
+      body: JSON.stringify(body)
+    });
+  } catch(e) {
+    throw new Error('Cannot reach claude-proxy — check it is deployed in Supabase. (' + e.message + ')');
+  }
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Proxy error ${response.status}: ${errText}`);
+  }
+  const data = await response.json();
+  if (data.error) throw new Error('Anthropic error: ' + (data.error.message || JSON.stringify(data.error)));
+  if (!data.content) throw new Error('Unexpected response: ' + JSON.stringify(data));
+  return data.content.map(c => c.text || '').join('');
+}
+
 async function runImport() {
   if (!importFiles.questions || !importFiles.answers) {
     showToast('Upload both PDFs first'); return;
@@ -3614,74 +3635,56 @@ async function runImport() {
       pdfToBase64(importFiles.answers)
     ]);
 
-    importLog('🤖 Sending to Claude AI for extraction…');
+    // ── Call 1: Extract questions + options + skill from questions PDF ──
+    importLog('🤖 Step 1/2 — Extracting questions…');
+    const prompt1 = `Extract ALL SAT Math questions from this PDF.
+For each question return JSON with:
+- id: the Question ID (from "ID: XXXXXXXX" or "Question ID XXXXXXXX")
+- skill: normalize the Skill column to short form e.g. "Linear Equations (1 var)", "Linear Equations (2 vars)", "Systems of Equations", "Quadratics", "Functions", "Geometry", "Statistics"
+- type: "MCQ" if has A/B/C/D options, "FRQ" if free response
+- options: for MCQ array of {l,t} objects, for FRQ empty array []
+Return ONLY a JSON array, no markdown, no explanation.`;
 
-    const prompt = `You are extracting SAT Math questions from two PDFs.
+    const raw1 = await callProxy({
+      model: 'claude-haiku-4-5-20251001', max_tokens: 4000,
+      messages: [{ role: 'user', content: [
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: qB64 } },
+        { type: 'text', text: prompt1 }
+      ]}]
+    });
 
-PDF 1 contains the questions. PDF 2 contains the answers with rationales.
+    const questions = JSON.parse(raw1.replace(/```json|```/g, '').trim());
+    importLog(`📋 Found ${questions.length} questions. Step 2/2 — Extracting answers…`);
 
-For EACH question found, extract:
-- id: the Question ID shown (e.g. "3cdbf026") — extract from "ID: XXXXXXXX" or "Question ID XXXXXXXX"
-- skill: the topic/skill label from the "Skill" column in the question header table (e.g. "Linear equations in two variables", "Systems of two linear equations", "Quadratic equations", etc.). Normalize it to a clean short form like "Linear Equations (2 vars)", "Systems of Equations", "Quadratics", "Functions", "Geometry", "Statistics". If all questions share the same skill, use that for all.
-- type: "MCQ" if it has A/B/C/D options, "FRQ" if it is free response (no options)
-- options: for MCQ, an array of {l, t} objects where l is "A"/"B"/"C"/"D" and t is the option text. For FRQ, empty array []
-- answer: the correct answer letter (e.g. "A") for MCQ, or the numeric/expression answer for FRQ
-- difficulty: "Hard", "Medium", or "Easy" — look for "Question Difficulty:" label in the answers PDF
+    // ── Call 2: Extract answers + difficulty from answers PDF ──
+    const ids = questions.map(q => q.id).join(', ');
+    const prompt2 = `From this SAT answer key PDF, extract the correct answer and difficulty for each question.
+Question IDs to find: ${ids}
+For each return JSON with:
+- id: the Question ID
+- answer: correct answer letter (A/B/C/D) for MCQ, or the numeric answer for FRQ
+- difficulty: "Easy", "Medium", or "Hard" from the "Question Difficulty:" label
+Return ONLY a JSON array, no markdown, no explanation.`;
 
-CRITICAL RULES:
-- Extract ALL questions found, not just some
-- For options text, keep it concise but complete. Use plain text, no LaTeX
-- If a question has a graph/image as the answer choices, describe them briefly like "Graph A", "Graph B" etc.
-- Return ONLY valid JSON, no markdown, no explanation
+    const raw2 = await callProxy({
+      model: 'claude-haiku-4-5-20251001', max_tokens: 2000,
+      messages: [{ role: 'user', content: [
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: aB64 } },
+        { type: 'text', text: prompt2 }
+      ]}]
+    });
 
-Return a JSON array like:
-[
-  {"id":"abc123","skill":"Linear Equations (2 vars)","type":"MCQ","options":[{"l":"A","t":"option text"},{"l":"B","t":"option text"},{"l":"C","t":"option text"},{"l":"D","t":"option text"}],"answer":"B","difficulty":"Hard"},
-  {"id":"def456","skill":"Systems of Equations","type":"FRQ","options":[],"answer":"74","difficulty":"Medium"}
-]`;
+    const answers = JSON.parse(raw2.replace(/```json|```/g, '').trim());
+    importLog('✅ Extraction complete. Merging results…');
 
-    let response;
-    try {
-      response = await fetch(`${SUPA_URL}/functions/v1/claude-proxy`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPA_ANON,
-          'Authorization': 'Bearer ' + SUPA_ANON
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 4000,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: qB64 } },
-              { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: aB64 } },
-              { type: 'text', text: prompt }
-            ]
-          }]
-        })
-      });
-    } catch(fetchErr) {
-      throw new Error('Cannot reach claude-proxy — check it is deployed in Supabase. (' + fetchErr.message + ')');
-    }
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Proxy error ${response.status}: ${errText}`);
-    }
-
-    const data = await response.json();
-    if (data.error) throw new Error('Anthropic error: ' + (data.error.message || JSON.stringify(data.error)));
-    if (!data.content) throw new Error('Unexpected response: ' + JSON.stringify(data));
-
-    const rawText = data.content.map(c => c.text || '').join('');
-
-    importLog('✅ Extraction complete. Parsing results…');
-
-    // Strip markdown fences if present
-    const clean = rawText.replace(/```json|```/g, '').trim();
-    const extracted = JSON.parse(clean);
+    // Merge answers into questions
+    const answerMap = {};
+    answers.forEach(a => { answerMap[a.id] = a; });
+    const extracted = questions.map(q => ({
+      ...q,
+      answer: answerMap[q.id]?.answer || '?',
+      difficulty: answerMap[q.id]?.difficulty || 'Easy'
+    }));
 
     if (!Array.isArray(extracted) || extracted.length === 0) {
       throw new Error('No questions found in extraction result');
