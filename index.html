@@ -880,20 +880,10 @@ tr:hover td{background:#f8faff}
               </div>
             </div>
 
-            <!-- Page range only — skill is auto-detected from PDF -->
-            <div style="display:flex;align-items:center;gap:12px">
-              <div style="max-width:220px">
-                <label style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Pages start from #</label>
-                <input type="number" id="import-page-start" value="" placeholder="e.g. 95"
-                  style="width:100%;padding:9px 12px;border:1.5px solid var(--rule);border-radius:8px;font-size:.88rem;font-family:var(--sans);outline:none"
-                  onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--rule)'">
-              </div>
-              <div style="flex:1;align-self:flex-end;padding-bottom:2px">
-                <p style="font-size:.8rem;color:var(--muted);line-height:1.5">
-                  <svg style="vertical-align:-3px;margin-right:4px" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                  Skill/topic and difficulty are extracted automatically from the PDF. New topics are added to the bank automatically.
-                </p>
-              </div>
+            <!-- Page numbering and skill are both auto-detected -->
+            <div style="background:var(--blue-bg);border-radius:9px;padding:11px 14px;font-size:.82rem;color:var(--blue);display:flex;align-items:center;gap:8px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Page numbers, skill/topic, and difficulty are all extracted automatically from the PDFs. New questions will start from page <strong id="import-next-page">—</strong>.
             </div>
 
             <!-- Extract button -->
@@ -3519,15 +3509,17 @@ let importFiles = { questions: null, answers: null };
 let importPendingQuestions = [];
 
 function renderImport() {
-  // reset state visually when switching to panel
   importFiles = { questions: null, answers: null };
   importPendingQuestions = [];
-  ['qlabel','alabel'].forEach((id,i)=>{ const el=document.getElementById(id); if(el) el.textContent='Click to upload'; });
+  ['qlabel','alabel'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent='Click to upload'; });
   ['drop-questions','drop-answers'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.style.borderColor='var(--rule)'; el.style.background='var(--bg)'; }});
   ['file-questions','file-answers'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   const log=document.getElementById('import-log'); if(log){ log.style.display='none'; log.innerHTML=''; }
   const prev=document.getElementById('import-preview'); if(prev) prev.style.display='none';
   const btn=document.getElementById('import-btn'); if(btn){ btn.disabled=false; btn.style.opacity='1'; btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> Extract &amp; Add to Question Bank'; }
+  // Show next page number
+  const npEl = document.getElementById('import-next-page');
+  if(npEl) npEl.textContent = QUESTION_BANK.length + 1;
 }
 
 function handleFileSelect(type, input) {
@@ -3564,7 +3556,7 @@ async function runImport() {
   if (!importFiles.questions || !importFiles.answers) {
     showToast('Upload both PDFs first'); return;
   }
-  const pageStart = parseInt(document.getElementById('import-page-start').value) || (QUESTION_BANK.length + 1);
+  const pageStart = QUESTION_BANK.length + 1;
   const btn       = document.getElementById('import-btn');
   const log       = document.getElementById('import-log');
 
