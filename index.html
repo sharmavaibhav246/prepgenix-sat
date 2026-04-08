@@ -971,11 +971,12 @@ tr:hover td{background:#f8faff}
 //  page = PDF page number (1-indexed)
 //  Free-response questions have options:[]
 // ════════════════════════════════════════════════
-const QUESTION_BANK = [];
+let QUESTION_BANK = [];
 
-// MCQ-only for assignment (filter out free-response)
-const MCQ_QUESTIONS = QUESTION_BANK.filter(q => q.options && q.options.length === 4 && q.answer)
-  .map(q => ({...q, difficulty: q.page <= 25 ? 'Easy' : q.page <= 36 ? 'Hard' : q.page <= 49 ? 'Medium' : 'Easy'}));
+// MCQ_QUESTIONS is now a live function so it always reflects current bank
+function getMCQ() {
+  return QUESTION_BANK.filter(q => q.options && q.options.length === 4 && q.answer);
+}
 
 // ════════════════════════════════════════════════
 //  PDF.js setup — high-res, cropped to question body
@@ -1511,9 +1512,6 @@ async function doForgotPassword(){
 // ── Live login stats — fetched once on page load ──────────────────────
 async function loadLoginStats(){
   try {
-    const qEl = document.getElementById('stat-questions');
-    if(qEl){ qEl.textContent = QUESTION_BANK.length; qEl.classList.remove('loading'); }
-
     const [stuRes, ansRes] = await Promise.all([
       fetch(`${SUPA_URL}/rest/v1/students?select=id`, {
         headers:{'apikey':SUPA_ANON,'Authorization':'Bearer '+SUPA_ANON,'Prefer':'count=exact','Range':'0-0'}
@@ -1946,7 +1944,7 @@ function updateAssignFilterUI(){
 function renderAssign(){
   // Apply filters + search
   const searchTerm = (document.getElementById('assign-search')?.value||'').toLowerCase().trim();
-  const filtered = MCQ_QUESTIONS.filter(q => {
+  const filtered = getMCQ().filter(q => {
     const topicOk = assignFilters.topics.length === 0 || assignFilters.topics.includes(q.skill);
     const diffOk  = assignFilters.difficulty.length === 0 || assignFilters.difficulty.includes(q.difficulty);
     const searchOk = !searchTerm || q.skill.toLowerCase().includes(searchTerm) || q.id.toLowerCase().includes(searchTerm) || String(q.page).includes(searchTerm);
@@ -1955,13 +1953,13 @@ function renderAssign(){
 
   // Update result count
   const countEl = document.getElementById('assign-filter-count');
-  if(countEl) countEl.textContent = `${filtered.length} of ${MCQ_QUESTIONS.length} questions`;
+  if(countEl) countEl.textContent = `${filtered.length} of ${getMCQ().length} questions`;
 
   // Render question list
   document.getElementById('question-list').innerHTML = filtered.map(q=>`
     <div class="q-row ${selectedQIds.has(q.id)?'selected':''}" id="qrow-${q.id}" onclick="toggleQ('${q.id}')">
       <div class="q-checkbox">${selectedQIds.has(q.id)?'✓':''}</div>
-      <div class="q-num">${MCQ_QUESTIONS.indexOf(q)+1}</div>
+      <div class="q-num">${getMCQ().indexOf(q)+1}</div>
       <div class="q-id">${q.id}</div>
       <div style="flex:1;font-size:.82rem;color:var(--muted)">Page ${q.page}</div>
       <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
@@ -2311,8 +2309,8 @@ function resetPracticeGround(){
   const badge = document.getElementById('pg-home-badge');
   const desc  = document.getElementById('pg-home-desc');
   const btn   = document.getElementById('pg-fresh-btn');
-  if(badge){ badge.textContent = MCQ_QUESTIONS.length + ' questions'; badge.style.background=''; badge.style.color=''; }
-  if(desc)  desc.textContent = 'Browse and attempt any of the ' + MCQ_QUESTIONS.length + ' SAT Algebra questions. Filter by topic and practice at your own pace.';
+  if(badge){ badge.textContent = getMCQ().length + ' questions'; badge.style.background=''; badge.style.color=''; }
+  if(desc)  desc.textContent = 'Browse and attempt any of the ' + getMCQ().length + ' SAT Algebra questions. Filter by topic and practice at your own pace.';
   if(btn)   btn.style.display = 'none';
   showToast('✓ Practice Ground reset — starting fresh');
 }
@@ -3460,8 +3458,55 @@ function renderFinalScore(s, st, studentId){
 // ════════════════════════════════════════════════
 //  INIT — restore session or show login
 // ════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+//  LOAD QUESTIONS FROM SUPABASE
+// ════════════════════════════════════════════════
+async function loadQuestionsFromDB() {
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/questions?select=*&order=page.asc`, {
+      headers: anonH()
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const rows = await res.json();
+    // Populate QUESTION_BANK in place
+    QUESTION_BANK.length = 0;
+    rows.forEach(r => QUESTION_BANK.push({
+      id: r.id,
+      page: r.page,
+      skill: r.skill,
+      difficulty: r.difficulty,
+      options: r.options || [],
+      answer: r.answer
+    }));
+    // Update stat counter
+    const qEl = document.getElementById('stat-questions');
+    if (qEl) { qEl.textContent = QUESTION_BANK.length; qEl.classList.remove('loading'); }
+  } catch(e) {
+    console.warn('Could not load questions from DB:', e.message);
+  }
+}
+
+async function saveQuestionsToDB(questions) {
+  // Upsert — safe to re-run, won't duplicate
+  const res = await fetch(`${SUPA_URL}/rest/v1/questions`, {
+    method: 'POST',
+    headers: { ...anonH(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify(questions.map(q => ({
+      id: q.id,
+      page: q.page,
+      skill: q.skill,
+      difficulty: q.difficulty || 'Easy',
+      options: q.options || [],
+      answer: q.answer
+    })))
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
 async function boot() {
   loadPDF();
+  // Always load questions from Supabase first
+  await loadQuestionsFromDB();
 
   const saved = await Auth.restoreSession();
   if (!saved) {
@@ -3705,34 +3750,36 @@ function showImportPreview(questions) {
 function confirmImport() {
   if (!importPendingQuestions.length) { showToast('Nothing to add'); return; }
 
-  // Push into live QUESTION_BANK
-  importPendingQuestions.forEach(q => QUESTION_BANK.push(q));
-
-  // Update the question count stat
-  const qEl = document.getElementById('stat-questions');
-  if (qEl) qEl.textContent = QUESTION_BANK.length;
-
-  const count = importPendingQuestions.length;
+  const questions = [...importPendingQuestions];
   importPendingQuestions = [];
-
-  // Hide preview, show success log
   document.getElementById('import-preview').style.display = 'none';
-  importLog(`🎉 ${count} question(s) added to the bank! Total: ${QUESTION_BANK.length}`, '#86efac');
 
-  // Show inline download button in the log
-  const log = document.getElementById('import-log');
-  if (log) {
-    const btn = document.createElement('button');
-    btn.onclick = downloadUpdatedHTML;
-    btn.textContent = '⬇ Download Updated index.html';
-    btn.style.cssText = 'margin-top:10px;background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:.82rem;font-weight:600;font-family:var(--mono);cursor:pointer;width:100%;letter-spacing:.02em';
-    log.appendChild(btn);
-  }
+  importLog('💾 Saving to database…', '#7dd3fc');
 
-  // Trigger re-render of assign panel if it was cached
-  if (activePanelId === 'panel-assign') renderAssign();
+  saveQuestionsToDB(questions).then(() => {
+    // Also push into live QUESTION_BANK
+    questions.forEach(q => QUESTION_BANK.push(q));
 
-  showToast(`✓ ${count} questions added`);
+    const qEl = document.getElementById('stat-questions');
+    if (qEl) qEl.textContent = QUESTION_BANK.length;
+
+    importLog(`🎉 ${questions.length} question(s) saved to database! Total: ${QUESTION_BANK.length}`, '#86efac');
+    importLog('✅ Questions are permanently saved — no download needed.', '#86efac');
+
+    // Update next page counter
+    const npEl = document.getElementById('import-next-page');
+    if (npEl) npEl.textContent = QUESTION_BANK.length + 1;
+
+    if (activePanelId === 'panel-assign') renderAssign();
+    showToast(`✓ ${questions.length} questions saved to database`);
+
+  }).catch(err => {
+    importLog('❌ Database save failed: ' + err.message, '#fca5a5');
+    importLog('💡 Make sure the questions table exists in Supabase.', '#fbbf24');
+    // Still add to local bank for this session
+    questions.forEach(q => QUESTION_BANK.push(q));
+    showToast('Save failed — check console');
+  });
 }
 
 function cancelImport() {
