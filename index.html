@@ -3599,33 +3599,41 @@ Return a JSON array like:
   {"id":"def456","skill":"Systems of Equations","type":"FRQ","options":[],"answer":"74","difficulty":"Medium"}
 ]`;
 
-    const response = await fetch(`${SUPA_URL}/functions/v1/claude-proxy`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPA_ANON,
-        'Authorization': 'Bearer ' + SUPA_ANON
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: qB64 } },
-            { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: aB64 } },
-            { type: 'text', text: prompt }
-          ]
-        }]
-      })
-    });
+    let response;
+    try {
+      response = await fetch(`${SUPA_URL}/functions/v1/claude-proxy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPA_ANON,
+          'Authorization': 'Bearer ' + SUPA_ANON
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 4000,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: qB64 } },
+              { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: aB64 } },
+              { type: 'text', text: prompt }
+            ]
+          }]
+        })
+      });
+    } catch(fetchErr) {
+      throw new Error('Cannot reach claude-proxy — check it is deployed in Supabase. (' + fetchErr.message + ')');
+    }
 
     if (!response.ok) {
-      const err = await response.text();
-      throw new Error('API error: ' + err);
+      const errText = await response.text();
+      throw new Error(`Proxy error ${response.status}: ${errText}`);
     }
 
     const data = await response.json();
+    if (data.error) throw new Error('Anthropic error: ' + (data.error.message || JSON.stringify(data.error)));
+    if (!data.content) throw new Error('Unexpected response: ' + JSON.stringify(data));
+
     const rawText = data.content.map(c => c.text || '').join('');
 
     importLog('✅ Extraction complete. Parsing results…');
