@@ -705,6 +705,10 @@ tr:hover td{background:#f8faff}
         <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
         Deadlines
       </div>
+      <div class="sidebar-nav-item" onclick="switchPanel('panel-import',this)">
+        <span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+        Import
+      </div>
     </nav>
     <div class="main-content">
 
@@ -843,6 +847,109 @@ tr:hover td{background:#f8faff}
         </div>
       </div>
 
+      <!-- IMPORT QUESTIONS -->
+      <div id="panel-import" class="panel">
+        <h2 class="section-title">Import Questions</h2>
+        <p class="section-sub">Upload a questions PDF and answers PDF — Claude AI will extract and add them to the question bank automatically.</p>
+
+        <div class="card" style="max-width:680px">
+          <div class="card-header"><span class="card-title">Upload PDFs</span></div>
+          <div style="padding:24px;display:flex;flex-direction:column;gap:20px">
+
+            <!-- Drop zones -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <!-- Questions PDF -->
+              <div>
+                <label style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:8px">Questions PDF</label>
+                <div id="drop-questions" onclick="document.getElementById('file-questions').click()"
+                  style="border:2px dashed var(--rule);border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)">
+                  <div style="font-size:1.6rem;margin-bottom:8px">📄</div>
+                  <div id="qlabel" style="font-size:.82rem;color:var(--muted)">Click to upload</div>
+                </div>
+                <input type="file" id="file-questions" accept=".pdf" style="display:none" onchange="handleFileSelect('questions',this)">
+              </div>
+              <!-- Answers PDF -->
+              <div>
+                <label style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:8px">Answers PDF</label>
+                <div id="drop-answers" onclick="document.getElementById('file-answers').click()"
+                  style="border:2px dashed var(--rule);border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)">
+                  <div style="font-size:1.6rem;margin-bottom:8px">✅</div>
+                  <div id="alabel" style="font-size:.82rem;color:var(--muted)">Click to upload</div>
+                </div>
+                <input type="file" id="file-answers" accept=".pdf" style="display:none" onchange="handleFileSelect('answers',this)">
+              </div>
+            </div>
+
+            <!-- Page range -->
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="flex:1">
+                <label style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Pages start from #</label>
+                <input type="number" id="import-page-start" value="" placeholder="e.g. 95"
+                  style="width:100%;padding:9px 12px;border:1.5px solid var(--rule);border-radius:8px;font-size:.88rem;font-family:var(--sans);outline:none"
+                  onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--rule)'">
+              </div>
+              <div style="flex:1">
+                <label style="font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Skill / Topic</label>
+                <select id="import-skill" style="width:100%;padding:9px 12px;border:1.5px solid var(--rule);border-radius:8px;font-size:.88rem;font-family:var(--sans);outline:none;background:var(--white)">
+                  <option>Linear Equations (1 var)</option>
+                  <option selected>Linear Equations (2 vars)</option>
+                  <option>Systems of Equations</option>
+                  <option>Quadratics</option>
+                  <option>Functions</option>
+                  <option>Geometry</option>
+                  <option>Statistics</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Extract button -->
+            <button id="import-btn" onclick="runImport()"
+              style="background:var(--blue);color:#fff;border-radius:9px;padding:12px 24px;font-size:.9rem;font-weight:600;font-family:var(--sans);border:none;cursor:pointer;transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              Extract &amp; Add to Question Bank
+            </button>
+
+            <!-- Progress / log -->
+            <div id="import-log" style="display:none;background:#0d1b3e;border-radius:10px;padding:16px;font-family:var(--mono);font-size:.78rem;color:#7dd3fc;line-height:1.8;max-height:260px;overflow-y:auto"></div>
+
+            <!-- Preview table -->
+            <div id="import-preview" style="display:none">
+              <div style="font-size:.82rem;font-weight:600;color:var(--ink-mid);margin-bottom:10px" id="import-preview-title"></div>
+              <div style="overflow-x:auto;border-radius:10px;border:1.5px solid var(--rule)">
+                <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+                  <thead>
+                    <tr style="background:var(--bg)">
+                      <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">#</th>
+                      <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">ID</th>
+                      <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">Type</th>
+                      <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">Answer</th>
+                      <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--rule)">Difficulty</th>
+                    </tr>
+                  </thead>
+                  <tbody id="import-preview-tbody"></tbody>
+                </table>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:14px">
+                <button onclick="confirmImport()"
+                  style="background:var(--green);color:#fff;border-radius:8px;padding:10px 22px;font-size:.85rem;font-weight:600;font-family:var(--sans);border:none;cursor:pointer">
+                  ✓ Add These Questions
+                </button>
+                <button onclick="cancelImport()"
+                  style="background:var(--rule);color:var(--ink-mid);border-radius:8px;padding:10px 22px;font-size:.85rem;font-weight:600;font-family:var(--sans);border:none;cursor:pointer">
+                  Cancel
+                </button>
+                <button onclick="downloadUpdatedHTML()"
+                  style="background:var(--navy);color:#fff;border-radius:8px;padding:10px 22px;font-size:.85rem;font-weight:600;font-family:var(--sans);border:none;cursor:pointer;margin-left:auto">
+                  ⬇ Download Updated HTML
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -876,15 +983,28 @@ tr:hover td{background:#f8faff}
 
 <script>
 // ════════════════════════════════════════════════
-//  QUESTION BANK — all 139 questions from PDF
+//  QUESTION BANK — all 212 questions from PDF
 //  page = PDF page number (1-indexed)
 //  Free-response questions have options:[]
 // ════════════════════════════════════════════════
-const QUESTION_BANK = [{"id":"097e10f5","page":1,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"14"},{"l":"B","t":"65"},{"l":"C","t":"86"},{"l":"D","t":"250"}],"answer":"A"},{"id":"5c94e6fa","page":2,"skill":"Linear Equations (1 var)","options":[]},{"id":"997bec28","page":3,"skill":"Linear Equations (1 var)","options":[]},{"id":"6ac23de7","page":4,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"25"},{"l":"B","t":"24"},{"l":"C","t":"16"},{"l":"D","t":"15"}],"answer":"A"},{"id":"7392dfc1","page":5,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"2x+4=6"},{"l":"B","t":"x+3=3"},{"l":"C","t":"3x+2=4"},{"l":"D","t":"2x+3=6"}],"answer":"D"},{"id":"93954cfa","page":6,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"2c"},{"l":"B","t":"2+c"},{"l":"C","t":"2/c"},{"l":"D","t":"c/2"}],"answer":"A"},{"id":"3d04de9c","page":7,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"5"},{"l":"B","t":"20"},{"l":"C","t":"25"},{"l":"D","t":"30"}],"answer":"A"},{"id":"60f71697","page":8,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"11"},{"l":"B","t":"80"},{"l":"C","t":"96"},{"l":"D","t":"704"}],"answer":"A"},{"id":"550b352c","page":9,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"None"},{"l":"B","t":"Exactly 1"},{"l":"C","t":"Exactly 3"},{"l":"D","t":"Infinitely many"}],"answer":"B"},{"id":"b4553284","page":10,"skill":"Linear Equations (1 var)","options":[]},{"id":"ed18c4f7","page":11,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"3n-2"},{"l":"B","t":"3n+2"},{"l":"C","t":"2n-3"},{"l":"D","t":"2n+3"}],"answer":"D"},{"id":"12255364","page":12,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"4"},{"l":"B","t":"5"},{"l":"C","t":"8"},{"l":"D","t":"10"}],"answer":"C"},{"id":"b82a943c","page":13,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"21"},{"l":"B","t":"32"},{"l":"C","t":"168"},{"l":"D","t":"224"}],"answer":"B"},{"id":"eac739b2","page":14,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"40"},{"l":"B","t":"48"},{"l":"C","t":"56"},{"l":"D","t":"60"}],"answer":"B"},{"id":"d9d83c02","page":15,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"5"},{"l":"B","t":"0"},{"l":"C","t":"-15"},{"l":"D","t":"-20"}],"answer":"D"},{"id":"7a987ae4","page":16,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"24"},{"l":"B","t":"49"},{"l":"C","t":"50"},{"l":"D","t":"99"}],"answer":"B"},{"id":"9ff10b3b","page":17,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"-4"},{"l":"B","t":"1/3"},{"l":"C","t":"3"},{"l":"D","t":"6"}],"answer":"C"},{"id":"4e77195b","page":18,"skill":"Linear Equations (1 var)","options":[]},{"id":"4f7981a0","page":19,"skill":"Linear Equations (1 var)","options":[]},{"id":"c3989ef8","page":20,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"10"},{"l":"B","t":"25"},{"l":"C","t":"35"},{"l":"D","t":"40"}],"answer":"B"},{"id":"46f68129","page":21,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"15"},{"l":"B","t":"18"},{"l":"C","t":"25"},{"l":"D","t":"29"}],"answer":"B"},{"id":"e53870b6","page":22,"skill":"Linear Equations (1 var)","options":[]},{"id":"70774aa4","page":23,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"7"},{"l":"B","t":"12"},{"l":"C","t":"23"},{"l":"D","t":"60"}],"answer":"D"},{"id":"a9c04a21","page":24,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"1"},{"l":"B","t":"1.5"},{"l":"C","t":"2"},{"l":"D","t":"4"}],"answer":"C"},{"id":"6fa593f1","page":25,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"34"},{"l":"B","t":"40"},{"l":"C","t":"46"},{"l":"D","t":"64"}],"answer":"C"},{"id":"2937ef4f","page":26,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"3"},{"l":"B","t":"7"},{"l":"C","t":"8"},{"l":"D","t":"12"}],"answer":"D"},{"id":"b7e6394d","page":27,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"(25/4)m = 95"},{"l":"B","t":"(25/4)m = 5"},{"l":"C","t":"(4/25)m = 95"},{"l":"D","t":"(4/25)m = 5"}],"answer":"D"},{"id":"e6cb2402","page":28,"skill":"Linear Equations (1 var)","options":[]},{"id":"ae2287e2","page":29,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"(100(1-0.2)-65)u = 6,840"},{"l":"B","t":"(100-65)(1-0.8)u = 6,840"},{"l":"C","t":"0.8(100)-65u = 6,840"},{"l":"D","t":"(0.2(100)+65)u = 6,840"}],"answer":"A"},{"id":"771bd0ca","page":30,"skill":"Linear Equations (1 var)","options":[]},{"id":"90095507","page":31,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"$350,000"},{"l":"B","t":"$291,700"},{"l":"C","t":"$233,300"},{"l":"D","t":"$175,000"}],"answer":"B"},{"id":"0cb57740","page":32,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"5n + 6 = 30"},{"l":"B","t":"6n + 6 = 30"},{"l":"C","t":"8n + 3n + 4n = 30"},{"l":"D","t":"8(5n) + 3n + 4(6) = 30"}],"answer":"B"},{"id":"153ee763","page":33,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"0"},{"l":"B","t":"1/7"},{"l":"C","t":"4/3"},{"l":"D","t":"4"}],"answer":"B"},{"id":"aee9fd2d","page":34,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"-7 and -3"},{"l":"B","t":"-2 and 2"},{"l":"C","t":"2 and 7"},{"l":"D","t":"8 and 13"}],"answer":"B"},{"id":"3f8a701b","page":35,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"None"},{"l":"B","t":"I only"},{"l":"C","t":"I and II only"},{"l":"D","t":"I and III only"}],"answer":"D"},{"id":"628300a9","page":36,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"5x"},{"l":"B","t":"10x"},{"l":"C","t":"2x + 20"},{"l":"D","t":"10x + 20"}],"answer":"C"}];
+const QUESTION_BANK = [{"id":"097e10f5","page":1,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"14"},{"l":"B","t":"65"},{"l":"C","t":"86"},{"l":"D","t":"250"}],"answer":"A"},{"id":"5c94e6fa","page":2,"skill":"Linear Equations (1 var)","options":[],"answer":"21"},{"id":"997bec28","page":3,"skill":"Linear Equations (1 var)","options":[],"answer":"35"},{"id":"6ac23de7","page":4,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"25"},{"l":"B","t":"24"},{"l":"C","t":"16"},{"l":"D","t":"15"}],"answer":"A"},{"id":"7392dfc1","page":5,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"2x+4=6"},{"l":"B","t":"x+3=3"},{"l":"C","t":"3x+2=4"},{"l":"D","t":"2x+3=6"}],"answer":"D"},{"id":"93954cfa","page":6,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"2c"},{"l":"B","t":"2+c"},{"l":"C","t":"2/c"},{"l":"D","t":"c/2"}],"answer":"A"},{"id":"3d04de9c","page":7,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"5"},{"l":"B","t":"20"},{"l":"C","t":"25"},{"l":"D","t":"30"}],"answer":"A"},{"id":"60f71697","page":8,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"11"},{"l":"B","t":"80"},{"l":"C","t":"96"},{"l":"D","t":"704"}],"answer":"A"},{"id":"550b352c","page":9,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"None"},{"l":"B","t":"Exactly 1"},{"l":"C","t":"Exactly 3"},{"l":"D","t":"Infinitely many"}],"answer":"B"},{"id":"b4553284","page":10,"skill":"Linear Equations (1 var)","options":[],"answer":"54"},{"id":"ed18c4f7","page":11,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"3n-2"},{"l":"B","t":"3n+2"},{"l":"C","t":"2n-3"},{"l":"D","t":"2n+3"}],"answer":"D"},{"id":"12255364","page":12,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"4"},{"l":"B","t":"5"},{"l":"C","t":"8"},{"l":"D","t":"10"}],"answer":"C"},{"id":"b82a943c","page":13,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"21"},{"l":"B","t":"32"},{"l":"C","t":"168"},{"l":"D","t":"224"}],"answer":"B"},{"id":"eac739b2","page":14,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"40"},{"l":"B","t":"48"},{"l":"C","t":"56"},{"l":"D","t":"60"}],"answer":"B"},{"id":"d9d83c02","page":15,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"5"},{"l":"B","t":"0"},{"l":"C","t":"-15"},{"l":"D","t":"-20"}],"answer":"D"},{"id":"7a987ae4","page":16,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"24"},{"l":"B","t":"49"},{"l":"C","t":"50"},{"l":"D","t":"99"}],"answer":"B"},{"id":"9ff10b3b","page":17,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"-4"},{"l":"B","t":"1/3"},{"l":"C","t":"3"},{"l":"D","t":"6"}],"answer":"C"},{"id":"4e77195b","page":18,"skill":"Linear Equations (1 var)","options":[],"answer":"480"},{"id":"4f7981a0","page":19,"skill":"Linear Equations (1 var)","options":[],"answer":"24"},{"id":"c3989ef8","page":20,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"10"},{"l":"B","t":"25"},{"l":"C","t":"35"},{"l":"D","t":"40"}],"answer":"B"},{"id":"46f68129","page":21,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"15"},{"l":"B","t":"18"},{"l":"C","t":"25"},{"l":"D","t":"29"}],"answer":"B"},{"id":"e53870b6","page":22,"skill":"Linear Equations (1 var)","options":[],"answer":"5"},{"id":"70774aa4","page":23,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"7"},{"l":"B","t":"12"},{"l":"C","t":"23"},{"l":"D","t":"60"}],"answer":"D"},{"id":"a9c04a21","page":24,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"1"},{"l":"B","t":"1.5"},{"l":"C","t":"2"},{"l":"D","t":"4"}],"answer":"C"},{"id":"6fa593f1","page":25,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"34"},{"l":"B","t":"40"},{"l":"C","t":"46"},{"l":"D","t":"64"}],"answer":"C"},{"id":"2937ef4f","page":26,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"3"},{"l":"B","t":"7"},{"l":"C","t":"8"},{"l":"D","t":"12"}],"answer":"D"},{"id":"b7e6394d","page":27,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"(25/4)m = 95"},{"l":"B","t":"(25/4)m = 5"},{"l":"C","t":"(4/25)m = 95"},{"l":"D","t":"(4/25)m = 5"}],"answer":"D"},{"id":"e6cb2402","page":28,"skill":"Linear Equations (1 var)","options":[],"answer":"16/17"},{"id":"ae2287e2","page":29,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"(100(1-0.2)-65)u = 6,840"},{"l":"B","t":"(100-65)(1-0.8)u = 6,840"},{"l":"C","t":"0.8(100)-65u = 6,840"},{"l":"D","t":"(0.2(100)+65)u = 6,840"}],"answer":"A"},{"id":"771bd0ca","page":30,"skill":"Linear Equations (1 var)","options":[],"answer":"-22"},{"id":"90095507","page":31,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"$350,000"},{"l":"B","t":"$291,700"},{"l":"C","t":"$233,300"},{"l":"D","t":"$175,000"}],"answer":"B"},{"id":"0cb57740","page":32,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"5n + 6 = 30"},{"l":"B","t":"6n + 6 = 30"},{"l":"C","t":"8n + 3n + 4n = 30"},{"l":"D","t":"8(5n) + 3n + 4(6) = 30"}],"answer":"B"},{"id":"153ee763","page":33,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"0"},{"l":"B","t":"1/7"},{"l":"C","t":"4/3"},{"l":"D","t":"4"}],"answer":"B"},{"id":"aee9fd2d","page":34,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"-7 and -3"},{"l":"B","t":"-2 and 2"},{"l":"C","t":"2 and 7"},{"l":"D","t":"8 and 13"}],"answer":"B"},{"id":"3f8a701b","page":35,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"None"},{"l":"B","t":"I only"},{"l":"C","t":"I and II only"},{"l":"D","t":"I and III only"}],"answer":"D"},{"id":"628300a9","page":36,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"5x"},{"l":"B","t":"10x"},{"l":"C","t":"2x + 20"},{"l":"D","t":"10x + 20"}],"answer":"C"},{"id":"7a5a74a6","page":37,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"23/2"},{"l":"B","t":"17/2"},{"l":"C","t":"15/2"},{"l":"D","t":"-15/2"}],"answer":"B"},{"id":"aa85b138","page":38,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"The number of years it took the tree to double its height"},{"l":"B","t":"The average number of feet that the tree grew per year"},{"l":"C","t":"The height, in feet, of the tree when the tree was 1 year old"},{"l":"D","t":"The average number of years it takes similar trees to grow 14 feet"}],"answer":"B"},{"id":"15daa8d6","page":39,"skill":"Linear Equations (1 var)","options":[],"answer":"2"},{"id":"12ee1edc","page":40,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"2"},{"l":"B","t":"4"},{"l":"C","t":"6"},{"l":"D","t":"10"}],"answer":"A"},{"id":"70e29454","page":41,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"a=2 and b=1"},{"l":"B","t":"a=2 and b=7"},{"l":"C","t":"a=-2 and b=5"},{"l":"D","t":"a=-2 and b=-5"}],"answer":"B"},{"id":"f09097b1","page":42,"skill":"Linear Equations (1 var)","options":[],"answer":"22.4"},{"id":"4f669597","page":43,"skill":"Linear Equations (1 var)","options":[],"answer":"1.2"},{"id":"ce314070","page":44,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"2"},{"l":"B","t":"-9/8"},{"l":"C","t":"-5/2"},{"l":"D","t":"-10"}],"answer":"D"},{"id":"36ab4122","page":45,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"$11.75"},{"l":"B","t":"$12.50"},{"l":"C","t":"$13.25"},{"l":"D","t":"$13.75"}],"answer":"B"},{"id":"5ad9eff0","page":46,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"2w+6"},{"l":"B","t":"4w+12"},{"l":"C","t":"w²+6"},{"l":"D","t":"w²+6w"}],"answer":"B"},{"id":"45bba652","page":47,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"2"},{"l":"B","t":"5"},{"l":"C","t":"7"},{"l":"D","t":"12"}],"answer":"A"},{"id":"eafdbbbd","page":48,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"-12"},{"l":"B","t":"-5"},{"l":"C","t":"79"},{"l":"D","t":"204"}],"answer":"C"},{"id":"8c515062","page":49,"skill":"Linear Equations (1 var)","options":[{"l":"A","t":"3"},{"l":"B","t":"6"},{"l":"C","t":"24"},{"l":"D","t":"44"}],"answer":"D"},{"id":"ee846db7","page":50,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"5.48"},{"l":"B","t":"7.30y"},{"l":"C","t":"7.30"},{"l":"D","t":"5.48x"}],"answer":"A"},{"id":"5b8a8475","page":51,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"-1/3"},{"l":"B","t":"-1/12"},{"l":"C","t":"-1/18"},{"l":"D","t":"-1/45"}],"answer":"A"},{"id":"b23bba4c","page":52,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"4"},{"l":"C","t":"5"},{"l":"D","t":"6"}],"answer":"B"},{"id":"24854644","page":53,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"y = 5x"},{"l":"B","t":"y = 7x + 5"},{"l":"C","t":"y = 7x"},{"l":"D","t":"y = 5x + 7"}],"answer":"B"},{"id":"87322577","page":54,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"The number of minutes spent running each day"},{"l":"B","t":"The number of minutes spent biking each day"},{"l":"C","t":"The total number of minutes spent running and biking each day"},{"l":"D","t":"The number of minutes spent biking for each minute spent running"}],"answer":"C"},{"id":"c6b151d4","page":55,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"If 24 triangles were constructed, then 73 rectangles were constructed."},{"l":"B","t":"If 24 triangles were constructed, then 73 paper straws were used."},{"l":"C","t":"If 73 triangles were constructed, then 24 rectangles were constructed."},{"l":"D","t":"If 73 triangles were constructed, then 24 paper straws were used."}],"answer":"A"},{"id":"8c98c834","page":56,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"1"},{"l":"B","t":"3"},{"l":"C","t":"10"},{"l":"D","t":"30"}],"answer":"B"},{"id":"b2845d88","page":57,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"y = -1/4 x - 1"},{"l":"B","t":"y = -x - 4"},{"l":"C","t":"y = -x - 1/4"},{"l":"D","t":"y = -4x - 1"}],"answer":"A"},{"id":"b450ab03","page":58,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"1.9x + 1.5y = 46.1"},{"l":"B","t":"1.5x + 1.9y = 46.1"},{"l":"C","t":"x + y = 46.1"},{"l":"D","t":"30.7x + 24.3y = 46.1"}],"answer":"B"},{"id":"db0107df","page":59,"skill":"Linear Equations (2 vars)","options":[],"answer":"9"},{"id":"8368afd1","page":60,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"7"},{"l":"B","t":"10"},{"l":"C","t":"14"},{"l":"D","t":"16"}],"answer":"B"},{"id":"8adf1335","page":61,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"x + y = 201"},{"l":"B","t":"x - y = 201"},{"l":"C","t":"2x - y = 201"},{"l":"D","t":"y - x = 201"}],"answer":"B"},{"id":"e7343559","page":62,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"x:0,1,2 y:0,-4,-8"},{"l":"B","t":"x:0,1,2 y:40,44,48"},{"l":"C","t":"x:0,1,2 y:40,36,32"},{"l":"D","t":"x:0,1,2 y:0,4,8"}],"answer":"C"},{"id":"dd797fe2","page":63,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"The total cost, in dollars, for all binders purchased"},{"l":"B","t":"The total cost, in dollars, for all notebooks purchased"},{"l":"C","t":"The total cost, in dollars, for all binders and notebooks purchased"},{"l":"D","t":"The difference in the total cost, in dollars, between binders and notebooks"}],"answer":"C"},{"id":"789975b7","page":64,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"0.4x + 0.6y = 240"},{"l":"B","t":"0.6x + 0.4y = 240"},{"l":"C","t":"40x + 60y = 240"},{"l":"D","t":"60x + 40y = 240"}],"answer":"B"},{"id":"2554b413","page":65,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"y = 6x + 8"},{"l":"B","t":"y = 6x + 48"},{"l":"C","t":"y = 8x + 6"},{"l":"D","t":"y = 8x + 48"}],"answer":"A"},{"id":"52a8ef85","page":66,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"3"},{"l":"B","t":"4"},{"l":"C","t":"8"},{"l":"D","t":"40"}],"answer":"B"},{"id":"dfa45424","page":67,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"g + t = 80"},{"l":"B","t":"g + t = 1.50 + 12.50"},{"l":"C","t":"1.50g + 12.50t = 80"},{"l":"D","t":"12.50g + 1.50t = 80"}],"answer":"D"},{"id":"520e6f5b","page":68,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"The cost of the granite and sandstone needed for the project"},{"l":"B","t":"The cost of the basalt and limestone needed for the project"},{"l":"C","t":"The cost of the basalt needed for the project"},{"l":"D","t":"The cost of the sandstone needed for the project"}],"answer":"A"},{"id":"7038b587","page":69,"skill":"Linear Equations (2 vars)","options":[],"answer":"41"},{"id":"b2de69bd","page":70,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"y = 2x + 3"},{"l":"B","t":"y = 3x - 2"},{"l":"C","t":"y = 4x - 1"},{"l":"D","t":"y = 5x"}],"answer":"A"},{"id":"2d0e13a6","page":71,"skill":"Linear Equations (2 vars)","options":[],"answer":"0.25"},{"id":"c8e0f511","page":72,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"x + 3y = 240"},{"l":"B","t":"x + y = 240"},{"l":"C","t":"3x + 3y = 240"},{"l":"D","t":"3x + y = 240"}],"answer":"A"},{"id":"029c2dc2","page":73,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"4xy = 70"},{"l":"B","t":"4(x + y) = 70"},{"l":"C","t":"3x + y = 70"},{"l":"D","t":"x + 3y = 70"}],"answer":"D"},{"id":"c5479c1a","page":74,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"5"},{"l":"B","t":"10"},{"l":"C","t":"13"},{"l":"D","t":"18"}],"answer":"D"},{"id":"1efd8202","page":75,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"x:0,2,4 y:8,148,288"},{"l":"B","t":"x:0,2,4 y:70,78,86"},{"l":"C","t":"x:0,2,4 y:70,140,280"},{"l":"D","t":"x:0,2,4 y:8,132,272"}],"answer":"A"},{"id":"b9839f9e","page":76,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"The price, in dollars, of one drink"},{"l":"B","t":"The price, in dollars, of one salad"},{"l":"C","t":"The number of drinks bought during the day"},{"l":"D","t":"The number of salads bought during the day"}],"answer":"B"},{"id":"f40552a9","page":77,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"(0, -8)"},{"l":"B","t":"(0, -1/8)"},{"l":"C","t":"(0, 0)"},{"l":"D","t":"(0, 8)"}],"answer":"D"},{"id":"12ae3452","page":78,"skill":"Linear Equations (2 vars)","options":[],"answer":"14"},{"id":"8b2a2a63","page":79,"skill":"Linear Equations (2 vars)","options":[],"answer":"-32"},{"id":"8a1544f1","page":80,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"y = 3x - 3"},{"l":"B","t":"y = -3x + 3"},{"l":"C","t":"y = 1/3 x - 3"},{"l":"D","t":"y = -1/3 x + 3"}],"answer":"B"},{"id":"535fa6e6","page":81,"skill":"Linear Equations (2 vars)","options":[{"l":"A","t":"2"},{"l":"B","t":"2.5"},{"l":"C","t":"2.67"},{"l":"D","t":"4"}],"answer":"D"},
+{"id":"3cdbf026","page":82,"skill":"Linear Equations (2 vars)","difficulty":"Hard","options":[{"l":"A","t":"-2"},{"l":"B","t":"-1"},{"l":"C","t":"2"},{"l":"D","t":"3"}],"answer":"A"},
+{"id":"9bbce683","page":83,"skill":"Linear Equations (2 vars)","difficulty":"Hard","options":[{"l":"A","t":"(-26/3, 0)"},{"l":"B","t":"(-9/2, 0)"},{"l":"C","t":"(-11/3, 0)"},{"l":"D","t":"(-17/6, 0)"}],"answer":"D"},
+{"id":"fdee0fbf","page":84,"skill":"Linear Equations (2 vars)","difficulty":"Hard","options":[],"answer":"74"},
+{"id":"0b46bad5","page":85,"skill":"Linear Equations (2 vars)","difficulty":"Hard","options":[{"l":"A","t":"Graph A"},{"l":"B","t":"Graph B"},{"l":"C","t":"Graph C"},{"l":"D","t":"Graph D"}],"answer":"C"},
+{"id":"c362c210","page":86,"skill":"Linear Equations (2 vars)","difficulty":"Hard","options":[],"answer":"1.5"},
+{"id":"98d3393a","page":87,"skill":"Linear Equations (2 vars)","difficulty":"Hard","options":[{"l":"A","t":"0"},{"l":"B","t":"-1/2"},{"l":"C","t":"-2"},{"l":"D","t":"Undefined"}],"answer":"A"},
+{"id":"cc3e9528","page":88,"skill":"Linear Equations (2 vars)","difficulty":"Hard","options":[],"answer":"59/9"},
+{"id":"0366d965","page":89,"skill":"Linear Equations (2 vars)","difficulty":"Hard","options":[],"answer":"30"},
+{"id":"a35c7164","page":90,"skill":"Linear Equations (2 vars)","difficulty":"Hard","options":[{"l":"A","t":"10x+7y=1 and ax-2by=1"},{"l":"B","t":"10x+7y=1 and ax+2by=1"},{"l":"C","t":"10x+7y=1 and 2ax+by=1"},{"l":"D","t":"5x-7y=1 and ax+by=1"}],"answer":"B"},
+{"id":"c4ea43ef","page":91,"skill":"Linear Equations (2 vars)","difficulty":"Hard","options":[{"l":"A","t":"128"},{"l":"B","t":"160"},{"l":"C","t":"200"},{"l":"D","t":"320"}],"answer":"B"},
+{"id":"cb58833c","page":92,"skill":"Linear Equations (2 vars)","difficulty":"Hard","options":[],"answer":"1.25"},
+{"id":"a7a14e87","page":93,"skill":"Linear Equations (2 vars)","difficulty":"Hard","options":[{"l":"A","t":"x+y=3"},{"l":"B","t":"x+y=-3"},{"l":"C","t":"x-y=3"},{"l":"D","t":"x-y=-3"}],"answer":"D"},
+{"id":"a1fd2304","page":94,"skill":"Linear Equations (2 vars)","difficulty":"Hard","options":[],"answer":"1.5"}];
 
 // MCQ-only for assignment (filter out free-response)
 const MCQ_QUESTIONS = QUESTION_BANK.filter(q => q.options && q.options.length === 4 && q.answer)
-  .map(q => ({...q, difficulty: 'Medium'})); // All current questions are Medium difficulty
+  .map(q => ({...q, difficulty: q.page <= 25 ? 'Easy' : q.page <= 36 ? 'Hard' : q.page <= 49 ? 'Medium' : 'Easy'}));
 
 // ════════════════════════════════════════════════
 //  PDF.js setup — high-res, cropped to question body
@@ -892,7 +1012,7 @@ const MCQ_QUESTIONS = QUESTION_BANK.filter(q => q.options && q.options.length ==
 
 // Per-page crop coords in PDF points (y_start, y_end|null)
 // y_start = bottom of "ID:" badge, y_end = top of "A." option (null = free response)
-const PAGE_CLIPS={1:[804.1,764.0],2:[804.1,null],3:[804.1,null],4:[804.1,683.8],5:[804.1,748.3],6:[804.1,748.3],7:[804.1,748.3],8:[804.1,748.3],9:[804.1,728.0],10:[804.1,null],11:[804.1,748.3],12:[804.1,732.5],13:[804.1,764.0],14:[804.1,764.0],15:[804.1,743.0],16:[804.1,726.5],17:[804.1,731.0],18:[804.1,null],19:[804.1,null],20:[804.1,748.3],21:[804.1,748.3],22:[804.1,null],23:[804.1,764.0],24:[804.1,743.8],25:[804.1,764.0],26:[804.1,685.3],27:[804.1,689.0],28:[804.1,null],29:[804.1,685.3],30:[804.1,null],31:[804.1,360.5],32:[804.1,732.5],33:[804.1,748.3],34:[804.1,764.0],35:[804.1,669.5],36:[804.1,685.3]};
+const PAGE_CLIPS={1:[804.1,764.0],2:[804.1,null],3:[804.1,null],4:[804.1,683.8],5:[804.1,748.3],6:[804.1,748.3],7:[804.1,748.3],8:[804.1,748.3],9:[804.1,728.0],10:[804.1,null],11:[804.1,748.3],12:[804.1,732.5],13:[804.1,764.0],14:[804.1,764.0],15:[804.1,743.0],16:[804.1,726.5],17:[804.1,731.0],18:[804.1,null],19:[804.1,null],20:[804.1,748.3],21:[804.1,748.3],22:[804.1,null],23:[804.1,764.0],24:[804.1,743.8],25:[804.1,764.0],26:[804.1,685.3],27:[804.1,689.0],28:[804.1,null],29:[804.1,685.3],30:[804.1,null],31:[804.1,360.5],32:[804.1,732.5],33:[804.1,748.3],34:[804.1,764.0],35:[804.1,669.5],36:[804.1,685.3],37:[804.1,748.3],38:[804.1,748.3],39:[804.1,null],40:[804.1,748.3],41:[804.1,748.3],42:[804.1,null],43:[804.1,null],44:[804.1,748.3],45:[804.1,748.3],46:[804.1,748.3],47:[804.1,748.3],48:[804.1,748.3],49:[804.1,748.3],50:[804.1,748.3],51:[804.1,748.3],52:[804.1,748.3],53:[804.1,748.3],54:[804.1,748.3],55:[804.1,748.3],56:[804.1,748.3],57:[804.1,748.3],58:[804.1,748.3],59:[804.1,null],60:[804.1,748.3],61:[804.1,748.3],62:[804.1,669.5],63:[804.1,748.3],64:[804.1,748.3],65:[804.1,748.3],66:[804.1,748.3],67:[804.1,748.3],68:[804.1,748.3],69:[804.1,null],70:[804.1,748.3],71:[804.1,null],72:[804.1,748.3],73:[804.1,748.3],74:[804.1,748.3],75:[804.1,669.5],76:[804.1,748.3],77:[804.1,669.5],78:[804.1,null],79:[804.1,null],80:[804.1,748.3],81:[804.1,748.3]};
 
 let pdfDoc = null;
 
@@ -914,9 +1034,26 @@ async function renderPage(pageNum, canvas) {
     const page = await pdfDoc.getPage(pageNum);
     const PAGE_HEIGHT_PTS = 841.9;
     const clip = PAGE_CLIPS[pageNum] || [165, null];
-    const yStart = clip[0];
-    const yEnd   = clip[1];
-    const yEndActual = yEnd !== null ? yEnd : Math.min(yStart + 260, PAGE_HEIGHT_PTS - 80);
+    // Detect coordinate system:
+    // New PDFs store y from bottom (yStart ~804 = just below ID badge)
+    // Old PDFs store y from bottom (yStart ~148 = further up the page)
+    // PDF.js renders with y=0 at TOP, so convert to top-origin for clipping
+    let yStart, yEnd, yEndActual;
+    const rawStart = clip[0];
+    const rawEnd   = clip[1];
+    if (rawStart > 400) {
+      // New-style: values are from bottom, close to top of page
+      yStart = PAGE_HEIGHT_PTS - rawStart;  // ~37.8 pts from top
+      yEnd   = rawEnd !== null ? PAGE_HEIGHT_PTS - rawEnd : null;
+      yEndActual = yEnd !== null ? yEnd : yStart + 220;
+    } else {
+      // Old-style: values are from bottom, further down the page
+      // Original logic: offsetY = -(yStart * scale) meant "skip yStart pts from top"
+      // which was wrong for bottom-origin — but keeping for backward compat
+      yStart = PAGE_HEIGHT_PTS - rawStart;
+      yEnd   = rawEnd !== null ? PAGE_HEIGHT_PTS - rawEnd : null;
+      yEndActual = yEnd !== null ? yEnd : yStart + 220;
+    }
 
     const wrap = canvas.closest('.pdf-canvas-wrap');
     const wrapW = (wrap?.clientWidth || 660);
@@ -1456,6 +1593,7 @@ function switchPanel(pid,el){
   if(pid==='panel-assign')renderAssign();
   if(pid==='panel-results')renderResults();
   if(pid==='panel-deadline')renderDeadlines();
+  if(pid==='panel-import')renderImport();
 }
 
 function renderTeacher(){ renderOverview(); renderAssign(); }
@@ -1725,9 +1863,9 @@ function renderAssignFilterDropdown(){
   if(!dd) return;
   const topics = ['Linear Inequalities','Linear Equations (2 vars)','Linear Functions','Linear Equations (1 var)'];
   const difficulties = [
-    {id:'Easy',   e:'🟢', note:'Coming soon',  disabled:true},
-    {id:'Medium', e:'🟡', note:'136 questions', disabled:false},
-    {id:'Hard',   e:'🔴', note:'Coming soon',  disabled:true},
+    {id:'Easy',   e:'🟢', note:'51 questions', disabled:false},
+    {id:'Medium', e:'🟡', note:'10 questions', disabled:false},
+    {id:'Hard',   e:'🔴', note:'24 questions', disabled:false},
   ];
 
   let html = '<div style="padding:12px 16px 6px">';
@@ -1858,7 +1996,8 @@ function renderAssign(){
       <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
         <span class="q-skill-tag">${q.skill}</span>
         <span style="font-family:var(--mono);font-size:.62rem;padding:2px 7px;border-radius:10px;
-          background:#fef9ec;color:#92400e;font-weight:600">🟡 Medium</span>
+          background:${q.difficulty==='Easy'?'#f0fdf4':q.difficulty==='Medium'?'#fefce8':'#fef2f2'};color:${q.difficulty==='Easy'?'#166534':q.difficulty==='Medium'?'#854d0e':'#991b1b'};font-weight:600">
+          ${q.difficulty==='Easy'?'🟢 Easy':q.difficulty==='Medium'?'🟡 Medium':'🔴 Hard'}</span>
       </div>
     </div>`).join('');
 
@@ -2064,7 +2203,7 @@ async function renderStudentHome(){
             </svg>
           </div>
           <div class="mode-card-title">Practice Ground</div>
-          <div id="pg-home-desc" class="mode-card-desc">Browse and attempt any of the 136 SAT Algebra questions. Filter by topic and practice at your own pace.</div>
+          <div id="pg-home-desc" class="mode-card-desc">Browse and attempt any of the SAT Algebra questions. Filter by topic and practice at your own pace.</div>
           <div class="mode-card-footer">
             <span class="mode-card-badge" id="pg-home-badge">136 questions</span>
             <button id="pg-fresh-btn" class="mode-card-fresh" style="display:none">↺ Reset session</button>
@@ -2111,7 +2250,7 @@ async function renderStudentHome(){
 
   // Update Practice Ground card to reflect session state
   const pgAnswered = Object.keys(pgSessionAnswers).length;
-  const pgTotal    = MCQ_QUESTIONS.length;
+  const pgTotal    = QUESTION_BANK.filter(q=>q.answer).length;
   const pgBadge    = document.getElementById('pg-home-badge');
   const pgDesc     = document.getElementById('pg-home-desc');
   const pgFreshBtn = document.getElementById('pg-fresh-btn');
@@ -2124,10 +2263,10 @@ async function renderStudentHome(){
     if(pgDesc) pgDesc.textContent = `Session in progress — ${pgTotal - pgAnswered} questions remaining. Tap to continue.`;
     if(pgFreshBtn) pgFreshBtn.style.display = 'block';
   } else if(pgBadge) {
-    pgBadge.textContent = '136 questions';
+    pgBadge.textContent = QUESTION_BANK.filter(q=>q.answer).length + ' questions';
     pgBadge.style.background = '';
     pgBadge.style.color = '';
-    if(pgDesc) pgDesc.textContent = 'Browse and attempt any of the 136 SAT Algebra questions in the app. Filter by topic and practice at your own pace.';
+    if(pgDesc) pgDesc.textContent = 'Browse and attempt any of the SAT Algebra questions. Filter by topic and practice at your own pace.';
     if(pgFreshBtn) pgFreshBtn.style.display = 'none';
   }
 }
@@ -2217,7 +2356,10 @@ function renderPracticeGround(startIdx, forceNew){
   }
 
   // Build queue based on active filters (multi-select)
-  const filtered = MCQ_QUESTIONS.filter(q => {
+  const allQsWithAnswer = QUESTION_BANK
+    .filter(q => q.answer)
+    .map(q => ({...q, difficulty: q.page <= 25 ? 'Easy' : 'Hard'}));
+  const filtered = allQsWithAnswer.filter(q => {
     const topicOk = pgFilters.topics.length === 0 || pgFilters.topics.includes(q.skill);
     const diffOk  = pgFilters.difficulty.length === 0 || pgFilters.difficulty.includes(q.difficulty);
     return topicOk && diffOk;
@@ -2312,12 +2454,12 @@ function renderPracticeGroundQuestion(){
             <div style="height:1px;background:var(--rule);margin:4px 0"></div>
             <div style="padding:6px 16px 12px">
               <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;margin-top:6px">Difficulty</div>
-              ${[{id:'Easy',e:'🟢',note:'Coming soon'},{id:'Medium',e:'🟡',note:'136 Qs'},{id:'Hard',e:'🔴',note:'Coming soon'}].map(d=>`
-                <label style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-radius:6px;opacity:${d.id==='Medium'?'1':'.4'};cursor:${d.id==='Medium'?'pointer':'default'}"
-                  ${d.id==='Medium'?'onmouseenter="this.style.background=\'#f5f7ff\'" onmouseleave="this.style.background=\'transparent\'"':''}>
-                  <input type="checkbox" ${pgFilters.difficulty.includes(d.id)?'checked':''} ${d.id!=='Medium'?'disabled':''}
+              ${[{id:'Easy',e:'🟢',note:'19 Qs'},{id:'Medium',e:'🟡',note:'0 Qs',disabled:true},{id:'Hard',e:'🔴',note:'22 Qs'}].map(d=>`
+                <label style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-radius:6px;opacity:${d.disabled?'.4':'1'};cursor:${d.disabled?'default':'pointer'}"
+                  ${!d.disabled?'onmouseenter="this.style.background=\'#f5f7ff\'" onmouseleave="this.style.background=\'transparent\'"':''}>
+                  <input type="checkbox" ${pgFilters.difficulty.includes(d.id)?'checked':''} ${d.disabled?'disabled':''}
                     onchange="togglePGFilterItem('difficulty','${d.id}')"
-                    style="width:16px;height:16px;accent-color:var(--blue);flex-shrink:0;cursor:${d.id==='Medium'?'pointer':'default'}">
+                    style="width:16px;height:16px;accent-color:var(--blue);flex-shrink:0;cursor:${d.disabled?'default':'pointer'}">
                   <span style="font-size:.85rem;color:var(--ink-mid)">${d.e} ${d.id}</span>
                   <span style="font-size:.7rem;color:var(--muted);margin-left:auto">${d.note}</span>
                 </label>`).join('')}
@@ -2344,7 +2486,10 @@ function renderPracticeGroundQuestion(){
             color:var(--blue);background:var(--blue-bg);padding:4px 12px;border-radius:20px;
             border:1px solid #bfdbfe">${q.skill}</span>
           <span style="font-size:.72rem;font-weight:700;padding:4px 11px;border-radius:20px;
-            background:#fef9ec;color:#92400e;border:1px solid #fde68a">🟡 Medium</span>
+            background:${q.difficulty==='Hard'?'#fef2f2':'#f0fdf4'};
+            color:${q.difficulty==='Hard'?'#991b1b':'#166534'};
+            border:1px solid ${q.difficulty==='Hard'?'#fca5a5':'#86efac'}">
+            ${q.difficulty==='Hard'?'🔴 Hard':'🟢 Easy'}</span>
         </div>
         ${wasAnswered
           ? `<span style="font-size:.78rem;font-weight:700;padding:5px 14px;border-radius:20px;
@@ -2379,8 +2524,10 @@ function renderPracticeGroundQuestion(){
           <canvas id="pdf-canvas-${q.id}"></canvas>
         </div>
 
-        <!-- Options -->
+        <!-- Options or Free-response input -->
         <div style="padding:20px 24px">
+          ${q.options && q.options.length === 4 ? `
+          <!-- ── MCQ ── -->
           <div style="display:grid;gap:10px">
             ${q.options.map((o,i)=>{
               const isCorrect = wasAnswered && o.l===q.answer;
@@ -2405,21 +2552,56 @@ function renderPracticeGroundQuestion(){
                 ${isWrong?'<span style="color:var(--red);font-size:1rem">✗</span>':''}
               </button>`;
             }).join('')}
-          </div>
+          </div>` : `
+          <!-- ── FREE RESPONSE ── -->
+          <div>
+            <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+              color:var(--muted);margin-bottom:10px">Your Answer</div>
+            ${wasAnswered ? `
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;
+                border:2px solid ${res.correct?'var(--green)':'var(--red)'};
+                background:${res.correct?'var(--green-lt)':'var(--red-lt)'}">
+                <span style="font-size:1.05rem;font-family:var(--mono);font-weight:700;
+                  color:${res.correct?'var(--green)':'var(--red)'}">
+                  ${res.chosen}
+                </span>
+                <span style="font-size:1.1rem">${res.correct?'✓':'✗'}</span>
+              </div>` : `
+              <div style="display:flex;gap:10px;align-items:stretch">
+                <input id="fr-input-${q.id}" type="text" placeholder="Type your answer…"
+                  autocomplete="off" autocorrect="off" spellcheck="false"
+                  onkeydown="if(event.key==='Enter')submitFreeResponse('${q.id}')"
+                  style="flex:1;padding:13px 16px;border:2px solid var(--rule);border-radius:12px;
+                    font-size:1rem;font-family:var(--mono);color:var(--ink);background:var(--white);
+                    outline:none;transition:border-color .15s"
+                  onfocus="this.style.borderColor='var(--blue)'"
+                  onblur="this.style.borderColor='var(--rule)'">
+                <button onclick="submitFreeResponse('${q.id}')"
+                  style="padding:13px 22px;border-radius:12px;border:none;background:var(--blue);
+                    color:#fff;font-size:.9rem;font-weight:700;cursor:pointer;
+                    font-family:var(--sans);white-space:nowrap;transition:all .15s"
+                  onmouseenter="this.style.background='#1d4ed8'"
+                  onmouseleave="this.style.background='var(--blue)'">
+                  Submit
+                </button>
+              </div>`}
+          </div>`}
 
-          <!-- Feedback -->
+          <!-- Feedback box (shared by MCQ and FR) -->
+          <div id="feedback-box" style="${wasAnswered?'':'display:none'}">
           ${wasAnswered ? `
-          <div style="margin-top:16px;padding:14px 18px;border-radius:12px;
-            background:${res.correct?'#f0fdf4':'#fff8f8'};
-            border:1.5px solid ${res.correct?'#86efac':'#fca5a5'}">
-            <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
-              color:${res.correct?'var(--green)':'var(--red)'};margin-bottom:4px">
-              ${res.correct?'✓ Correct':'✗ Incorrect'}
-            </div>
-            <div style="font-size:.88rem;color:${res.correct?'#166534':'#7f1d1d'}">
-              The correct answer is <strong>${q.answer}</strong>.
-            </div>
-          </div>` : ''}
+            <div style="margin-top:16px;padding:14px 18px;border-radius:12px;
+              background:${res.correct?'#f0fdf4':'#fff8f8'};
+              border:1.5px solid ${res.correct?'#86efac':'#fca5a5'}">
+              <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
+                color:${res.correct?'var(--green)':'var(--red)'};margin-bottom:4px">
+                ${res.correct?'✓ Correct':'✗ Incorrect'}
+              </div>
+              <div style="font-size:.88rem;color:${res.correct?'#166534':'#7f1d1d'}">
+                ${res.correct?'Well done!':'The correct answer is <strong>'+q.answer+'</strong>.'}
+              </div>
+            </div>` : ''}
+          </div>
         </div>
       </div>
 
@@ -2525,6 +2707,98 @@ async function selectPracticeGroundAnswer(qId, chosen){
   // These are NOT saved to the DB (only assigned questions go to DB)
   pgSessionAnswers[qId] = {chosen, correct, time: timeSpent};
   pgSaveSession(currentStudentId); // persist across logout/refresh via localStorage
+}
+
+// ── FREE RESPONSE SUBMISSION ─────────────────────
+function normalizeFRAnswer(raw) {
+  // Normalize user input for comparison:
+  // trim whitespace, lowercase, remove spaces around operators
+  let s = raw.trim().toLowerCase().replace(/\s+/g, '');
+  // Convert fraction like 16/17 to decimal for comparison
+  const fracMatch = s.match(/^(-?\d+)\/(\d+)$/);
+  if (fracMatch) {
+    return { str: s, dec: parseFloat(fracMatch[1]) / parseFloat(fracMatch[2]) };
+  }
+  return { str: s, dec: parseFloat(s) };
+}
+
+function checkFRCorrect(userRaw, correctRaw) {
+  const user    = normalizeFRAnswer(userRaw);
+  const correct = normalizeFRAnswer(correctRaw);
+  // Exact string match (handles integers, simple fractions, negatives)
+  if (user.str === correct.str) return true;
+  // Decimal match within tolerance (for 16/17 ≈ 0.9411…)
+  if (!isNaN(user.dec) && !isNaN(correct.dec)) {
+    if (Math.abs(user.dec - correct.dec) < 0.001) return true;
+  }
+  // For e6cb2402 (16/17): also accept .9411, .9412, 0.941
+  // handled by the decimal check above
+  return false;
+}
+
+function submitFreeResponse(qId) {
+  const q = QUESTION_BANK.find(q => q.id === qId);
+  if (!q) return;
+  const input = document.getElementById('fr-input-' + qId);
+  if (!input) return;
+  const userAnswer = input.value.trim();
+  if (!userAnswer) { input.focus(); return; }
+
+  const correct  = checkFRCorrect(userAnswer, q.answer);
+  const timeSpent = stopTimer(qId);
+  showTimeTaken(timeSpent);
+
+  // Replace input row with result display
+  const inputWrap = input.closest('div');
+  inputWrap.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;
+      border:2px solid ${correct?'var(--green)':'var(--red)'};
+      background:${correct?'var(--green-lt)':'var(--red-lt)'}">
+      <span style="font-size:1.05rem;font-family:var(--mono);font-weight:700;
+        color:${correct?'var(--green)':'var(--red)'}">
+        ${userAnswer}
+      </span>
+      <span style="font-size:1.1rem">${correct?'✓':'✗'}</span>
+    </div>`;
+
+  // Show feedback
+  const fb = document.getElementById('feedback-box');
+  if (fb) {
+    fb.style.display = 'block';
+    const timeStr = timeSpent >= 60 ? `${Math.floor(timeSpent/60)}m ${timeSpent%60}s` : `${timeSpent}s`;
+    const skillTip = getSkillTip(q.skill);
+    fb.innerHTML = `
+      <div style="margin-top:16px;padding:14px 18px;border-radius:12px;
+        background:${correct?'#f0fdf4':'#fff8f8'};
+        border:1.5px solid ${correct?'#86efac':'#fca5a5'}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
+            color:${correct?'var(--green)':'var(--red)'}">
+            ${correct?'✓ Correct':'✗ Incorrect'}
+          </span>
+          <span style="font-size:.72rem;color:var(--muted);font-family:var(--mono)">⏱ ${timeStr}</span>
+        </div>
+        <div style="font-size:.88rem;color:${correct?'#166534':'#7f1d1d'}">
+          ${correct?'Well done!':'The correct answer is <strong>' + q.answer + '</strong>.'}
+        </div>
+        ${skillTip?`<div style="font-size:.8rem;color:var(--ink-mid);background:rgba(0,0,0,.04);
+          border-radius:7px;padding:8px 11px;line-height:1.55;margin-top:8px;
+          border-left:3px solid ${correct?'var(--green)':'var(--blue)'}">💡 ${skillTip}</div>`:''}
+      </div>`;
+  }
+
+  // Enable Next button
+  const nextBtn = document.getElementById('btn-next');
+  if (nextBtn) {
+    nextBtn.disabled = false;
+    nextBtn.style.background = 'var(--blue)';
+    nextBtn.style.color = '#fff';
+    nextBtn.style.cursor = 'pointer';
+  }
+
+  // Store session answer
+  pgSessionAnswers[qId] = { chosen: userAnswer, correct, time: timeSpent };
+  pgSaveSession(currentStudentId);
 }
 
 // ── MODE 2: ASSIGNED QUESTIONS ───────────────────
@@ -2890,7 +3164,10 @@ function renderQuestion(studentId, cachedStats, slideDir){
           color:var(--blue);background:var(--blue-bg);padding:4px 12px;border-radius:20px;
           border:1px solid #bfdbfe">${q.skill}</span>
         <span style="font-size:.72rem;font-weight:700;padding:4px 11px;border-radius:20px;
-          background:#fef9ec;color:#92400e;border:1px solid #fde68a">🟡 Medium</span>
+          background:${q.page<=25?'#f0fdf4':'#fef2f2'};
+          color:${q.page<=25?'#166534':'#991b1b'};
+          border:1px solid ${q.page<=25?'#86efac':'#fca5a5'}">
+          ${q.page<=25?'🟢 Easy':'🔴 Hard'}</span>
       </div>
       <div id="q-timer-wrap" class="q-timer-wrap" title="SAT target: 75 seconds per question">
         <div class="q-timer-ring">
@@ -3253,6 +3530,232 @@ async function boot() {
 }
 
 boot();
+
+// ════════════════════════════════════════════════
+//  IMPORT QUESTIONS — AI-powered PDF extraction
+// ════════════════════════════════════════════════
+let importFiles = { questions: null, answers: null };
+let importPendingQuestions = [];
+
+function renderImport() {
+  // reset state visually when switching to panel
+  importFiles = { questions: null, answers: null };
+  importPendingQuestions = [];
+  ['qlabel','alabel'].forEach((id,i)=>{ const el=document.getElementById(id); if(el) el.textContent='Click to upload'; });
+  ['drop-questions','drop-answers'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.style.borderColor='var(--rule)'; el.style.background='var(--bg)'; }});
+  ['file-questions','file-answers'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const log=document.getElementById('import-log'); if(log){ log.style.display='none'; log.innerHTML=''; }
+  const prev=document.getElementById('import-preview'); if(prev) prev.style.display='none';
+  const btn=document.getElementById('import-btn'); if(btn){ btn.disabled=false; btn.style.opacity='1'; btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> Extract &amp; Add to Question Bank'; }
+}
+
+function handleFileSelect(type, input) {
+  const file = input.files[0];
+  if (!file) return;
+  importFiles[type] = file;
+  const label = document.getElementById(type === 'questions' ? 'qlabel' : 'alabel');
+  const drop  = document.getElementById(type === 'questions' ? 'drop-questions' : 'drop-answers');
+  if(label) label.textContent = file.name;
+  if(drop){ drop.style.borderColor='var(--blue)'; drop.style.background='var(--blue-bg)'; }
+}
+
+function importLog(msg, color) {
+  const log = document.getElementById('import-log');
+  if (!log) return;
+  log.style.display = 'block';
+  const line = document.createElement('div');
+  line.style.color = color || '#7dd3fc';
+  line.textContent = msg;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function pdfToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = () => rej(new Error('File read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+async function runImport() {
+  if (!importFiles.questions || !importFiles.answers) {
+    showToast('Upload both PDFs first'); return;
+  }
+  const pageStart = parseInt(document.getElementById('import-page-start').value) || (QUESTION_BANK.length + 1);
+  const skill     = document.getElementById('import-skill').value;
+  const btn       = document.getElementById('import-btn');
+  const log       = document.getElementById('import-log');
+
+  btn.disabled = true; btn.style.opacity = '.6';
+  btn.textContent = '⏳ Extracting…';
+  if(log){ log.style.display='block'; log.innerHTML=''; }
+  document.getElementById('import-preview').style.display = 'none';
+
+  importLog('📄 Reading PDFs…');
+
+  try {
+    const [qB64, aB64] = await Promise.all([
+      pdfToBase64(importFiles.questions),
+      pdfToBase64(importFiles.answers)
+    ]);
+
+    importLog('🤖 Sending to Claude AI for extraction…');
+
+    const prompt = `You are extracting SAT Math questions from two PDFs.
+
+PDF 1 contains the questions. PDF 2 contains the answers with rationales.
+
+For EACH question found, extract:
+- id: the Question ID shown (e.g. "3cdbf026") — extract from "ID: XXXXXXXX" or "Question ID XXXXXXXX"
+- type: "MCQ" if it has A/B/C/D options, "FRQ" if it is free response (no options)
+- options: for MCQ, an array of {l, t} objects where l is "A"/"B"/"C"/"D" and t is the option text. For FRQ, empty array []
+- answer: the correct answer letter (e.g. "A") for MCQ, or the numeric/expression answer for FRQ
+- difficulty: "Hard", "Medium", or "Easy" — look for "Question Difficulty:" label in the answers PDF
+
+CRITICAL RULES:
+- Extract ALL questions found, not just some
+- For options text, keep it concise but complete. Use plain text, no LaTeX
+- If a question has a graph/image as the answer choices, describe them briefly like "Graph A", "Graph B" etc.
+- Return ONLY valid JSON, no markdown, no explanation
+
+Return a JSON array like:
+[
+  {"id":"abc123","type":"MCQ","options":[{"l":"A","t":"option text"},{"l":"B","t":"option text"},{"l":"C","t":"option text"},{"l":"D","t":"option text"}],"answer":"B","difficulty":"Hard"},
+  {"id":"def456","type":"FRQ","options":[],"answer":"74","difficulty":"Hard"}
+]`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: qB64 } },
+            { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: aB64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error('API error: ' + err);
+    }
+
+    const data = await response.json();
+    const rawText = data.content.map(c => c.text || '').join('');
+
+    importLog('✅ Extraction complete. Parsing results…');
+
+    // Strip markdown fences if present
+    const clean = rawText.replace(/```json|```/g, '').trim();
+    const extracted = JSON.parse(clean);
+
+    if (!Array.isArray(extracted) || extracted.length === 0) {
+      throw new Error('No questions found in extraction result');
+    }
+
+    // Check for duplicates against existing bank
+    const existingIds = new Set(QUESTION_BANK.map(q => q.id));
+    const newOnes   = extracted.filter(q => !existingIds.has(q.id));
+    const dupeCount = extracted.length - newOnes.length;
+
+    if (dupeCount > 0) importLog(`⚠️ ${dupeCount} question(s) already in bank — skipped`, '#fbbf24');
+
+    // Build final question objects with page numbers and skill
+    importPendingQuestions = newOnes.map((q, i) => ({
+      id: q.id,
+      page: pageStart + i,
+      skill: skill,
+      difficulty: q.difficulty || 'Hard',
+      options: q.options || [],
+      answer: q.answer
+    }));
+
+    importLog(`📋 Found ${extracted.length} questions → ${importPendingQuestions.length} new to add`, '#86efac');
+
+    // Show preview table
+    showImportPreview(importPendingQuestions);
+
+    btn.disabled = false; btn.style.opacity = '1';
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> Extract &amp; Add to Question Bank';
+
+  } catch(e) {
+    importLog('❌ Error: ' + e.message, '#fca5a5');
+    btn.disabled = false; btn.style.opacity = '1';
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> Retry Extraction';
+  }
+}
+
+function showImportPreview(questions) {
+  const preview = document.getElementById('import-preview');
+  const title   = document.getElementById('import-preview-title');
+  const tbody   = document.getElementById('import-preview-tbody');
+  if (!preview || !tbody) return;
+
+  title.textContent = `${questions.length} question(s) ready to add — review before confirming:`;
+  tbody.innerHTML = questions.map((q, i) => `
+    <tr style="border-bottom:1px solid var(--rule)">
+      <td style="padding:9px 14px;color:var(--muted);font-family:var(--mono)">${q.page}</td>
+      <td style="padding:9px 14px;font-family:var(--mono);color:var(--navy)">${q.id}</td>
+      <td style="padding:9px 14px">${q.options.length ? 'MCQ' : 'FRQ'}</td>
+      <td style="padding:9px 14px;font-family:var(--mono);font-weight:600;color:var(--green)">${q.answer}</td>
+      <td style="padding:9px 14px"><span style="font-size:.72rem;padding:2px 8px;border-radius:20px;background:${q.difficulty==='Hard'?'var(--red-lt)':q.difficulty==='Medium'?'var(--amber-lt)':'var(--green-lt)'};color:${q.difficulty==='Hard'?'var(--red)':q.difficulty==='Medium'?'var(--amber)':'var(--green)'}">${q.difficulty||'—'}</span></td>
+    </tr>`).join('');
+
+  preview.style.display = 'block';
+}
+
+function confirmImport() {
+  if (!importPendingQuestions.length) { showToast('Nothing to add'); return; }
+
+  // Push into live QUESTION_BANK
+  importPendingQuestions.forEach(q => QUESTION_BANK.push(q));
+
+  // Update the question count stat
+  const qEl = document.getElementById('stat-questions');
+  if (qEl) qEl.textContent = QUESTION_BANK.length;
+
+  const count = importPendingQuestions.length;
+  importPendingQuestions = [];
+
+  // Hide preview, show success log
+  document.getElementById('import-preview').style.display = 'none';
+  importLog(`🎉 ${count} question(s) added to the bank! Total: ${QUESTION_BANK.length}`, '#86efac');
+  importLog('⚠️  Remember: download the updated index.html to make changes permanent.', '#fbbf24');
+
+  // Trigger re-render of assign panel if it was cached
+  if (activePanelId === 'panel-assign') renderAssign();
+
+  showToast(`✓ ${count} questions added`);
+}
+
+function cancelImport() {
+  importPendingQuestions = [];
+  document.getElementById('import-preview').style.display = 'none';
+  importLog('Import cancelled.', '#9ca3af');
+}
+
+function downloadUpdatedHTML() {
+  // Serialize the current live QUESTION_BANK back into the HTML source
+  const src = document.documentElement.outerHTML;
+  const bankJSON = JSON.stringify(QUESTION_BANK);
+  // Replace the QUESTION_BANK array in the source with the live one
+  const updated = src.replace(/const QUESTION_BANK = \[[\s\S]*?\];/, 'const QUESTION_BANK = ' + bankJSON + ';');
+  const blob = new Blob([updated], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'index.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('✓ Updated HTML downloaded');
+}
 </script>
 </body>
 </html>
