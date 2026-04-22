@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Prepgenix — Digital SAT Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- KaTeX — math rendering -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -39,6 +43,9 @@
   --shadow-lg:0 8px 32px rgba(13,27,62,.18);
 }
 body{font-family:var(--sans);background:var(--bg);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.65}
+/* KaTeX — keep math at body size; display-mode centres & adds breathing room */
+.katex{font-size:1em!important}
+.katex-display{margin:.5em 0!important;overflow-x:auto;overflow-y:hidden}
 button{cursor:pointer;font-family:var(--sans);border:none}
 input,select{font-family:var(--sans)}
 .hidden{display:none!important}
@@ -769,7 +776,7 @@ tr:hover td{background:#f8faff}
             <!-- Dropdown built by JS in renderAssignFilterDropdown() -->
             <div id="assign-filter-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;
               background:var(--white);border:1.5px solid var(--rule);border-radius:12px;
-              box-shadow:0 8px 28px rgba(0,0,0,.14);z-index:200;min-width:268px;overflow:hidden">
+              box-shadow:0 8px 28px rgba(0,0,0,.14);z-index:200;min-width:580px;overflow:hidden">
             </div>
           </div>
           <div id="assign-active-filters" style="display:flex;gap:6px;flex-wrap:wrap"></div>
@@ -1230,6 +1237,25 @@ let qStartTime=null, timerInterval=null, sessionTimes={}; // qId -> seconds
 // ════════════════════════════════════════════════
 //  UTILITY
 // ════════════════════════════════════════════════
+// ── Math rendering (KaTeX) ────────────────────────
+// Renders all $...$ and $$...$$ in a container element.
+// Fails silently if KaTeX hasn't loaded yet.
+function renderMath(el) {
+  if (!el || typeof renderMathInElement === 'undefined') return;
+  try {
+    renderMathInElement(el, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true  },
+        { left: '$',  right: '$',  display: false },
+        { left: '\\(', right: '\\)', display: false },
+        { left: '\\[', right: '\\]', display: true  },
+      ],
+      throwOnError: false,   // show broken math as red text, never crash
+      errorColor: '#dc2626',
+    });
+  } catch(e) { /* ignore */ }
+}
+
 function showToast(msg,dur=2600){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),dur);
@@ -1721,17 +1747,19 @@ function renderAssignFilterDropdown(){
 
   let html = '<div style="padding:12px 16px 6px">';
   html += '<div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px">Topic</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">';
   topics.forEach(sk => {
     const checked = assignFilters.topics.includes(sk) ? 'checked' : '';
     const safeId  = 'af-topic-' + sk.replace(/[^a-zA-Z0-9]/g,'');
-    html += `<label style="display:flex;align-items:center;gap:10px;padding:7px 4px;cursor:pointer;border-radius:6px"
+    html += `<label style="display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer;border-radius:6px"
       onmouseenter="this.style.background='#f5f7ff'" onmouseleave="this.style.background='transparent'">
       <input type="checkbox" id="${safeId}" ${checked}
         onchange="toggleAssignFilterItem('topics','${sk}')"
-        style="width:16px;height:16px;accent-color:var(--blue);cursor:pointer;flex-shrink:0">
-      <span style="font-size:.85rem;color:var(--ink-mid)">${sk}</span>
+        style="width:15px;height:15px;accent-color:var(--blue);cursor:pointer;flex-shrink:0">
+      <span style="font-size:.82rem;color:var(--ink-mid);line-height:1.3">${sk}</span>
     </label>`;
   });
+  html += '</div>';
   html += '</div><div style="height:1px;background:var(--rule);margin:4px 0"></div>';
   html += '<div style="padding:6px 16px 12px">';
   html += '<div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;margin-top:6px">Difficulty</div>';
@@ -2300,17 +2328,19 @@ function renderPracticeGroundQuestion(){
           <!-- Multi-select dropdown -->
           <div id="pg-filter-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;
             background:var(--white);border:1.5px solid var(--rule);border-radius:12px;
-            box-shadow:0 8px 28px rgba(0,0,0,.14);z-index:200;min-width:268px;overflow:hidden">
+            box-shadow:0 8px 28px rgba(0,0,0,.14);z-index:200;min-width:580px;overflow:hidden">
             <div style="padding:12px 16px 6px">
               <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px">Topic</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">
               ${_pgTopics.map(sk=>`
-                <label style="display:flex;align-items:center;gap:10px;padding:7px 4px;cursor:pointer;border-radius:6px"
+                <label style="display:flex;align-items:center;gap:8px;padding:6px 4px;cursor:pointer;border-radius:6px"
                   onmouseenter="this.style.background='#f5f7ff'" onmouseleave="this.style.background='transparent'">
                   <input type="checkbox" ${pgFilters.topics.includes(sk)?'checked':''}
                     onchange="togglePGFilterItem('topics','${sk}')"
-                    style="width:16px;height:16px;accent-color:var(--blue);cursor:pointer;flex-shrink:0">
-                  <span style="font-size:.85rem;color:var(--ink-mid)">${sk}</span>
+                    style="width:15px;height:15px;accent-color:var(--blue);cursor:pointer;flex-shrink:0">
+                  <span style="font-size:.82rem;color:var(--ink-mid);line-height:1.3">${sk}</span>
                 </label>`).join('')}
+              </div>
             </div>
             <div style="height:1px;background:var(--rule);margin:4px 0"></div>
             <div style="padding:6px 16px 12px">
@@ -2507,7 +2537,8 @@ function renderPracticeGroundQuestion(){
     });
   }, 0);
 
-  // Render PDF page
+  // Render math in question text and options
+  renderMath(document.getElementById('student-body'));
   if(!wasAnswered) startTimer(q.id);
 }
 
@@ -3070,6 +3101,8 @@ function renderQuestion(studentId, cachedStats, slideDir){
       </button>
     </div>`;
 
+  // Render math in question text and options
+  renderMath(document.getElementById('q-mount'));
   startTimer(q.id);
   updateDotNav();
 }
@@ -3603,6 +3636,7 @@ function showImportPreview(questions) {
       <td style="padding:8px 12px"><span style="font-size:.7rem;padding:2px 8px;border-radius:20px;background:${q.difficulty==='Hard'?'var(--red-lt)':q.difficulty==='Medium'?'var(--amber-lt)':'var(--green-lt)'};color:${q.difficulty==='Hard'?'var(--red)':q.difficulty==='Medium'?'var(--amber)':'var(--green)'}">${q.difficulty}</span></td>
     </tr>`).join('');
   preview.style.display = 'block';
+  renderMath(preview);
 }
 
 function confirmImport() {
