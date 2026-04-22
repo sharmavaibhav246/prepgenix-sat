@@ -526,6 +526,28 @@ tr:hover td{background:#f8faff}
   font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .18s}
 .btn-secondary-pill:hover{border-color:var(--navy);color:var(--navy);transform:translateY(-1px)}
 
+/* ── Floating calculator button ── */
+.calc-fab{
+  position:fixed;right:20px;bottom:80px;z-index:500;
+  width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--blue) 0%,#6366f1 100%);
+  color:#fff;display:none;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(43,91,224,.45);
+  transition:transform .18s,box-shadow .18s;
+  font-family:var(--sans)
+}
+.calc-fab:hover{transform:translateY(-3px) scale(1.07);box-shadow:0 8px 24px rgba(43,91,224,.55)}
+.calc-fab:active{transform:scale(.95)}
+.calc-fab svg{flex-shrink:0}
+/* tooltip */
+.calc-fab::before{
+  content:'Open Calculator';position:absolute;right:60px;top:50%;transform:translateY(-50%);
+  background:var(--navy);color:#fff;font-size:.72rem;font-weight:600;
+  padding:5px 10px;border-radius:6px;white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity .15s;letter-spacing:.02em
+}
+.calc-fab:hover::before{opacity:1}
+
 /* modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(13,27,62,.5);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(3px);animation:fadeIn .2s ease}
 .modal-overlay.hidden{display:none}
@@ -616,6 +638,21 @@ tr:hover td{background:#f8faff}
 
 <!-- TOAST -->
 <div id="toast"></div>
+
+<!-- ── FLOATING CALCULATOR BUTTON (student only) ── -->
+<button id="calc-fab" class="calc-fab" title="Open Desmos Calculator"
+  onclick="window.open('https://www.desmos.com/graphing','DesmosCalc','width=1040,height=720,menubar=no,toolbar=no,location=no,scrollbars=yes,resizable=yes')">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2"/>
+    <line x1="8" y1="6" x2="16" y2="6"/>
+    <line x1="8" y1="10" x2="10" y2="10"/>
+    <line x1="14" y1="10" x2="16" y2="10"/>
+    <line x1="8" y1="14" x2="10" y2="14"/>
+    <line x1="14" y1="14" x2="16" y2="14"/>
+    <line x1="8" y1="18" x2="10" y2="18"/>
+    <line x1="14" y1="18" x2="16" y2="18"/>
+  </svg>
+</button>
 
 <!-- ══════════════ SCREEN: LOGIN ══════════════ -->
 <div id="screen-login" class="screen">
@@ -1406,7 +1443,7 @@ async function doLogin(){
       // Teacher signs in with their real email via Supabase Auth
       await Auth.signInTeacher(u, p);
       currentUser={role:'teacher'};
-      hide('screen-login');show('screen-teacher');
+      hide('screen-login');show('screen-teacher');document.getElementById('calc-fab').style.display='none';
       document.getElementById('teacher-username-label').textContent=u;
       // Silently purge any expired student accounts
       DB.purgeExpired().catch(e=>console.warn('Purge failed:',e));
@@ -1429,7 +1466,7 @@ async function doLogin(){
       localStorage.setItem(SESSION_TOKEN_KEY, deviceToken);
       writeSessionToken(deviceToken); // fire-and-forget, non-blocking
       currentUser={role:'student',id:s.id};
-      hide('screen-login'); show('screen-student');
+      hide('screen-login'); show('screen-student'); document.getElementById('calc-fab').style.display='flex';
       history.replaceState({screen:'home'}, '', '#home');
       startSessionCheck();
       renderStudentPractice(s.id);
@@ -1456,7 +1493,7 @@ function doLogout(){
   stopSessionCheck();
   localStorage.removeItem(SESSION_TOKEN_KEY);
   Auth.signOut().catch(()=>{});
-  currentUser=null;hide('screen-teacher');hide('screen-student');show('screen-login');
+  currentUser=null;hide('screen-teacher');hide('screen-student');show('screen-login');document.getElementById('calc-fab').style.display='none';
   history.replaceState(null, '', window.location.pathname);
   document.getElementById('login-user').value='';document.getElementById('login-pass').value='';
 }
@@ -1937,6 +1974,7 @@ function toggleAssignFilterItem(type, value){
   if(cb) cb.checked = arr.includes(value);
   if(type === 'topics') updateAssignDiffCounts();
   updateAssignFilterUI();
+  renderAssign();
 }
 function clearAssignFilters(){
   assignFilters = { topics: [], difficulty: [] };
@@ -1974,11 +2012,16 @@ function updateAssignFilterUI(){
 
 function getFilteredQuestions(){
   const searchTerm = (document.getElementById('assign-search')?.value||'').toLowerCase().trim();
+  const selectedTopics = assignFilters.topics.map(t => t.trim().toLowerCase());
+  const selectedDiffs  = assignFilters.difficulty.map(d => d.trim().toLowerCase());
   return getMCQ().filter(q => {
-    const topicOk  = assignFilters.topics.length === 0 || assignFilters.topics.includes(q.skill);
-    const diffOk   = assignFilters.difficulty.length === 0 || assignFilters.difficulty.includes(q.difficulty);
-    const searchOk = !searchTerm || q.skill.toLowerCase().includes(searchTerm)
-                     || q.id.toLowerCase().includes(searchTerm) || String(q.page).includes(searchTerm);
+    const skill = (q.skill || '').trim().toLowerCase();
+    const diff  = (q.difficulty || '').trim().toLowerCase();
+    const topicOk  = selectedTopics.length === 0 || selectedTopics.includes(skill);
+    const diffOk   = selectedDiffs.length === 0  || selectedDiffs.includes(diff);
+    const searchOk = !searchTerm || skill.includes(searchTerm)
+                     || (q.id||'').toLowerCase().includes(searchTerm)
+                     || String(q.page||'').includes(searchTerm);
     return topicOk && diffOk && searchOk;
   });
 }
@@ -3741,7 +3784,7 @@ async function boot() {
   try {
     if (saved.role === 'teacher') {
       currentUser = { role: 'teacher' };
-      hide('screen-login'); show('screen-teacher');
+      hide('screen-login'); show('screen-teacher'); document.getElementById('calc-fab').style.display='none';
       document.getElementById('teacher-username-label').textContent = saved.email || '';
       DB.purgeExpired().catch(e => console.warn('Purge failed:', e));
       renderTeacher();
@@ -3758,7 +3801,7 @@ async function boot() {
         return;
       }
       currentUser = { role: 'student', id: s.id };
-      hide('screen-login'); show('screen-student');
+      hide('screen-login'); show('screen-student'); document.getElementById('calc-fab').style.display='flex';
       startSessionCheck();
       renderStudentPractice(s.id);
     }
