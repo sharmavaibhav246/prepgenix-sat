@@ -318,11 +318,6 @@ tr:hover td{background:#f8faff}
 .q-slide-left{animation:qSlideLeft .22s cubic-bezier(.4,0,.2,1)}
 .q-slide-right{animation:qSlideRight .22s cubic-bezier(.4,0,.2,1)}
 
-/* PDF canvas */
-.pdf-canvas-wrap{width:100%;background:var(--white);display:flex;justify-content:center;align-items:flex-start;min-height:80px;border-bottom:1px solid var(--rule);position:relative;overflow:hidden;padding:22px 28px 16px}
-.pdf-canvas-wrap canvas{display:block;max-width:100%;height:auto}
-.pdf-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.8rem;color:var(--muted);padding:20px;text-align:center}
-
 /* MCQ options */
 .options-area{padding:20px 24px}
 .options-list{display:grid;gap:10px}
@@ -493,10 +488,6 @@ tr:hover td{background:#f8faff}
   .mode-card-icon{width:44px;height:44px;margin-bottom:12px}
   .mode-card-title{font-size:.95rem}
   .mode-card-desc{font-size:.8rem}
-
-  /* PDF canvas — no horizontal padding on mobile, full width */
-  .pdf-canvas-wrap{padding:12px 8px 10px!important;overflow-x:auto!important;justify-content:flex-start!important}
-  .pdf-canvas-wrap canvas{min-width:100%}
 
   /* Options — larger text, bigger touch targets */
   .options-area{padding:14px 12px!important}
@@ -762,7 +753,7 @@ tr:hover td{background:#f8faff}
       <!-- ASSIGN -->
       <div id="panel-assign" class="panel">
         <h2 class="section-title">Assign Questions</h2>
-        <p class="section-sub">All 136 MCQ questions from your PDF. Filter, select, then assign to one student or everyone.</p>
+        <p class="section-sub">All questions from your imported Excel file. Filter, select, then assign to one student or everyone.</p>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
           <!-- Filter button -->
           <div style="position:relative">
@@ -862,16 +853,16 @@ tr:hover td{background:#f8faff}
             <div style="background:var(--bg);border-radius:10px;padding:14px 16px;font-size:.78rem;color:var(--ink-mid);line-height:1.8">
               <strong style="display:block;margin-bottom:6px;color:var(--navy)">Required columns in your Excel file:</strong>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 20px">
-                <span><code style="color:var(--blue)">id</code> — Question ID (e.g. 3cdbf026)</span>
-                <span><code style="color:var(--blue)">question</code> — Full question text</span>
-                <span><code style="color:var(--blue)">skill</code> — Topic (e.g. Linear Equations)</span>
-                <span><code style="color:var(--blue)">difficulty</code> — Easy / Medium / Hard</span>
-                <span><code style="color:var(--blue)">type</code> — MCQ or FRQ</span>
-                <span><code style="color:var(--blue)">option_a</code> through <code style="color:var(--blue)">option_d</code> — MCQ choices</span>
-                <span><code style="color:var(--blue)">answer</code> — A/B/C/D or numeric</span>
-                <span><code style="color:var(--blue)">explanation</code> — Shown after answering</span>
-                <span><code style="color:var(--blue)">image_url</code> — Optional image URL</span>
+                <span><code style="color:var(--blue)">Question ID</code> — Unique ID (e.g. q001)</span>
+                <span><code style="color:var(--blue)">Question Text</code> — Full question text ✱</span>
+                <span><code style="color:var(--blue)">Topic Name</code> — e.g. Linear Equations</span>
+                <span><code style="color:var(--blue)">Difficulty</code> — Easy / Medium / Hard</span>
+                <span><code style="color:var(--blue)">Option A</code> through <code style="color:var(--blue)">Option D</code> — MCQ choices (leave blank for FRQ)</span>
+                <span><code style="color:var(--blue)">Correct Answer</code> — A / B / C / D or numeric ✱</span>
+                <span><code style="color:var(--blue)">Explanation</code> — Shown after answering</span>
+                <span><code style="color:var(--blue)">Visuals</code> — Optional image URL</span>
               </div>
+              <div style="margin-top:8px;font-size:.72rem;color:var(--muted)">✱ Required &nbsp;·&nbsp; MCQ/FRQ is auto-detected: leave Option A–D blank for free-response questions.</div>
             </div>
 
             <!-- Drop zone -->
@@ -955,23 +946,16 @@ tr:hover td{background:#f8faff}
 
 <script>
 // ════════════════════════════════════════════════
-//  QUESTION BANK — all 212 questions from PDF
-//  page = PDF page number (1-indexed)
+//  QUESTION BANK — loaded from Supabase (imported via Excel)
+//  page = sequential order index
 //  Free-response questions have options:[]
 // ════════════════════════════════════════════════
 let QUESTION_BANK = [];
 
-// MCQ_QUESTIONS is now a live function so it always reflects current bank
+// Returns only MCQ questions (4 options + answer)
 function getMCQ() {
   return QUESTION_BANK.filter(q => q.options && q.options.length === 4 && q.answer);
 }
-
-// ════════════════════════════════════════════════
-//  PDF.js setup — high-res, cropped to question body
-// ════════════════════════════════════════════════
-
-// Per-page crop coords in PDF points (y_start, y_end|null)
-// y_start = bottom of "ID:" badge, y_end = top of "A." option (null = free response)
 
 // ════════════════════════════════════════════════
 //  DATABASE LAYER  (Secure — v2)
@@ -1724,11 +1708,15 @@ let assignFilters = { topics: [], difficulty: [] };
 function renderAssignFilterDropdown(){
   const dd = document.getElementById('assign-filter-dropdown');
   if(!dd) return;
-  const topics = ['Linear Inequalities','Linear Equations (2 vars)','Linear Functions','Linear Equations (1 var)'];
+  const mcqBank = getMCQ();
+  const topics = [...new Set(mcqBank.map(q=>q.skill))].sort();
+  const easyCnt = mcqBank.filter(q=>q.difficulty==='Easy').length;
+  const medCnt  = mcqBank.filter(q=>q.difficulty==='Medium').length;
+  const hardCnt = mcqBank.filter(q=>q.difficulty==='Hard').length;
   const difficulties = [
-    {id:'Easy',   e:'🟢', note:'51 questions', disabled:false},
-    {id:'Medium', e:'🟡', note:'10 questions', disabled:false},
-    {id:'Hard',   e:'🔴', note:'24 questions', disabled:false},
+    {id:'Easy',   e:'🟢', note:`${easyCnt} questions`,  disabled:false},
+    {id:'Medium', e:'🟡', note:`${medCnt} questions`,   disabled:medCnt===0},
+    {id:'Hard',   e:'🔴', note:`${hardCnt} questions`,  disabled:false},
   ];
 
   let html = '<div style="padding:12px 16px 6px">';
@@ -1855,7 +1843,7 @@ function renderAssign(){
       <div class="q-checkbox">${selectedQIds.has(q.id)?'✓':''}</div>
       <div class="q-num">${getMCQ().indexOf(q)+1}</div>
       <div class="q-id">${q.id}</div>
-      <div style="flex:1;font-size:.82rem;color:var(--muted)">Page ${q.page}</div>
+      <div style="flex:1;font-size:.82rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px" title="${q.question_text}">${q.question_text ? q.question_text.slice(0,55)+(q.question_text.length>55?'…':'') : q.id}</div>
       <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
         <span class="q-skill-tag">${q.skill}</span>
         <span style="font-family:var(--mono);font-size:.62rem;padding:2px 7px;border-radius:10px;
@@ -2219,9 +2207,7 @@ function renderPracticeGround(startIdx, forceNew){
   }
 
   // Build queue based on active filters (multi-select)
-  const allQsWithAnswer = QUESTION_BANK
-    .filter(q => q.answer)
-    .map(q => ({...q, difficulty: q.page <= 25 ? 'Easy' : 'Hard'}));
+  const allQsWithAnswer = QUESTION_BANK.filter(q => q.answer);
   const filtered = allQsWithAnswer.filter(q => {
     const topicOk = pgFilters.topics.length === 0 || pgFilters.topics.includes(q.skill);
     const diffOk  = pgFilters.difficulty.length === 0 || pgFilters.difficulty.includes(q.difficulty);
@@ -2267,6 +2253,18 @@ function renderPracticeGroundQuestion(){
   const answeredInQueue = pgQueue.filter(qq => allAnswers[qq.id]).length;
   const correctInQueue  = pgQueue.filter(qq => allAnswers[qq.id]?.correct).length;
 
+  // Dynamic filter data (reflects whatever is in the question bank)
+  const _pgAllQ    = QUESTION_BANK.filter(q => q.answer);
+  const _pgTopics  = [...new Set(_pgAllQ.map(q => q.skill))].sort();
+  const _pgEasyCnt = _pgAllQ.filter(q => q.difficulty === 'Easy').length;
+  const _pgMedCnt  = _pgAllQ.filter(q => q.difficulty === 'Medium').length;
+  const _pgHardCnt = _pgAllQ.filter(q => q.difficulty === 'Hard').length;
+  const _pgDiffs   = [
+    {id:'Easy',   e:'🟢', note:`${_pgEasyCnt} Qs`,  disabled:false},
+    {id:'Medium', e:'🟡', note:`${_pgMedCnt} Qs`,   disabled:_pgMedCnt===0},
+    {id:'Hard',   e:'🔴', note:`${_pgHardCnt} Qs`,  disabled:false},
+  ];
+
   body.innerHTML = `
     <div style="width:100%;max-width:760px;margin:0 auto">
 
@@ -2305,7 +2303,7 @@ function renderPracticeGroundQuestion(){
             box-shadow:0 8px 28px rgba(0,0,0,.14);z-index:200;min-width:268px;overflow:hidden">
             <div style="padding:12px 16px 6px">
               <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px">Topic</div>
-              ${['Linear Inequalities','Linear Equations (2 vars)','Linear Functions','Linear Equations (1 var)'].map(sk=>`
+              ${_pgTopics.map(sk=>`
                 <label style="display:flex;align-items:center;gap:10px;padding:7px 4px;cursor:pointer;border-radius:6px"
                   onmouseenter="this.style.background='#f5f7ff'" onmouseleave="this.style.background='transparent'">
                   <input type="checkbox" ${pgFilters.topics.includes(sk)?'checked':''}
@@ -2317,7 +2315,7 @@ function renderPracticeGroundQuestion(){
             <div style="height:1px;background:var(--rule);margin:4px 0"></div>
             <div style="padding:6px 16px 12px">
               <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;margin-top:6px">Difficulty</div>
-              ${[{id:'Easy',e:'🟢',note:'19 Qs'},{id:'Medium',e:'🟡',note:'0 Qs',disabled:true},{id:'Hard',e:'🔴',note:'22 Qs'}].map(d=>`
+              ${_pgDiffs.map(d=>`
                 <label style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-radius:6px;opacity:${d.disabled?'.4':'1'};cursor:${d.disabled?'default':'pointer'}"
                   ${!d.disabled?'onmouseenter="this.style.background=\'#f5f7ff\'" onmouseleave="this.style.background=\'transparent\'"':''}>
                   <input type="checkbox" ${pgFilters.difficulty.includes(d.id)?'checked':''} ${d.disabled?'disabled':''}
@@ -2349,10 +2347,10 @@ function renderPracticeGroundQuestion(){
             color:var(--blue);background:var(--blue-bg);padding:4px 12px;border-radius:20px;
             border:1px solid #bfdbfe">${q.skill}</span>
           <span style="font-size:.72rem;font-weight:700;padding:4px 11px;border-radius:20px;
-            background:${q.difficulty==='Hard'?'#fef2f2':'#f0fdf4'};
-            color:${q.difficulty==='Hard'?'#991b1b':'#166534'};
-            border:1px solid ${q.difficulty==='Hard'?'#fca5a5':'#86efac'}">
-            ${q.difficulty==='Hard'?'🔴 Hard':'🟢 Easy'}</span>
+            background:${q.difficulty==='Easy'?'#f0fdf4':q.difficulty==='Medium'?'#fefce8':'#fef2f2'};
+            color:${q.difficulty==='Easy'?'#166534':q.difficulty==='Medium'?'#854d0e':'#991b1b'};
+            border:1px solid ${q.difficulty==='Easy'?'#86efac':q.difficulty==='Medium'?'#fde047':'#fca5a5'}">
+            ${q.difficulty==='Easy'?'🟢 Easy':q.difficulty==='Medium'?'🟡 Medium':'🔴 Hard'}</span>
         </div>
         ${wasAnswered
           ? `<span style="font-size:.78rem;font-weight:700;padding:5px 14px;border-radius:20px;
@@ -2381,10 +2379,8 @@ function renderPracticeGroundQuestion(){
         box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 20px rgba(13,27,62,.08);
         border:1px solid var(--rule);margin-bottom:14px;animation:qSlide .3s cubic-bezier(.4,0,.2,1)">
 
-        <!-- PDF question area -->
         <div style="padding:22px 24px 18px;border-bottom:1px solid var(--rule);font-size:.97rem;line-height:1.75;color:var(--ink)">
           ${q.question_text ? q.question_text.replace(/\n/g,'<br>') : '<span style="color:var(--muted);font-size:.85rem;font-family:var(--mono)">ID: '+q.id+'</span>'}
-          ${q.image_url ? '<img src="'+q.image_url+'" style="max-width:100%;margin-top:14px;border-radius:8px;display:block" alt="Question diagram">' : ''}
           ${q.image_url ? '<img src="'+q.image_url+'" style="max-width:100%;margin-top:14px;border-radius:8px;display:block" alt="Question diagram">' : ''}
         </div>
 
@@ -3026,10 +3022,10 @@ function renderQuestion(studentId, cachedStats, slideDir){
           color:var(--blue);background:var(--blue-bg);padding:4px 12px;border-radius:20px;
           border:1px solid #bfdbfe">${q.skill}</span>
         <span style="font-size:.72rem;font-weight:700;padding:4px 11px;border-radius:20px;
-          background:${q.page<=25?'#f0fdf4':'#fef2f2'};
-          color:${q.page<=25?'#166534':'#991b1b'};
-          border:1px solid ${q.page<=25?'#86efac':'#fca5a5'}">
-          ${q.page<=25?'🟢 Easy':'🔴 Hard'}</span>
+          background:${q.difficulty==='Easy'?'#f0fdf4':q.difficulty==='Medium'?'#fefce8':'#fef2f2'};
+          color:${q.difficulty==='Easy'?'#166534':q.difficulty==='Medium'?'#854d0e':'#991b1b'};
+          border:1px solid ${q.difficulty==='Easy'?'#86efac':q.difficulty==='Medium'?'#fde047':'#fca5a5'}">
+          ${q.difficulty==='Easy'?'🟢 Easy':q.difficulty==='Medium'?'🟡 Medium':'🔴 Hard'}</span>
       </div>
       <div id="q-timer-wrap" class="q-timer-wrap" title="SAT target: 75 seconds per question">
         <div class="q-timer-ring">
@@ -3052,7 +3048,6 @@ function renderQuestion(studentId, cachedStats, slideDir){
       class="${slideDir==='left'?'q-slide-left':slideDir==='right'?'q-slide-right':'q-slide-left'}">
       <div style="padding:22px 24px 18px;border-bottom:1px solid var(--rule);font-size:.97rem;line-height:1.75;color:var(--ink)">
         ${q.question_text ? q.question_text.replace(/\n/g,'<br>') : '<span style="color:var(--muted);font-size:.85rem;font-family:var(--mono)">ID: '+q.id+'</span>'}
-          ${q.image_url ? '<img src="'+q.image_url+'" style="max-width:100%;margin-top:14px;border-radius:8px;display:block" alt="Question diagram">' : ''}
           ${q.image_url ? '<img src="'+q.image_url+'" style="max-width:100%;margin-top:14px;border-radius:8px;display:block" alt="Question diagram">' : ''}
       </div>
       <div style="padding:20px 24px">
@@ -3517,22 +3512,42 @@ async function runExcelImport() {
     if (!rows.length) throw new Error('No rows found in Excel file');
     importLog(`📋 Found ${rows.length} row(s) in sheet "${workbook.SheetNames[0]}"`);
 
-    // Validate required columns
-    const required = ['id', 'question', 'answer'];
+    // Friendly column name → internal key mapping (case-insensitive)
+    const COL_MAP = {
+      'question id':    'id',
+      'topic name':     'skill',
+      'difficulty':     'difficulty',
+      'question text':  'question',
+      'option a':       'option_a',
+      'option b':       'option_b',
+      'option c':       'option_c',
+      'option d':       'option_d',
+      'correct answer': 'answer',
+      'explanation':    'explanation',
+      'visuals':        'image_url',
+    };
+
+    // Validate required columns (friendly names)
+    const requiredFriendly = ['question id', 'question text', 'correct answer'];
     const cols = Object.keys(rows[0]).map(k => k.toLowerCase().trim());
-    const missing = required.filter(r => !cols.includes(r));
-    if (missing.length) throw new Error(`Missing required columns: ${missing.join(', ')}`);
+    const missing = requiredFriendly.filter(r => !cols.includes(r));
+    if (missing.length) throw new Error(`Missing required columns: ${missing.map(c=>c.split(' ').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ')).join(', ')}`);
 
     const pageStart = QUESTION_BANK.length + 1;
     const existingIds = new Set(QUESTION_BANK.map(q => q.id));
 
     const parsed = rows.map((row, i) => {
-      // Normalize keys to lowercase
+      // Normalize: lowercase key → apply alias map → store under internal key
       const r = {};
-      Object.keys(row).forEach(k => { r[k.toLowerCase().trim()] = String(row[k]).trim(); });
+      Object.keys(row).forEach(k => {
+        const lower  = k.toLowerCase().trim();
+        const mapped = COL_MAP[lower] || lower;
+        r[mapped] = String(row[k]).trim();
+      });
 
-      const type = (r.type || '').toUpperCase() === 'FRQ' ? 'FRQ' : 'MCQ';
-      const options = type === 'MCQ' ? [
+      // Auto-detect MCQ vs FRQ: MCQ if at least Option A is filled
+      const isMCQ = !!(r.option_a || r.option_b || r.option_c || r.option_d);
+      const options = isMCQ ? [
         r.option_a ? { l: 'A', t: r.option_a } : null,
         r.option_b ? { l: 'B', t: r.option_b } : null,
         r.option_c ? { l: 'C', t: r.option_c } : null,
@@ -3540,15 +3555,15 @@ async function runExcelImport() {
       ].filter(Boolean) : [];
 
       return {
-        id: r.id,
-        page: pageStart + i,
-        skill: r.skill || 'General',
-        difficulty: r.difficulty || 'Easy',
-        question_text: r.question || '',
+        id:            r.id,
+        page:          pageStart + i,
+        skill:         r.skill        || 'General',
+        difficulty:    r.difficulty   || 'Easy',
+        question_text: r.question     || '',
         options,
-        answer: r.answer || '',
-        explanation: r.explanation || '',
-        image_url: r.image_url || r.image || ''
+        answer:        r.answer       || '',
+        explanation:   r.explanation  || '',
+        image_url:     r.image_url    || '',
       };
     }).filter(q => q.id && q.answer);
 
@@ -3620,20 +3635,29 @@ function cancelImport() {
 
 function downloadTemplate() {
   const ws = XLSX.utils.aoa_to_sheet([
-    ['id','question','skill','difficulty','type','option_a','option_b','option_c','option_d','answer','explanation','image_url'],
-    ['abc12345','If 3x = 12, what is the value of x?','Linear Equations (1 var)','Easy','MCQ','1','4','3','12','B','Divide both sides by 3 to get x = 4.',''],
-    ['def67890','What is the slope of the line y = 2x + 5?','Linear Equations (2 vars)','Medium','FRQ','','','','','2','Slope is the coefficient of x in slope-intercept form.',''],
+    // Header row — exact column names the importer expects
+    ['Question ID','Topic Name','Difficulty','Question Text','Option A','Option B','Option C','Option D','Correct Answer','Explanation','Visuals'],
+    // Sample MCQ row
+    ['q001','Linear Equations (1 var)','Easy','If 3x = 12, what is the value of x?','1','4','3','12','B','Divide both sides by 3: x = 4.',''],
+    // Sample MCQ row
+    ['q002','Linear Inequalities','Medium','Which value of x satisfies 2x + 1 > 7?','x = 2','x = 3','x = 4','x = 5','C','Solve: 2x > 6 → x > 3, so x = 4 works.',''],
+    // Sample FRQ row (leave Option A–D blank → auto-detected as free-response)
+    ['q003','Linear Functions','Hard','What is the slope of the line passing through (1, 3) and (4, 9)?','','','','','2','Slope = (9−3)/(4−1) = 6/3 = 2.',''],
   ]);
+
+  // Style header row bold (column widths for readability)
+  ws['!cols'] = [
+    {wch:14},{wch:26},{wch:12},{wch:52},
+    {wch:20},{wch:20},{wch:20},{wch:20},
+    {wch:16},{wch:44},{wch:36}
+  ];
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Questions');
   XLSX.writeFile(wb, 'prepgenix_questions_template.xlsx');
 }
 
 boot();
-
-// ════════════════════════════════════════════════
-//  IMPORT QUESTIONS — AI-powered PDF extraction
-// ════════════════════════════════════════════════
 </script>
 </body>
 </html>
