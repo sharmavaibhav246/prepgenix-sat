@@ -1861,6 +1861,8 @@ function renderAssignFilterDropdown(){
     <button onclick="closeAssignFilter();renderAssign()" style="font-size:.82rem;font-weight:700;color:#fff;background:var(--blue);border:none;border-radius:7px;padding:7px 20px;cursor:pointer;font-family:var(--sans)">Apply</button>
   </div>`;
   dd.innerHTML = html;
+  // If topics are already selected, immediately apply filtered counts
+  if(assignFilters.topics.length > 0) updateAssignDiffCounts();
 }
 
 function updateAssignDiffCounts(){
@@ -2666,6 +2668,8 @@ function renderPracticeGroundQuestion(){
   // Render math in question text and options
   renderMath(document.getElementById('student-body'));
   if(!wasAnswered) startTimer(q.id);
+  // If topics are already selected, immediately show filtered difficulty counts
+  if(pgFilters.topics.length > 0) updatePGDiffCounts();
 }
 
 async function selectPracticeGroundAnswer(qId, chosen){
