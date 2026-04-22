@@ -2581,6 +2581,7 @@ async function selectPracticeGroundAnswer(qId, chosen){
         ${correct?'Well done!':'The correct answer is <strong>'+q.answer+'</strong>.'}
       </div>
       ${skillTip?`<div style="font-size:.8rem;color:var(--ink-mid);background:rgba(0,0,0,.04);border-radius:7px;padding:8px 11px;line-height:1.55;border-left:3px solid ${correct?'var(--green)':'var(--blue)'}">💡 ${skillTip}</div>`:''}`;
+    renderMath(fb);
   }
 
   // Enable Next button
@@ -2674,6 +2675,7 @@ function submitFreeResponse(qId) {
           border-radius:7px;padding:8px 11px;line-height:1.55;margin-top:8px;
           border-left:3px solid ${correct?'var(--green)':'var(--blue)'}">💡 ${skillTip}</div>`:''}
       </div>`;
+    renderMath(fb);
   }
 
   // Enable Next button
@@ -3161,6 +3163,7 @@ async function selectAnswer(studentId,qId,chosen){
         ${correct?'Well done!':'The correct answer is <strong>'+q.answer+'</strong>.'}
       </div>
       ${sTip?`<div style="font-size:.8rem;color:var(--ink-mid);background:rgba(0,0,0,.04);border-radius:7px;padding:8px 11px;line-height:1.55;border-left:3px solid ${correct?'var(--green)':'var(--blue)'}">💡 ${sTip}</div>`:''}`;
+    renderMath(fb);
   }
 
   // Enable Next button with blue styling
@@ -3196,6 +3199,7 @@ async function markReviewed(studentId,qId){
       background:#f0fdf4;border:1.5px solid #86efac;animation:fadeIn .2s ease`;
     fb.innerHTML=`<div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--green);margin-bottom:4px">✓ Reviewed</div>
       <div style="font-size:.88rem;color:#166534">Work out the answer on paper and check with your teacher.</div>`;
+    renderMath(fb);
   }
   const nextBtn=document.getElementById('btn-next');
   if(nextBtn){
@@ -3382,26 +3386,34 @@ function renderFinalScore(s, st, studentId){
 //  LOAD QUESTIONS FROM SUPABASE
 // ════════════════════════════════════════════════
 async function loadQuestionsFromDB() {
+  // Supabase caps each response at 1000 rows by default.
+  // We paginate with offset until a page comes back with fewer rows than PAGE_SIZE.
+  const PAGE_SIZE = 1000;
   try {
-    const res = await fetch(`${SUPA_URL}/rest/v1/questions?select=*&order=page.asc`, {
-      headers: anonH()
-    });
-    if (!res.ok) throw new Error(await res.text());
-    const rows = await res.json();
-    // Populate QUESTION_BANK in place
     QUESTION_BANK.length = 0;
-    rows.forEach(r => QUESTION_BANK.push({
-      id: r.id,
-      page: r.page,
-      skill: r.skill,
-      difficulty: r.difficulty,
-      options: r.options || [],
-      answer: r.answer,
-      question_text: r.question_text || '',
-      explanation: r.explanation || '',
-      image_url: r.image_url || ''
-    }));
-    // Update stat counter
+    let offset = 0;
+    while (true) {
+      const res = await fetch(
+        `${SUPA_URL}/rest/v1/questions?select=*&order=page.asc&limit=${PAGE_SIZE}&offset=${offset}`,
+        { headers: anonH() }
+      );
+      if (!res.ok) throw new Error(await res.text());
+      const rows = await res.json();
+      rows.forEach(r => QUESTION_BANK.push({
+        id:            r.id,
+        page:          r.page,
+        skill:         r.skill,
+        difficulty:    r.difficulty,
+        options:       r.options || [],
+        answer:        r.answer,
+        question_text: r.question_text || '',
+        explanation:   r.explanation   || '',
+        image_url:     r.image_url     || ''
+      }));
+      if (rows.length < PAGE_SIZE) break; // last page — no more rows
+      offset += PAGE_SIZE;
+    }
+    // Update stat counter on the login screen
     const qEl = document.getElementById('stat-questions');
     if (qEl) { qEl.textContent = QUESTION_BANK.length; qEl.classList.remove('loading'); }
   } catch(e) {
@@ -3410,23 +3422,28 @@ async function loadQuestionsFromDB() {
 }
 
 async function saveQuestionsToDB(questions) {
-  // Upsert — safe to re-run, won't duplicate
-  const res = await fetch(`${SUPA_URL}/rest/v1/questions`, {
-    method: 'POST',
-    headers: { ...anonH(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-    body: JSON.stringify(questions.map(q => ({
-      id: q.id,
-      page: q.page,
-      skill: q.skill,
-      difficulty: q.difficulty || 'Easy',
-      options: q.options || [],
-      answer: q.answer,
-      question_text: q.question_text || '',
-      explanation: q.explanation || '',
-      image_url: q.image_url || ''
-    })))
-  });
-  if (!res.ok) throw new Error(await res.text());
+  // Supabase caps inserts at 1000 rows per request — send in batches of 500.
+  const BATCH_SIZE = 500;
+  const rows = questions.map(q => ({
+    id:            q.id,
+    page:          q.page,
+    skill:         q.skill,
+    difficulty:    q.difficulty    || 'Easy',
+    options:       q.options       || [],
+    answer:        q.answer,
+    question_text: q.question_text || '',
+    explanation:   q.explanation   || '',
+    image_url:     q.image_url     || ''
+  }));
+  for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+    const batch = rows.slice(i, i + BATCH_SIZE);
+    const res = await fetch(`${SUPA_URL}/rest/v1/questions`, {
+      method: 'POST',
+      headers: { ...anonH(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(batch)
+    });
+    if (!res.ok) throw new Error(await res.text());
+  }
 }
 
 async function boot() {
@@ -3644,13 +3661,14 @@ function confirmImport() {
   const questions = [...importPendingQuestions];
   importPendingQuestions = [];
   document.getElementById('import-preview').style.display = 'none';
-  importLog('💾 Saving to database…', '#7dd3fc');
+  const batches = Math.ceil(questions.length / 500);
+  importLog(`💾 Saving ${questions.length} questions in ${batches} batch${batches>1?'es':''}…`, '#7dd3fc');
 
   saveQuestionsToDB(questions).then(() => {
     questions.forEach(q => QUESTION_BANK.push(q));
     const qEl = document.getElementById('stat-questions');
     if (qEl) qEl.textContent = QUESTION_BANK.length;
-    importLog(`🎉 ${questions.length} question(s) saved! Total in bank: ${QUESTION_BANK.length}`, '#86efac');
+    importLog(`🎉 All ${questions.length} question(s) saved! Total in bank: ${QUESTION_BANK.length}`, '#86efac');
     const npEl = document.getElementById('import-next-page');
     if (npEl) npEl.textContent = QUESTION_BANK.length + 1;
     if (activePanelId === 'panel-assign') renderAssign();
