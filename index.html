@@ -1865,15 +1865,37 @@ function renderAssignFilterDropdown(){
   if(assignFilters.topics.length > 0) updateAssignDiffCounts();
 }
 
+function diagnoseDifficulties(){
+  const allDiffs = [...new Set(QUESTION_BANK.map(q=>q.difficulty))];
+  console.log('=== DIFFICULTY DIAGNOSIS ===');
+  console.log('All unique difficulty values in QUESTION_BANK:', allDiffs);
+  allDiffs.forEach(d => {
+    console.log(`  "${d}": ${QUESTION_BANK.filter(q=>q.difficulty===d).length} questions`);
+  });
+  const leov = QUESTION_BANK.filter(q=>q.skill && q.skill.toLowerCase().includes('linear equations in one'));
+  if(leov.length){
+    console.log('Linear Equations in One Variable difficulties:', [...new Set(leov.map(q=>q.difficulty))]);
+    leov.forEach(q=>console.log(`  ID:${q.id} difficulty:"${q.difficulty}"`));
+  }
+  console.log('============================');
+}
 function updateAssignDiffCounts(){
   const mcqBank = getMCQ ? getMCQ() : QUESTION_BANK.filter(q=>q.options&&q.options.length>0);
   const base = assignFilters.topics.length > 0
     ? mcqBank.filter(q => assignFilters.topics.includes(q.skill))
     : mcqBank;
   ['Easy','Medium','Hard'].forEach(d => {
+    const cnt = base.filter(q => q.difficulty === d).length;
     const el = document.getElementById('af-diff-cnt-' + d);
-    if(el) el.textContent = base.filter(q => q.difficulty === d).length + ' questions';
+    if(el) el.textContent = cnt + ' questions';
   });
+  // Warn if counts don't add up — reveals wrong difficulty values in DB
+  const counted = ['Easy','Medium','Hard'].reduce((s,d)=>s+base.filter(q=>q.difficulty===d).length,0);
+  if(counted < base.length){
+    const badValues = [...new Set(base.filter(q=>!['Easy','Medium','Hard'].includes(q.difficulty)).map(q=>JSON.stringify(q.difficulty)))];
+    console.warn(`[DiffCount] ⚠️ ${base.length-counted} questions have unrecognised difficulty values:`, badValues);
+    console.warn('Run diagnoseDifficulties() in the console for full details.');
+  }
 }
 function toggleAssignFilter(){
   const dd = document.getElementById('assign-filter-dropdown');
@@ -3612,17 +3634,25 @@ async function loadQuestionsFromDB() {
       );
       if (!res.ok) throw new Error(await res.text());
       const rows = await res.json();
-      rows.forEach(r => QUESTION_BANK.push({
-        id:            r.id,
-        page:          r.page,
-        skill:         r.skill,
-        difficulty:    r.difficulty,
-        options:       r.options || [],
-        answer:        r.answer,
-        question_text: r.question_text || '',
-        explanation:   r.explanation   || '',
-        image_url:     r.image_url     || ''
-      }));
+      rows.forEach(r => {
+        // Normalize difficulty: handle any casing/whitespace from DB
+        const rawDiff = (r.difficulty || '').trim().toLowerCase();
+        const difficulty = rawDiff === 'medium' ? 'Medium'
+                         : rawDiff === 'hard'   ? 'Hard'
+                         : rawDiff === 'easy'   ? 'Easy'
+                         : r.difficulty || 'Easy'; // fallback: keep original if unrecognized
+        QUESTION_BANK.push({
+          id:            r.id,
+          page:          r.page,
+          skill:         (r.skill || '').trim(),
+          difficulty,
+          options:       r.options || [],
+          answer:        r.answer,
+          question_text: r.question_text || '',
+          explanation:   r.explanation   || '',
+          image_url:     r.image_url     || ''
+        });
+      });
       if (rows.length < PAGE_SIZE) break; // last page — no more rows
       offset += PAGE_SIZE;
     }
@@ -3817,11 +3847,13 @@ async function runExcelImport() {
         r.option_d ? { l: 'D', t: r.option_d } : null,
       ].filter(Boolean) : [];
 
+      const rawD = (r.difficulty || '').trim().toLowerCase();
+      const normDiff = rawD === 'medium' ? 'Medium' : rawD === 'hard' ? 'Hard' : 'Easy';
       return {
         id:            r.id,
         page:          pageStart + i,
-        skill:         r.skill        || 'General',
-        difficulty:    r.difficulty   || 'Easy',
+        skill:         (r.skill || 'General').trim(),
+        difficulty:    normDiff,
         question_text: r.question     || '',
         options,
         answer:        r.answer       || '',
