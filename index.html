@@ -847,7 +847,7 @@ tr:hover td{background:#f8faff}
           </div>
           <div id="assign-active-filters" style="display:flex;gap:6px;flex-wrap:wrap"></div>
           <!-- Search box -->
-          <div style="position:relative;margin-left:auto">
+          <div style="position:relative">
             <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="assign-search" placeholder="Search questions…"
               oninput="renderAssign()"
@@ -857,7 +857,15 @@ tr:hover td{background:#f8faff}
               onfocus="this.style.borderColor='var(--blue)'"
               onblur="this.style.borderColor='var(--rule)'">
           </div>
-          <span id="assign-filter-count" style="font-size:.78rem;color:var(--muted);font-family:var(--mono)"></span>
+          <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+            <span id="assign-filter-count" style="font-size:.78rem;color:var(--muted);font-family:var(--mono)"></span>
+            <button id="select-all-btn" onclick="toggleSelectAll()"
+              style="font-size:.78rem;font-weight:600;color:var(--blue);background:none;border:none;
+                cursor:pointer;font-family:var(--sans);padding:0;white-space:nowrap;text-decoration:underline;
+                text-underline-offset:2px;opacity:.85">
+              Select all
+            </button>
+          </div>
         </div>
         <div class="q-grid" id="question-list"></div>
         <div class="assign-bar hidden" id="assign-bar">
@@ -1964,19 +1972,42 @@ function updateAssignFilterUI(){
   }
 }
 
-function renderAssign(){
-  // Apply filters + search
+function getFilteredQuestions(){
   const searchTerm = (document.getElementById('assign-search')?.value||'').toLowerCase().trim();
-  const filtered = getMCQ().filter(q => {
-    const topicOk = assignFilters.topics.length === 0 || assignFilters.topics.includes(q.skill);
-    const diffOk  = assignFilters.difficulty.length === 0 || assignFilters.difficulty.includes(q.difficulty);
-    const searchOk = !searchTerm || q.skill.toLowerCase().includes(searchTerm) || q.id.toLowerCase().includes(searchTerm) || String(q.page).includes(searchTerm);
+  return getMCQ().filter(q => {
+    const topicOk  = assignFilters.topics.length === 0 || assignFilters.topics.includes(q.skill);
+    const diffOk   = assignFilters.difficulty.length === 0 || assignFilters.difficulty.includes(q.difficulty);
+    const searchOk = !searchTerm || q.skill.toLowerCase().includes(searchTerm)
+                     || q.id.toLowerCase().includes(searchTerm) || String(q.page).includes(searchTerm);
     return topicOk && diffOk && searchOk;
   });
+}
+function toggleSelectAll(){
+  const filtered = getFilteredQuestions();
+  const allSelected = filtered.length > 0 && filtered.every(q => selectedQIds.has(q.id));
+  if(allSelected){
+    // Deselect all visible
+    filtered.forEach(q => selectedQIds.delete(q.id));
+  } else {
+    // Select all visible
+    filtered.forEach(q => selectedQIds.add(q.id));
+  }
+  renderAssign();
+}
+function renderAssign(){
+  const filtered = getFilteredQuestions();
 
   // Update result count
   const countEl = document.getElementById('assign-filter-count');
   if(countEl) countEl.textContent = `${filtered.length} of ${getMCQ().length} questions`;
+
+  // Update Select All button label
+  const saBtn = document.getElementById('select-all-btn');
+  if(saBtn){
+    const allSelected = filtered.length > 0 && filtered.every(q => selectedQIds.has(q.id));
+    saBtn.textContent = allSelected ? 'Deselect all' : `Select all ${filtered.length > 0 ? '('+filtered.length+')' : ''}`;
+    saBtn.style.color = allSelected ? 'var(--red)' : 'var(--blue)';
+  }
 
   // Render question list
   document.getElementById('question-list').innerHTML = filtered.map(q=>`
@@ -2002,6 +2033,14 @@ function toggleQ(id){
   const row=document.getElementById('qrow-'+id);
   if(row){row.classList.toggle('selected',selectedQIds.has(id));row.querySelector('.q-checkbox').textContent=selectedQIds.has(id)?'✓':'';}
   updateAssignBar();
+  // Keep select-all button label in sync without full re-render
+  const saBtn = document.getElementById('select-all-btn');
+  if(saBtn){
+    const filtered = getFilteredQuestions();
+    const allSel = filtered.length > 0 && filtered.every(q => selectedQIds.has(q.id));
+    saBtn.textContent = allSel ? 'Deselect all' : `Select all (${filtered.length})`;
+    saBtn.style.color = allSel ? 'var(--red)' : 'var(--blue)';
+  }
 }
 function updateAssignBar(){
   const bar=document.getElementById('assign-bar');
@@ -2552,7 +2591,7 @@ function renderPracticeGroundQuestion(){
 
         <div style="padding:22px 24px 18px;border-bottom:1px solid var(--rule);font-size:.97rem;line-height:1.75;color:var(--ink)">
           ${q.question_text ? q.question_text.replace(/\n/g,'<br>') : '<span style="color:var(--muted);font-size:.85rem;font-family:var(--mono)">ID: '+q.id+'</span>'}
-          ${q.image_url ? '<img src="'+q.image_url+'" style="max-width:100%;margin-top:14px;border-radius:8px;display:block" alt="Question diagram">' : ''}
+          ${q.image_url && (q.image_url.startsWith('http://') || q.image_url.startsWith('https://')) ? '<img src="'+q.image_url+'" style="max-width:100%;margin-top:14px;border-radius:8px;display:block" alt="Question diagram" onerror="this.style.display=\'none\'">' : ''}
         </div>
 
         <!-- Options or Free-response input -->
@@ -3312,7 +3351,7 @@ function renderQuestion(studentId, cachedStats, slideDir){
       class="${slideDir==='left'?'q-slide-left':slideDir==='right'?'q-slide-right':'q-slide-left'}">
       <div style="padding:22px 24px 18px;border-bottom:1px solid var(--rule);font-size:.97rem;line-height:1.75;color:var(--ink)">
         ${q.question_text ? q.question_text.replace(/\n/g,'<br>') : '<span style="color:var(--muted);font-size:.85rem;font-family:var(--mono)">ID: '+q.id+'</span>'}
-          ${q.image_url ? '<img src="'+q.image_url+'" style="max-width:100%;margin-top:14px;border-radius:8px;display:block" alt="Question diagram">' : ''}
+          ${q.image_url && (q.image_url.startsWith('http://') || q.image_url.startsWith('https://')) ? '<img src="'+q.image_url+'" style="max-width:100%;margin-top:14px;border-radius:8px;display:block" alt="Question diagram" onerror="this.style.display=\'none\'">' : ''}
       </div>
       <div style="padding:20px 24px">
         <div style="display:grid;gap:10px">${optionsHtml}</div>
