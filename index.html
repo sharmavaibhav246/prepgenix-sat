@@ -372,10 +372,10 @@ tr:hover td{background:#f8faff}
 .q-timer.warn{color:#b45309;border-color:#f59e0b;background:#fffbeb}
 .q-timer.slow{color:#dc2626;border-color:#f87171;background:#fff1f1;animation:timer-pulse .9s ease-in-out infinite}
 .q-timer svg{flex-shrink:0}
-.btn-next{padding:11px 30px;border-radius:8px;background:var(--blue);color:#fff;font-size:.88rem;font-weight:700;transition:all .15s;letter-spacing:.02em}
-.btn-next:hover:not(:disabled){background:#1d4ed8}
-.btn-next:active:not(:disabled){transform:scale(.97)}
-.btn-next:disabled{opacity:.35;cursor:default}
+.btn-next{padding:11px 28px;border-radius:40px;background:var(--blue);color:#fff;font-size:.88rem;font-weight:700;transition:all .18s;letter-spacing:.01em;box-shadow:0 4px 12px rgba(43,91,224,.3)}
+.btn-next:hover:not(:disabled){background:#1d4ed8;box-shadow:0 6px 18px rgba(43,91,224,.4);transform:translateY(-1px)}
+.btn-next:active:not(:disabled){transform:scale(.98)}
+.btn-next:disabled{opacity:.35;cursor:default;box-shadow:none}
 @keyframes nextPulse{0%{box-shadow:0 0 0 0 rgba(43,91,224,.4)}70%{box-shadow:0 0 0 8px rgba(43,91,224,0)}100%{box-shadow:0 0 0 0 rgba(43,91,224,0)}}
 
 /* score screen */
@@ -447,21 +447,84 @@ tr:hover td{background:#f8faff}
 .mode-card{display:flex;flex-direction:column;min-height:220px}
 
 /* student nav tabs (breadcrumb-style back button) */
-.student-subnav{display:flex;align-items:center;gap:12px;margin-bottom:20px}
-.student-back-btn{display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;padding:6px 12px;border-radius:7px;border:1.5px solid var(--rule);background:var(--white);transition:all .15s;font-family:var(--sans)}
-.student-back-btn:hover{color:var(--navy);border-color:var(--navy)}
+.student-subnav{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.student-back-btn{display:inline-flex;align-items:center;gap:7px;font-size:.82rem;font-weight:600;
+  color:var(--navy);cursor:pointer;padding:8px 16px 8px 12px;border-radius:40px;
+  border:1.5px solid var(--rule);background:var(--white);transition:all .18s;font-family:var(--sans);
+  box-shadow:0 1px 4px rgba(0,0,0,.06);white-space:nowrap}
+.student-back-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg);box-shadow:0 2px 8px rgba(43,91,224,.12);transform:translateX(-2px)}
+.student-back-btn svg{transition:transform .18s}
+.student-back-btn:hover svg{transform:translateX(-2px)}
 
 /* practice-ground topic filter */
 .pg-filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
 
 /* analytics dashboard */
-.analytics-wrap{width:100%;max-width:860px;margin:0 auto;padding:20px 20px 60px;animation:fadeIn .3s ease}
-.analytics-section{margin-bottom:32px}
-.analytics-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:14px}
+.analytics-wrap{width:100%;max-width:880px;margin:0 auto;padding:24px 20px 60px;animation:fadeIn .3s ease}
+.analytics-hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 60%,var(--navy-lt) 100%);
+  border-radius:20px;padding:32px 36px;margin-bottom:28px;color:#fff;display:flex;align-items:center;
+  gap:32px;position:relative;overflow:hidden}
+.analytics-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:220px;height:220px;
+  border-radius:50%;background:rgba(255,255,255,.05)}
+.analytics-hero::after{content:'';position:absolute;bottom:-60px;right:80px;width:160px;height:160px;
+  border-radius:50%;background:rgba(43,91,224,.25)}
+.analytics-hero-score{flex-shrink:0;text-align:center;position:relative;z-index:1}
+.analytics-hero-score .big-pct{font-family:var(--mono);font-size:3.2rem;font-weight:700;line-height:1;
+  letter-spacing:-.04em}
+.analytics-hero-score .big-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;opacity:.65;margin-top:4px}
+.analytics-hero-info{flex:1;position:relative;z-index:1}
+.analytics-hero-info h3{font-size:1.25rem;font-weight:700;margin-bottom:6px}
+.analytics-hero-info p{font-size:.85rem;opacity:.75;line-height:1.5;max-width:360px}
+.analytics-hero-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.analytics-hero-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;
+  font-size:.75rem;font-weight:600;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.analytics-section{margin-bottom:28px}
+.analytics-section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.analytics-section-title::before{content:'';display:block;width:3px;height:14px;border-radius:2px;background:var(--blue)}
 .analytics-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:8px}
-.an-card{background:var(--white);border:1px solid var(--rule);border-radius:var(--radius);padding:16px 18px;text-align:center;box-shadow:var(--shadow)}
-.an-card .an-num{font-family:var(--mono);font-size:1.65rem;font-weight:500;line-height:1;margin-bottom:4px;letter-spacing:-.02em}
-.an-card .an-key{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+.an-card{background:var(--white);border:1px solid var(--rule);border-radius:14px;padding:20px 16px 16px;
+  text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 12px rgba(0,0,0,.04);
+  position:relative;overflow:hidden;transition:transform .18s,box-shadow .18s}
+.an-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.an-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0}
+.an-card.ac-blue::before{background:var(--blue)}
+.an-card.ac-green::before{background:var(--green)}
+.an-card.ac-red::before{background:var(--red)}
+.an-card.ac-navy::before{background:var(--navy)}
+.an-card.ac-amber::before{background:var(--amber)}
+.an-card.ac-muted::before{background:var(--muted)}
+.an-card.ac-teal::before{background:var(--teal)}
+.an-card-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 10px;font-size:1.1rem}
+.an-card .an-num{font-family:var(--mono);font-size:1.7rem;font-weight:700;line-height:1;margin-bottom:5px;letter-spacing:-.03em}
+.an-card .an-key{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+
+/* no-work (empty states) */
+.no-work{text-align:center;padding:60px 20px;color:var(--muted)}
+.no-work .nw-icon{font-size:3rem;margin-bottom:16px}
+.no-work h3{font-size:1.3rem;font-weight:700;color:var(--navy);margin-bottom:8px}
+/* empty state card for "no assigned questions" */
+.empty-state-card{background:linear-gradient(135deg,#f8faff 0%,#eef2ff 100%);border:1.5px solid #c7d2fe;
+  border-radius:20px;padding:48px 32px;text-align:center;margin:20px 0;position:relative;overflow:hidden}
+.empty-state-card::before{content:'';position:absolute;top:-30px;right:-30px;width:150px;height:150px;
+  border-radius:50%;background:rgba(99,102,241,.07)}
+.empty-state-card::after{content:'';position:absolute;bottom:-40px;left:-20px;width:120px;height:120px;
+  border-radius:50%;background:rgba(43,91,224,.06)}
+.empty-state-icon{width:80px;height:80px;background:linear-gradient(135deg,#eef2ff,#ddd6fe);
+  border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;
+  box-shadow:0 4px 16px rgba(99,102,241,.2)}
+.empty-state-title{font-size:1.35rem;font-weight:700;color:var(--navy);margin-bottom:10px;font-family:var(--sans)}
+.empty-state-desc{font-size:.88rem;color:var(--muted);line-height:1.65;max-width:340px;margin:0 auto 24px}
+.empty-state-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative;z-index:1}
+.btn-primary-pill{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:40px;
+  border:none;background:var(--blue);color:#fff;font-size:.88rem;font-weight:700;cursor:pointer;
+  font-family:var(--sans);transition:all .18s;box-shadow:0 4px 12px rgba(43,91,224,.3)}
+.btn-primary-pill:hover{background:#1a4ed8;transform:translateY(-1px);box-shadow:0 6px 18px rgba(43,91,224,.4)}
+.btn-secondary-pill{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:40px;
+  border:1.5px solid var(--rule);background:var(--white);color:var(--ink-mid);font-size:.88rem;
+  font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .18s}
+.btn-secondary-pill:hover{border-color:var(--navy);color:var(--navy);transform:translateY(-1px)}
 
 /* modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(13,27,62,.5);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(3px);animation:fadeIn .2s ease}
@@ -534,9 +597,12 @@ tr:hover td{background:#f8faff}
 
   /* Analytics */
   .analytics-wrap{padding:16px 14px 48px!important}
+  .analytics-hero{flex-direction:column;gap:16px;padding:24px 20px!important}
+  .analytics-hero-score .big-pct{font-size:2.2rem}
   .analytics-stats-row{grid-template-columns:1fr 1fr;gap:8px}
   .an-card{padding:14px 12px}
   .an-card .an-num{font-size:1.3rem}
+  .an-card-icon{width:28px;height:28px;border-radius:8px;font-size:.9rem}
 
   /* Modal */
   .modal-box{width:calc(100vw - 32px);padding:28px 22px}
@@ -1761,22 +1827,34 @@ function renderAssignFilterDropdown(){
   });
   html += '</div>';
   html += '</div><div style="height:1px;background:var(--rule);margin:4px 0"></div>';
-  html += '<div style="padding:6px 16px 12px">';
-  html += '<div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;margin-top:6px">Difficulty</div>';
+  html += '<div style="padding:8px 16px 14px">';
+  html += '<div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;margin-top:6px">Difficulty</div>';
+  html += '<div style="display:flex;gap:8px">';
   difficulties.forEach(d => {
-    const checked  = assignFilters.difficulty.includes(d.id) ? 'checked' : '';
+    const active   = assignFilters.difficulty.includes(d.id);
     const disabled = d.disabled ? 'disabled' : '';
     const opacity  = d.disabled ? '.4' : '1';
     const cursor   = d.disabled ? 'default' : 'pointer';
-    const hover    = d.disabled ? '' : `onmouseenter="this.style.background='#f5f7ff'" onmouseleave="this.style.background='transparent'"`;
-    html += `<label style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-radius:6px;opacity:${opacity};cursor:${cursor}" ${hover}>
-      <input type="checkbox" id="af-diff-${d.id}" ${checked} ${disabled}
-        onchange="toggleAssignFilterItem('difficulty','${d.id}')"
-        style="width:16px;height:16px;accent-color:var(--blue);flex-shrink:0;cursor:${cursor}">
-      <span style="font-size:.85rem;color:var(--ink-mid)">${d.e} ${d.id}</span>
-      <span style="font-size:.7rem;color:var(--muted);margin-left:auto">${d.note}</span>
+    const borderC  = active ? 'var(--blue)' : 'var(--rule)';
+    const bgC      = active ? 'var(--blue-bg)' : 'var(--white)';
+    const textC    = active ? 'var(--blue)' : 'var(--ink-mid)';
+    html += `<label style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 8px 10px;
+      border-radius:12px;cursor:${cursor};border:1.5px solid ${borderC};background:${bgC};
+      opacity:${opacity};transition:all .15s;text-align:center" id="af-diff-label-${d.id}"
+      ${!d.disabled?`onmouseenter="if(!document.getElementById('af-diff-${d.id}').checked){this.style.borderColor='#93c5fd';this.style.background='#f5f8ff'}"
+        onmouseleave="if(!document.getElementById('af-diff-${d.id}').checked){this.style.borderColor='var(--rule)';this.style.background='var(--white)'}"`:''}>
+      <input type="checkbox" id="af-diff-${d.id}" ${active?'checked':''} ${disabled}
+        onchange="toggleAssignFilterItem('difficulty','${d.id}');
+          var lbl=document.getElementById('af-diff-label-${d.id}');
+          if(lbl){lbl.style.borderColor=this.checked?'var(--blue)':'var(--rule)';
+            lbl.style.background=this.checked?'var(--blue-bg)':'var(--white)'}"
+        style="display:none">
+      <span style="font-size:1.3rem;line-height:1">${d.e}</span>
+      <span style="font-size:.8rem;font-weight:700;color:${textC}">${d.id}</span>
+      <span id="af-diff-cnt-${d.id}" style="font-size:.68rem;color:var(--muted)">${d.note}</span>
     </label>`;
   });
+  html += '</div>';
   html += '</div>';
   html += `<div style="padding:10px 16px;border-top:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;background:var(--bg)">
     <button onclick="clearAssignFilters()" style="font-size:.78rem;color:var(--muted);background:none;border:none;cursor:pointer;font-family:var(--sans)">Clear all</button>
@@ -1785,6 +1863,16 @@ function renderAssignFilterDropdown(){
   dd.innerHTML = html;
 }
 
+function updateAssignDiffCounts(){
+  const mcqBank = getMCQ ? getMCQ() : QUESTION_BANK.filter(q=>q.options&&q.options.length>0);
+  const base = assignFilters.topics.length > 0
+    ? mcqBank.filter(q => assignFilters.topics.includes(q.skill))
+    : mcqBank;
+  ['Easy','Medium','Hard'].forEach(d => {
+    const el = document.getElementById('af-diff-cnt-' + d);
+    if(el) el.textContent = base.filter(q => q.difficulty === d).length + ' questions';
+  });
+}
 function toggleAssignFilter(){
   const dd = document.getElementById('assign-filter-dropdown');
   if(!dd) return;
@@ -1815,6 +1903,7 @@ function toggleAssignFilterItem(type, value){
   // Sync checkbox state
   const cb = document.getElementById(`af-${type==='topics'?'topic':'diff'}-${value.replace(/[^a-z]/gi,'')}`);
   if(cb) cb.checked = arr.includes(value);
+  if(type === 'topics') updateAssignDiffCounts();
   updateAssignFilterUI();
 }
 function clearAssignFilters(){
@@ -2158,11 +2247,21 @@ function closePGFilter(){
   const dd = document.getElementById('pg-filter-dropdown');
   if(dd) dd.style.display = 'none';
 }
+function updatePGDiffCounts(){
+  const base = pgFilters.topics.length > 0
+    ? QUESTION_BANK.filter(q => pgFilters.topics.includes(q.skill))
+    : QUESTION_BANK;
+  ['Easy','Medium','Hard'].forEach(d => {
+    const el = document.getElementById('pg-diff-cnt-' + d);
+    if(el) el.textContent = base.filter(q => q.difficulty === d).length + ' questions';
+  });
+}
 function togglePGFilterItem(type, value){
   const arr = pgFilters[type];
   const idx = arr.indexOf(value);
   if(idx === -1) arr.push(value);
   else arr.splice(idx, 1);
+  if(type === 'topics') updatePGDiffCounts();
   // Re-render just the filter button label (badge count) without closing dropdown
   const btn = document.getElementById('pg-filter-btn');
   if(btn){
@@ -2299,11 +2398,14 @@ function renderPracticeGroundQuestion(){
       <!-- ── TOP BAR ── -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
         <button onclick="renderStudentHome()"
-          style="display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;
-            border:1.5px solid var(--rule);background:var(--white);color:var(--muted);
+          style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px 8px 12px;border-radius:40px;
+            border:1.5px solid var(--rule);background:var(--white);color:var(--navy);
             font-size:.82rem;font-weight:600;cursor:pointer;font-family:var(--sans);
-            transition:all .15s;white-space:nowrap">
-          ← Home
+            transition:all .18s;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.06)"
+          onmouseenter="this.style.borderColor='var(--blue)';this.style.color='var(--blue)';this.style.background='var(--blue-bg)'"
+          onmouseleave="this.style.borderColor='var(--rule)';this.style.color='var(--navy)';this.style.background='var(--white)'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Home
         </button>
 
         <!-- Progress bar -->
@@ -2343,17 +2445,32 @@ function renderPracticeGroundQuestion(){
               </div>
             </div>
             <div style="height:1px;background:var(--rule);margin:4px 0"></div>
-            <div style="padding:6px 16px 12px">
-              <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;margin-top:6px">Difficulty</div>
-              ${_pgDiffs.map(d=>`
-                <label style="display:flex;align-items:center;gap:10px;padding:7px 4px;border-radius:6px;opacity:${d.disabled?'.4':'1'};cursor:${d.disabled?'default':'pointer'}"
-                  ${!d.disabled?'onmouseenter="this.style.background=\'#f5f7ff\'" onmouseleave="this.style.background=\'transparent\'"':''}>
-                  <input type="checkbox" ${pgFilters.difficulty.includes(d.id)?'checked':''} ${d.disabled?'disabled':''}
-                    onchange="togglePGFilterItem('difficulty','${d.id}')"
-                    style="width:16px;height:16px;accent-color:var(--blue);flex-shrink:0;cursor:${d.disabled?'default':'pointer'}">
-                  <span style="font-size:.85rem;color:var(--ink-mid)">${d.e} ${d.id}</span>
-                  <span style="font-size:.7rem;color:var(--muted);margin-left:auto">${d.note}</span>
-                </label>`).join('')}
+            <div style="padding:8px 16px 14px">
+              <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;margin-top:6px">Difficulty</div>
+              <div style="display:flex;gap:8px">
+              ${_pgDiffs.map(d=>{
+                const active=pgFilters.difficulty.includes(d.id);
+                const borderC=active?'var(--blue)':'var(--rule)';
+                const bgC=active?'var(--blue-bg)':'var(--white)';
+                const textC=active?'var(--blue)':'var(--ink-mid)';
+                return `<label id="pg-diff-label-${d.id}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+                  padding:12px 8px 10px;border-radius:12px;cursor:${d.disabled?'default':'pointer'};
+                  border:1.5px solid ${borderC};background:${bgC};opacity:${d.disabled?'.4':'1'};
+                  transition:all .15s;text-align:center"
+                  ${!d.disabled?`onmouseenter="if(!document.getElementById('pg-diff-cb-${d.id}').checked){this.style.borderColor='#93c5fd';this.style.background='#f5f8ff'}"
+                    onmouseleave="if(!document.getElementById('pg-diff-cb-${d.id}').checked){this.style.borderColor='var(--rule)';this.style.background='var(--white)'}"`:''}>
+                  <input type="checkbox" id="pg-diff-cb-${d.id}" ${active?'checked':''} ${d.disabled?'disabled':''}
+                    onchange="togglePGFilterItem('difficulty','${d.id}');
+                      var lbl=document.getElementById('pg-diff-label-${d.id}');
+                      if(lbl){lbl.style.borderColor=this.checked?'var(--blue)':'var(--rule)';
+                        lbl.style.background=this.checked?'var(--blue-bg)':'var(--white)'}"
+                    style="display:none">
+                  <span style="font-size:1.3rem;line-height:1">${d.e}</span>
+                  <span style="font-size:.8rem;font-weight:700;color:${textC}">${d.id}</span>
+                  <span id="pg-diff-cnt-${d.id}" style="font-size:.68rem;color:var(--muted)">${d.note}</span>
+                </label>`;
+              }).join('')}
+              </div>
             </div>
             <div style="padding:10px 16px;border-top:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;background:var(--bg)">
               <button onclick="pgFilters={topics:[],difficulty:[]};closePGFilter();renderPracticeGround(0)"
@@ -2499,27 +2616,36 @@ function renderPracticeGroundQuestion(){
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
         <button
           onclick="${pgIndex > 0 ? 'pgIndex--;renderPracticeGroundQuestion()' : 'renderStudentHome()'}"
-          style="display:flex;align-items:center;gap:6px;padding:11px 20px;border-radius:10px;
+          style="display:inline-flex;align-items:center;gap:7px;padding:11px 20px 11px 16px;border-radius:40px;
             border:1.5px solid var(--rule);background:var(--white);
-            color:var(--ink-mid);font-size:.88rem;font-weight:600;cursor:pointer;
-            font-family:var(--sans);transition:all .15s;min-width:100px;justify-content:center">
-          ${pgIndex > 0 ? '← Prev' : '← Home'}
+            color:var(--navy);font-size:.88rem;font-weight:600;cursor:pointer;
+            font-family:var(--sans);transition:all .18s;min-width:100px;justify-content:center;
+            box-shadow:0 1px 4px rgba(0,0,0,.06)"
+          onmouseenter="this.style.borderColor='var(--navy)';this.style.background='var(--bg)'"
+          onmouseleave="this.style.borderColor='var(--rule)';this.style.background='var(--white)'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          ${pgIndex > 0 ? 'Prev' : 'Home'}
         </button>
 
         ${answeredInQueue > 0 ? `
-        <div style="text-align:center;font-size:.75rem;color:var(--muted);font-family:var(--mono)">
-          <strong style="color:var(--green)">${correctInQueue}</strong>/${answeredInQueue} correct
+        <div style="text-align:center">
+          <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:2px">Score</div>
+          <div style="font-size:1rem;font-weight:700;font-family:var(--mono);color:var(--navy)">
+            <span style="color:var(--green)">${correctInQueue}</span><span style="color:var(--muted);font-weight:400">/${answeredInQueue}</span>
+          </div>
         </div>` : `<div></div>`}
 
         <button id="btn-next"
           ${wasAnswered ? '' : 'disabled'}
           onclick="${pgIndex < pgQueue.length-1 ? 'pgIndex++;renderPracticeGroundQuestion()' : 'renderStudentHome()'}"
-          style="display:flex;align-items:center;gap:6px;padding:11px 24px;border-radius:10px;
+          style="display:inline-flex;align-items:center;gap:7px;padding:11px 20px 11px 24px;border-radius:40px;
             border:none;background:${wasAnswered?'var(--blue)':'var(--rule)'};
             color:${wasAnswered?'#fff':'var(--muted)'};font-size:.88rem;font-weight:700;
             cursor:${wasAnswered?'pointer':'not-allowed'};font-family:var(--sans);
-            transition:all .15s;min-width:100px;justify-content:center">
-          ${pgIndex < pgQueue.length-1 ? 'Next →' : '🏠 Finish'}
+            transition:all .18s;min-width:100px;justify-content:center;
+            box-shadow:${wasAnswered?'0 4px 12px rgba(43,91,224,.3)':'none'}">
+          ${pgIndex < pgQueue.length-1 ? 'Next' : 'Finish'}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
         </button>
       </div>
 
@@ -2703,20 +2829,36 @@ async function renderAssignedPractice(){
   const body = document.getElementById('student-body');
 
   if(st.total === 0){
-    body.style.padding = '40px 20px';
+    body.style.padding = '32px 20px 60px';
     body.innerHTML = `
       <div style="max-width:720px;margin:0 auto">
-        <div class="student-subnav"><button class="student-back-btn" onclick="renderStudentHome()">← Home</button></div>
-        <div class="no-work">
-          <svg width="72" height="72" viewBox="0 0 72 72" fill="none" style="margin-bottom:16px">
-            <circle cx="36" cy="36" r="36" fill="#eef2ff"/>
-            <path d="M24 28h24M24 36h16M24 44h12" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round"/>
-            <circle cx="52" cy="46" r="8" fill="#fff" stroke="#6366f1" stroke-width="2"/>
-            <path d="M52 43v3l2 2" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <h3>No questions yet</h3>
-          <p style="max-width:280px;margin:0 auto">Your teacher will assign questions soon. Try the Practice Ground in the meantime!</p>
-          <button onclick="renderStudentHome()" style="margin-top:20px;padding:10px 24px;border-radius:8px;border:1.5px solid var(--blue);background:var(--blue-bg);color:var(--blue);font-weight:600;cursor:pointer;font-family:var(--sans);font-size:.88rem">← Back to home</button>
+        <div class="student-subnav">
+          <button class="student-back-btn" onclick="renderStudentHome()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Home
+          </button>
+          <span style="font-size:.82rem;color:var(--muted)">Assigned Questions</span>
+        </div>
+        <div class="empty-state-card">
+          <div class="empty-state-icon">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <path d="M10 14h20M10 20h14M10 26h10" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="30" cy="28" r="7" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
+              <path d="M30 25v3l2 2" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="empty-state-title">No assignments yet</div>
+          <div class="empty-state-desc">Your teacher hasn't assigned any questions yet. Check back soon — or head to Practice Ground to get a head start!</div>
+          <div class="empty-state-actions">
+            <button onclick="renderPracticeGround(0)" class="btn-primary-pill">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Practice Ground
+            </button>
+            <button onclick="renderStudentHome()" class="btn-secondary-pill">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              Back to Home
+            </button>
+          </div>
         </div>
       </div>`;
     return;
@@ -2743,7 +2885,10 @@ async function renderAssignedPractice(){
     body.innerHTML = `
       <div style="width:100%;max-width:720px;margin:0 auto">
         <div class="student-subnav">
-          <button class="student-back-btn" onclick="renderStudentHome()">← Home</button>
+          <button class="student-back-btn" onclick="renderStudentHome()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Home
+          </button>
           <span style="font-size:.82rem;color:var(--muted)">Assigned Questions — Complete</span>
         </div>
 
@@ -2771,11 +2916,14 @@ async function renderAssignedPractice(){
       <!-- Top bar -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
         <button onclick="renderStudentHome()"
-          style="display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;
-            border:1.5px solid var(--rule);background:var(--white);color:var(--muted);
+          style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px 8px 12px;border-radius:40px;
+            border:1.5px solid var(--rule);background:var(--white);color:var(--navy);
             font-size:.82rem;font-weight:600;cursor:pointer;font-family:var(--sans);
-            transition:all .15s;white-space:nowrap">
-          ← Home
+            transition:all .18s;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.06)"
+          onmouseenter="this.style.borderColor='var(--blue)';this.style.color='var(--blue)';this.style.background='var(--blue-bg)'"
+          onmouseleave="this.style.borderColor='var(--rule)';this.style.color='var(--navy)';this.style.background='var(--white)'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Home
         </button>
         <!-- Progress bar -->
         <div style="flex:1;height:6px;background:var(--rule);border-radius:3px;overflow:hidden">
@@ -2903,23 +3051,76 @@ async function renderStudentAnalytics(){
   body.innerHTML = `
     <div class="analytics-wrap">
       <div class="student-subnav">
-        <button class="student-back-btn" onclick="renderStudentHome()">← Home</button>
-        <span style="font-size:.9rem;font-weight:700;color:var(--navy)">My Analytics</span>
+        <button class="student-back-btn" onclick="renderStudentHome()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Home
+        </button>
+        <span style="font-size:.88rem;font-weight:700;color:var(--navy)">My Analytics</span>
+      </div>
+
+      <!-- Hero banner -->
+      <div class="analytics-hero">
+        <div class="analytics-hero-score">
+          <div class="big-pct">${pct>0?pct+'%':'—'}</div>
+          <div class="big-label">Overall Score</div>
+        </div>
+        <div class="analytics-hero-info">
+          <h3>${pct>=80?'🎉 Excellent work!':pct>=60?'👍 Good progress!':pct>0?'📚 Keep going!':'Start practicing!'}</h3>
+          <p>${pct>=80?'You\'re crushing it. Keep up the momentum!':pct>=60?'You\'re on the right track. A bit more practice and you\'ll ace it.':pct>0?'Every question counts. Keep solving and you\'ll see improvement.':'Complete assigned questions or jump into Practice Ground to see your stats here.'}</p>
+          <div class="analytics-hero-chips">
+            <span class="analytics-hero-chip">✅ ${st.correct} Correct</span>
+            <span class="analytics-hero-chip">❌ ${st.wrong} Wrong</span>
+            ${avgTime>0?`<span class="analytics-hero-chip">⏱ ${fmtTime(avgTime)} avg</span>`:''}
+            <span class="analytics-hero-chip">📝 ${st.done}/${st.total} assigned</span>
+          </div>
+        </div>
       </div>
 
       <div class="analytics-section">
-        <div class="analytics-section-title">Overall Performance</div>
+        <div class="analytics-section-title">Performance Breakdown</div>
         <div class="analytics-stats-row">
-          <div class="an-card"><div class="an-num" style="color:var(--blue)">${pct>0?pct+'%':'—'}</div><div class="an-key">Score</div></div>
-          <div class="an-card"><div class="an-num" style="color:var(--green)">${st.correct}</div><div class="an-key">Correct</div></div>
-          <div class="an-card"><div class="an-num" style="color:var(--red)">${st.wrong}</div><div class="an-key">Wrong</div></div>
-          <div class="an-card"><div class="an-num" style="color:var(--navy)">${avgTime>0?fmtTime(avgTime):'—'}</div><div class="an-key">Avg Time/Q</div></div>
+          <div class="an-card ac-blue">
+            <div class="an-card-icon" style="background:#eef2ff">📊</div>
+            <div class="an-num" style="color:var(--blue)">${pct>0?pct+'%':'—'}</div>
+            <div class="an-key">Score</div>
+          </div>
+          <div class="an-card ac-green">
+            <div class="an-card-icon" style="background:#d1fae5">✅</div>
+            <div class="an-num" style="color:var(--green)">${st.correct}</div>
+            <div class="an-key">Correct</div>
+          </div>
+          <div class="an-card ac-red">
+            <div class="an-card-icon" style="background:#fee2e2">❌</div>
+            <div class="an-num" style="color:var(--red)">${st.wrong}</div>
+            <div class="an-key">Wrong</div>
+          </div>
+          <div class="an-card ac-navy">
+            <div class="an-card-icon" style="background:#e0e7ff">⏱️</div>
+            <div class="an-num" style="color:var(--navy)">${avgTime>0?fmtTime(avgTime):'—'}</div>
+            <div class="an-key">Avg Time/Q</div>
+          </div>
         </div>
         <div class="analytics-stats-row" style="margin-top:10px">
-          <div class="an-card"><div class="an-num" style="color:var(--amber)">${st.done}</div><div class="an-key">Assigned Done</div></div>
-          <div class="an-card"><div class="an-num" style="color:var(--muted)">${st.total-st.done}</div><div class="an-key">Remaining</div></div>
-          <div class="an-card"><div class="an-num" style="color:var(--teal)">${pgOnly.length}</div><div class="an-key">Practice Ground</div></div>
-          <div class="an-card"><div class="an-num" style="color:var(--navy)">${maxTime>0?fmtTime(maxTime):'—'}</div><div class="an-key">Slowest Q</div></div>
+          <div class="an-card ac-amber">
+            <div class="an-card-icon" style="background:#fef3c7">📋</div>
+            <div class="an-num" style="color:var(--amber)">${st.done}</div>
+            <div class="an-key">Assigned Done</div>
+          </div>
+          <div class="an-card ac-muted">
+            <div class="an-card-icon" style="background:#f3f4f6">🕐</div>
+            <div class="an-num" style="color:var(--muted)">${st.total-st.done}</div>
+            <div class="an-key">Remaining</div>
+          </div>
+          <div class="an-card ac-teal">
+            <div class="an-card-icon" style="background:#e0f7fa">🎯</div>
+            <div class="an-num" style="color:var(--teal)">${pgOnly.length}</div>
+            <div class="an-key">Practice Ground</div>
+          </div>
+          <div class="an-card ac-red">
+            <div class="an-card-icon" style="background:#fee2e2">🐢</div>
+            <div class="an-num" style="color:var(--red)">${maxTime>0?fmtTime(maxTime):'—'}</div>
+            <div class="an-key">Slowest Q</div>
+          </div>
         </div>
       </div>
 
@@ -2928,7 +3129,7 @@ async function renderStudentAnalytics(){
       ${times.length>0?`
       <div class="analytics-section">
         <div class="analytics-section-title">Time per Question (last ${Math.min(times.length,20)} answered)</div>
-        <div style="background:var(--white);border:1px solid var(--rule);border-radius:12px;padding:20px;box-shadow:var(--shadow)">
+        <div style="background:var(--white);border:1px solid var(--rule);border-radius:16px;padding:24px;box-shadow:var(--shadow)">
           <div style="display:flex;align-items:flex-end;gap:5px;height:130px;margin-bottom:10px">
             ${times.slice(-20).map(t=>{
               const ht=maxTime>0?Math.max(5,Math.round((t/maxTime)*120)):5;
@@ -2937,33 +3138,37 @@ async function renderStudentAnalytics(){
                 onmouseenter="this.style.opacity='.65'" onmouseleave="this.style.opacity='1'"></div>`;
             }).join('')}
           </div>
-          <div style="height:1px;background:var(--rule);margin-bottom:10px"></div>
+          <div style="height:1px;background:var(--rule);margin-bottom:14px"></div>
           <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between">
             <div style="display:flex;gap:14px">
               <span style="font-size:.75rem;color:var(--muted)"><span style="color:var(--blue)">●</span> &lt;1min</span>
               <span style="font-size:.75rem;color:var(--muted)"><span style="color:var(--amber)">●</span> 1–2min</span>
               <span style="font-size:.75rem;color:var(--muted)"><span style="color:var(--red)">●</span> &gt;2min</span>
             </div>
-            <div style="text-align:right">
-              <span style="font-size:.78rem;color:var(--muted)">SAT target: ~1min 15sec/question</span>
-            </div>
+            <span style="font-size:.75rem;color:var(--muted)">SAT target: ~1min 15sec/question</span>
           </div>
-          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--rule);display:flex;gap:24px">
-            <div><div style="font-size:.72rem;color:var(--muted);margin-bottom:2px">Your average</div>
-              <div style="font-size:1.3rem;font-weight:500;font-family:var(--mono);color:var(--navy);letter-spacing:-.02em">${fmtTime(avgTime)}</div></div>
-            <div><div style="font-size:.72rem;color:var(--muted);margin-bottom:2px">Slowest question</div>
-              <div style="font-size:1.3rem;font-weight:500;font-family:var(--mono);color:var(--red);letter-spacing:-.02em">${fmtTime(maxTime)}</div></div>
-            <div><div style="font-size:.72rem;color:var(--muted);margin-bottom:2px">Fastest question</div>
-              <div style="font-size:1.3rem;font-weight:500;font-family:var(--mono);color:var(--green);letter-spacing:-.02em">${fmtTime(Math.min(...times.filter(t=>t>0)))}</div></div>
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--rule);display:flex;gap:32px;flex-wrap:wrap">
+            <div><div style="font-size:.7rem;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em">Your average</div>
+              <div style="font-size:1.4rem;font-weight:700;font-family:var(--mono);color:var(--navy);letter-spacing:-.03em">${fmtTime(avgTime)}</div></div>
+            <div><div style="font-size:.7rem;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em">Slowest</div>
+              <div style="font-size:1.4rem;font-weight:700;font-family:var(--mono);color:var(--red);letter-spacing:-.03em">${fmtTime(maxTime)}</div></div>
+            <div><div style="font-size:.7rem;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em">Fastest</div>
+              <div style="font-size:1.4rem;font-weight:700;font-family:var(--mono);color:var(--green);letter-spacing:-.03em">${fmtTime(Math.min(...times.filter(t=>t>0)))}</div></div>
           </div>
         </div>
       </div>`:''}
 
       ${st.done===0&&pgOnly.length===0?`
-      <div class="no-work" style="padding:40px 0">
-        <div class="nw-icon">📊</div>
-        <h3>No data yet</h3>
-        <p style="font-size:.88rem;margin-top:8px">Complete some questions first to see your analytics.</p>
+      <div class="empty-state-card" style="margin-top:0">
+        <div class="empty-state-icon" style="background:linear-gradient(135deg,#fef3c7,#fed7aa)">📊</div>
+        <div class="empty-state-title">No data yet</div>
+        <div class="empty-state-desc">Complete some assigned questions or practice in Practice Ground to see your performance analytics here.</div>
+        <div class="empty-state-actions">
+          <button onclick="renderPracticeGround(0)" class="btn-primary-pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Start Practicing
+          </button>
+        </div>
       </div>`:''}
     </div>`;
 }
@@ -3091,15 +3296,18 @@ function renderQuestion(studentId, cachedStats, slideDir){
 
     <!-- Footer -->
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-      <div style="font-size:.75rem;color:var(--muted);font-family:var(--mono)">
-        ${practiceIndex+1} of ${total} remaining
+      <div style="font-size:.75rem;color:var(--muted)">
+        <span style="font-family:var(--mono);font-weight:700;color:var(--navy)">${practiceIndex+1}</span>
+        <span> of ${total} remaining</span>
       </div>
       <button id="btn-next" disabled
         onclick="nextQuestion('${studentId}')"
-        style="display:flex;align-items:center;gap:6px;padding:12px 0;border-radius:10px;
+        style="display:inline-flex;align-items:center;gap:7px;padding:12px 28px 12px 32px;border-radius:40px;
           border:none;background:var(--rule);color:var(--muted);font-size:.9rem;font-weight:700;
-          cursor:not-allowed;font-family:var(--sans);transition:all .25s;width:100%;justify-content:center">
-        Next →
+          cursor:not-allowed;font-family:var(--sans);transition:all .25s;justify-content:center;
+          box-shadow:none">
+        Next
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
       </button>
     </div>`;
 
@@ -3173,9 +3381,10 @@ async function selectAnswer(studentId,qId,chosen){
     nextBtn.style.background='var(--blue)';
     nextBtn.style.color='#fff';
     nextBtn.style.cursor='pointer';
+    nextBtn.style.boxShadow='0 4px 14px rgba(43,91,224,.35)';
     nextBtn.style.animation='nextPulse .9s ease 2';
-    nextBtn.onmouseenter=()=>nextBtn.style.background='#1d4ed8';
-    nextBtn.onmouseleave=()=>nextBtn.style.background='var(--blue)';
+    nextBtn.onmouseenter=()=>{nextBtn.style.background='#1d4ed8';nextBtn.style.transform='translateY(-1px)'};
+    nextBtn.onmouseleave=()=>{nextBtn.style.background='var(--blue)';nextBtn.style.transform='none'};
   }
 
   // Update local stats cache
